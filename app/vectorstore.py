@@ -17,8 +17,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 # Configuramos HuggingFaceEmbeddings para ejecutar el modelo de nomic localmente
 embeddings = HuggingFaceEmbeddings(
-    model_name="nomic-ai/nomic-embed-text-v1.5",
-    model_kwargs={"trust_remote_code": True}
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
 collection_name = "seniorvital_memory"
