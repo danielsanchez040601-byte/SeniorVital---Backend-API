@@ -9,6 +9,10 @@ openrouter_api_key = os.environ.get("OPENROUTER_API_KEY")
 if not db_url or not openrouter_api_key:
     raise ValueError("DATABASE_URL y OPENROUTER_API_KEY son requeridas en .env")
 
+# Forzar el uso del driver psycopg3 para sqlalchemy sincrónico en PGVector
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
 # Configuramos OpenAIEmbeddings usando OpenRouter y el modelo de nomic
 embeddings = OpenAIEmbeddings(
     api_key=openrouter_api_key,
