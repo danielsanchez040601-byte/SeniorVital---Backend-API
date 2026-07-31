@@ -87,6 +87,9 @@ class DailyRoutine(Base):
     assigned_date = Column(Date, default=date.today)
     status = Column(Enum(RoutineStatusEnum), default=RoutineStatusEnum.PENDING)
     
+    exercises_data = Column(JSON, default=list)
+    warmup_data = Column(JSON, default=list)
+    
     senior = relationship("User", back_populates="routines")
     exercises = relationship("RoutineExercise", back_populates="routine")
 

@@ -79,6 +79,8 @@ class DailyRoutineBase(BaseModel):
     senior_id: int
     assigned_date: date
     status: RoutineStatusEnum = RoutineStatusEnum.PENDING
+    exercises_data: list = Field(default_factory=list)
+    warmup_data: list = Field(default_factory=list)
 
 class DailyRoutineCreate(DailyRoutineBase):
     pass

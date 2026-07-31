@@ -11,7 +11,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from app.agent import wellness_agent
 from app.security import apply_guardrails
 from app.database import engine, Base
-from app.routers import users, exercises, auth
+from app.routers import users, exercises, auth, routines
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Senior Vital Autonomous AI Service", version="3.0.0")
@@ -32,6 +32,7 @@ async def startup_event():
 app.include_router(users.router)
 app.include_router(exercises.router)
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+app.include_router(routines.router)
 
 class ChatRequest(BaseModel):
     user_id: str

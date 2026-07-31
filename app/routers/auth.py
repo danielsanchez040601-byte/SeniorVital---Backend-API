@@ -19,7 +19,7 @@ async def login(req: LoginRequest = None):
 async def get_me():
     # Endpoint mock para devolver el perfil básico
     return {
-        "id": "paciente_prueba_01",
+        "id": 1,
         "name": "Usuario Demo",
         "role": "paciente"
     }
