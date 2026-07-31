@@ -22,3 +22,5 @@ psycopg[binary]>=3.1.0
 sqlalchemy>=2.0.0
 sentence-transformers>=3.0.0
 langchain-community>=0.2.0
+langchain-huggingface>=0.0.3
+einops>=0.7.0

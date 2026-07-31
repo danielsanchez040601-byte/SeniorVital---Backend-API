@@ -13,11 +13,12 @@ if not db_url or not openrouter_api_key:
 if db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
-# Configuramos OpenAIEmbeddings usando OpenRouter y el modelo de nomic
-embeddings = OpenAIEmbeddings(
-    api_key=openrouter_api_key,
-    base_url="https://openrouter.ai/api/v1",
-    model="nomic-ai/nomic-embed-text-v1.5"
+from langchain_huggingface import HuggingFaceEmbeddings
+
+# Configuramos HuggingFaceEmbeddings para ejecutar el modelo de nomic localmente
+embeddings = HuggingFaceEmbeddings(
+    model_name="nomic-ai/nomic-embed-text-v1.5",
+    model_kwargs={"trust_remote_code": True}
 )
 
 collection_name = "seniorvital_memory"
