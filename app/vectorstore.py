@@ -13,10 +13,10 @@ if not db_url or not openrouter_api_key:
 if db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 
-# Configuramos HuggingFaceEmbeddings para ejecutar el modelo de nomic localmente
-embeddings = HuggingFaceEmbeddings(
+# Configuramos FastEmbed para ejecutar el modelo de embeddings localmente (Optimizado para bajo consumo de RAM - ideal para 512MB)
+embeddings = FastEmbedEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
