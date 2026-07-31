@@ -9,11 +9,11 @@ openrouter_api_key = os.environ.get("OPENROUTER_API_KEY")
 if not db_url or not openrouter_api_key:
     raise ValueError("DATABASE_URL y OPENROUTER_API_KEY son requeridas en .env")
 
-from langchain_huggingface import HuggingFaceEmbeddings
-
-# Configuramos HuggingFaceEmbeddings ya que la API Key gratuita de OpenRouter no permite embeddings
-embeddings = HuggingFaceEmbeddings(
-    model_name="all-MiniLM-L6-v2"
+# Configuramos OpenAIEmbeddings usando OpenRouter y el modelo de nomic
+embeddings = OpenAIEmbeddings(
+    api_key=openrouter_api_key,
+    base_url="https://openrouter.ai/api/v1",
+    model="nomic-ai/nomic-embed-text-v1.5"
 )
 
 collection_name = "seniorvital_memory"
