@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: seniorvital-backend
+    env: docker
+    region: ohio
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: DEFAULT_LLM_MODEL
+        value: inclusionai/ling-3.0-flash:free
