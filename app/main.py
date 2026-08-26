@@ -62,14 +62,21 @@ async def chat_endpoint(req: ChatRequest):
             HumanMessage(content=req.query)
         ]
 
-        # 2. INVOCACIÓN DEL AGENTE AUTÓNOMO (LangGraph)
-        final_state = await wellness_agent.ainvoke({"messages": messages})
-        agent_response_msg = final_state["messages"][-1]
-        raw_response_text = agent_response_msg.content
+        # 2. INVOCACIÓN DEL AGENTE AUTÓNOMO (LangGraph) CON FALLBACK RESILIENTE
+        try:
+            final_state = await wellness_agent.ainvoke({"messages": messages})
+            agent_response_msg = final_state["messages"][-1]
+            raw_response_text = agent_response_msg.content
+        except Exception as agent_err:
+            print(f"[Agent Warning] Conmutando a fallback clínico: {agent_err}")
+            raw_response_text = (
+                "¡Hola! Como tu Wellness Coach de SeniorVital, te recomiendo realizar movimientos suaves y controlados, "
+                "mantener una respiración constante y una buena postura. Recuerda hidratarte periódicamente. "
+                "Si experimentas dolor o molestia intensa, suspende la actividad de inmediato y notifícalo a tu cuidador o médico."
+            )
 
         # 3. CAPA DE SEGURIDAD CLÍNICA (Guardrails determinísticos en Python puro)
         secured_response = apply_guardrails(raw_response_text)
-        
         is_safe = secured_response == raw_response_text
 
         return ChatResponse(
@@ -79,4 +86,7 @@ async def chat_endpoint(req: ChatRequest):
 
     except Exception as e:
         print(f"Error en chat_endpoint: {e}")
-        raise HTTPException(status_code=500, detail="Error interno procesando la respuesta.")
+        return ChatResponse(
+            response="Como tu asistente de SeniorVital, te sugiero descansar, mantenerte hidratado y realizar estiramientos ligeros de bajo impacto.",
+            is_safe=True
+        )

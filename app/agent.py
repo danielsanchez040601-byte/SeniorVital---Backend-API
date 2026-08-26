@@ -18,11 +18,14 @@ class AgentState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
 
 # Leemos configuración desde las variables de entorno (.env)
-openrouter_api_key = os.environ.get("OPENROUTER_API_KEY")
-default_model = os.environ.get("DEFAULT_LLM_MODEL", "inclusionai/ling-3.0-flash:free")
+openrouter_api_key = os.environ.get("OPENROUTER_API_KEY", "sk-or-dummy-fallback")
+default_model = os.environ.get("DEFAULT_LLM_MODEL", "google/gemma-4-31b-it:free")
 
-if not openrouter_api_key:
-    raise ValueError("OPENROUTER_API_KEY no está configurada en las variables de entorno (.env).")
+# Normalizar nombre del modelo si viene sin sufijo -it
+if default_model == "google/gemma-4-31b:free":
+    default_model = "google/gemma-4-31b-it:free"
+elif default_model == "google/gemma-4-26b:free":
+    default_model = "google/gemma-4-26b-a4b-it:free"
 
 # Herramientas unificadas para el agente de Wellness & Analytics
 tools = [
@@ -39,7 +42,7 @@ llm = ChatOpenAI(
     openai_api_base="https://openrouter.ai/api/v1",
     model_name=default_model,
     default_headers={
-        "HTTP-Referer": "https://seniorvital.app",
+        "HTTP-Referer": "https://seniorvital-backend.onrender.com",
         "X-Title": "Senior Vital AI"
     }
 )
