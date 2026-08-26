@@ -54,16 +54,34 @@ app = FastAPI(
 )
 
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
 
 async def call_ollama(prompt: str) -> dict:
-    """Envía un prompt a OpenRouter o Ollama y parsea la respuesta JSON.
+    """Envía un prompt a Google AI Studio, OpenRouter o Ollama y parsea la respuesta JSON.
 
     :param prompt: Texto del prompt para el modelo.
     :raises httpx.HTTPError: Si la llamada al LLM falla.
     :return: Diccionario con la respuesta parseada.
     """
+    # 1. Google AI Studio Directo (Gemini 3.6 Flash)
+    if GEMINI_API_KEY:
+        for gem_model in ["gemini-3.6-flash", "gemini-flash-latest"]:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{gem_model}:generateContent?key={GEMINI_API_KEY}"
+                payload = {
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {"response_mime_type": "application/json"}
+                }
+                async with httpx.AsyncClient(timeout=20.0) as client:
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        return json.loads(raw_text)
+            except Exception as e:
+                print(f"Aviso Google AI Studio ({gem_model}): {e}")
+
+    # 2. OpenRouter
     if OPENROUTER_API_KEY:
         headers = {
             "Authorization": f"Bearer {OPENROUTER_API_KEY}",
@@ -90,7 +108,7 @@ async def call_ollama(prompt: str) -> dict:
         except Exception as e:
             print(f"Excepción en OpenRouter ({e}), usando fallback.")
 
-    # Fallback a Ollama local
+    # 3. Fallback a Ollama local
     async with httpx.AsyncClient(timeout=180.0) as client:
         resp = await client.post(
             f"{OLLAMA_URL}/api/generate",

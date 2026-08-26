@@ -74,26 +74,47 @@ async def generate_routine(req: GenerateRequest, db: AsyncSession = Depends(get_
     profile_result = await db.execute(select(models.SeniorProfile).filter(models.SeniorProfile.user_id == req.user_id))
     profile = profile_result.scalars().first()
     
-    # Lista de modelos gratuitos de respaldo para alta disponibilidad ante rate limits (429)
-    preferred_model = os.getenv("DEFAULT_LLM_MODEL", "google/gemma-4-31b-it:free")
-    if preferred_model == "google/gemma-4-31b:free":
-        preferred_model = "google/gemma-4-31b-it:free"
-
-    candidate_models = [
-        preferred_model,
-        "google/gemma-4-26b-a4b-it:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "mistralai/mistral-7b-instruct:free"
-    ]
-    
     routine_data = None
-    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
-    if openrouter_key:
+    # 1. Prioridad: Google AI Studio Directo (Gemini 3.6 Flash / Ultrarrápido y sin intermediarios)
+    if gemini_key:
+        import httpx
+        for gem_model in ["gemini-3.6-flash", "gemini-flash-latest"]:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{gem_model}:generateContent?key={gemini_key}"
+                full_prompt = f"{sys_prompt}\n\nDatos del Adulto Mayor:\n{user_prompt}"
+                payload = {
+                    "contents": [{"parts": [{"text": full_prompt}]}],
+                    "generationConfig": {"response_mime_type": "application/json"}
+                }
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        routine_data = json.loads(raw_text)
+                        if routine_data and "exercises" in routine_data:
+                            print(f"Rutina generada con éxito usando Google AI Studio ({gem_model})")
+                            break
+            except Exception as gem_err:
+                print(f"Aviso Google AI Studio ({gem_model}): {gem_err}")
+
+    # 2. Respaldo: OpenRouter Multimodelo
+    if (not routine_data or "exercises" not in routine_data) and os.getenv("OPENROUTER_API_KEY"):
+        preferred_model = os.getenv("DEFAULT_LLM_MODEL", "google/gemma-4-31b-it:free")
+        if preferred_model == "google/gemma-4-31b:free":
+            preferred_model = "google/gemma-4-31b-it:free"
+
+        candidate_models = [
+            preferred_model,
+            "google/gemma-4-26b-a4b-it:free",
+            "meta-llama/llama-3.3-70b-instruct:free",
+            "mistralai/mistral-7b-instruct:free"
+        ]
         for model_name in candidate_models:
             try:
                 llm = ChatOpenAI(
-                    api_key=openrouter_key,
+                    api_key=os.getenv("OPENROUTER_API_KEY"),
                     base_url="https://openrouter.ai/api/v1",
                     model=model_name,
                     temperature=0.7,
@@ -114,10 +135,10 @@ async def generate_routine(req: GenerateRequest, db: AsyncSession = Depends(get_
                     
                 routine_data = json.loads(content)
                 if routine_data and "exercises" in routine_data:
-                    print(f"Rutina generada exitosamente con modelo: {model_name}")
+                    print(f"Rutina generada con modelo OpenRouter: {model_name}")
                     break
             except Exception as model_err:
-                print(f"Aviso ({model_name}): {model_err}. Intentando siguiente modelo de respaldo...")
+                print(f"Aviso OpenRouter ({model_name}): {model_err}")
 
     if not routine_data or "exercises" not in routine_data:
         print("Usando rutina preventiva clínica por defecto (Fallback seguro).")
