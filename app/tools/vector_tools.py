@@ -2,17 +2,18 @@ import os
 from langchain_core.tools import tool
 from ..config import settings
 
-# Delegar el cómputo a la API Serverless de Hugging Face para no saturar la RAM (<512MB en Render)
-try:
-    from langchain_huggingface import HuggingFaceEndpointEmbeddings
-    hf_token = os.environ.get("HF_TOKEN") or settings.HF_TOKEN
-    embeddings = HuggingFaceEndpointEmbeddings(
-        model=settings.EMBEDDING_MODEL,
-        huggingfacehub_api_token=hf_token
-    )
-except Exception as e:
-    print(f"[VectorTools Warning] Error inicializando HuggingFaceEndpointEmbeddings: {e}")
-    embeddings = None
+def get_embeddings():
+    """Inicialización bajo demanda del cliente de embeddings serverless."""
+    try:
+        from langchain_huggingface import HuggingFaceEndpointEmbeddings
+        hf_token = os.environ.get("HF_TOKEN") or settings.HF_TOKEN
+        return HuggingFaceEndpointEmbeddings(
+            model=settings.EMBEDDING_MODEL,
+            huggingfacehub_api_token=hf_token
+        )
+    except Exception as e:
+        print(f"[VectorTools Warning] Error obteniendo cliente de embeddings: {e}")
+        return None
 
 
 async def ingestar_memoria_paciente(paciente_id: str, texto: str, metadata: dict = None) -> bool:
@@ -22,7 +23,7 @@ async def ingestar_memoria_paciente(paciente_id: str, texto: str, metadata: dict
     metadata["paciente_id"] = str(paciente_id)
     
     try:
-        # Si se dispone de embeddings, generamos el vector
+        embeddings = get_embeddings()
         if embeddings:
             vector = embeddings.embed_query(texto)
             print(f"[VectorStore] Ingestada memoria de {len(vector)}d para paciente {paciente_id}")
