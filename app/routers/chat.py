@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from ..schemas import ChatRequest, ChatResponse
-from ..agents.wellness_coach import wellness_agent
+from ..agents.wellness_coach import wellness_agent, CLINICAL_SYSTEM_PROMPT
 
 router = APIRouter(prefix="/api/v1", tags=["AI Clinical Chat"])
 
@@ -15,7 +15,7 @@ def apply_guardrails(text: str) -> str:
         if term in lower_text:
             return (
                 "Como asistente de bienestar, no estoy autorizado para recomendar medicamentos o dosis. "
-                "Por favor, consulta a tu médico o fisioterapeuta de cabecera."
+                "Por favor, consulte a su médico o fisioterapeuta de cabecera."
             )
     return text
 
@@ -24,11 +24,7 @@ def apply_guardrails(text: str) -> str:
 async def chat_endpoint(req: ChatRequest):
     """Endpoint conversacional del Wellness Coach con RAG y Guardrails clínicos."""
     try:
-        system_prompt = (
-            "Eres el Wellness Coach gerontológico de SeniorVital. Sé empático, cálido y profesional. "
-            "Ayuda a los adultos mayores con recomendaciones de ejercicio seguro y autocuidado. "
-            f"El ID del paciente con el que interactúas es: {req.user_id}."
-        )
+        system_prompt = f"{CLINICAL_SYSTEM_PROMPT}\nID de contexto del paciente actual: {req.user_id}."
 
         messages = [
             SystemMessage(content=system_prompt),
