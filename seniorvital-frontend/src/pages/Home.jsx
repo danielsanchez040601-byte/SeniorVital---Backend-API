@@ -422,30 +422,71 @@ export default function Home({ user: propUser }) {
                 ¿Cómo sentiste la intensidad? (Escala RPE 1-10)
               </label>
 
-              <div className={`p-4 rounded-2xl border-2 flex items-center justify-between mb-4 ${rpeInfo.color}`}>
+              <div className={`p-4 rounded-2xl border-2 flex items-center justify-between mb-4 transition-all ${rpeInfo.color}`}>
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl">{rpeInfo.emoji}</span>
+                  <span className="text-4xl">{rpeInfo.emoji}</span>
                   <div>
-                    <span className="text-xs uppercase font-bold tracking-wider block">Nivel RPE {rpe} de 10</span>
-                    <span className="text-base font-extrabold">{rpeInfo.label}</span>
+                    <span className="text-xs uppercase font-extrabold tracking-wider block">NIVEL RPE {rpe} DE 10</span>
+                    <span className="text-lg font-black">{rpeInfo.label}</span>
                   </div>
                 </div>
-                <span className="text-2xl font-black">{rpe}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRpe(Math.max(1, rpe - 1))}
+                    className="w-10 h-10 rounded-xl bg-surface/80 hover:bg-surface border border-outline-variant text-primary font-black text-xl flex items-center justify-center active:scale-95 transition-transform"
+                    aria-label="Disminuir intensidad"
+                  >
+                    −
+                  </button>
+                  <span className="text-3xl font-black min-w-[36px] text-center">{rpe}</span>
+                  <button
+                    type="button"
+                    onClick={() => setRpe(Math.min(10, rpe + 1))}
+                    className="w-10 h-10 rounded-xl bg-surface/80 hover:bg-surface border border-outline-variant text-primary font-black text-xl flex items-center justify-center active:scale-95 transition-transform"
+                    aria-label="Aumentar intensidad"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
-              {/* Slider Táctil RPE */}
-              <input
-                type="range"
-                min="1"
-                max="10"
-                value={rpe}
-                onChange={(e) => setRpe(parseInt(e.target.value))}
-                className="w-full h-3 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-secondary"
-              />
-              <div className="flex justify-between text-xs text-on-surface-variant font-bold mt-1 px-1">
-                <span>1 (Muy Suave)</span>
-                <span>5 (Moderado)</span>
-                <span>10 (Máximo)</span>
+              {/* Botonera Numérica Táctil del 1 al 10 (Accesibilidad Gerontológica) */}
+              <div className="mb-2">
+                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block mb-2">
+                  Selecciona tu número de esfuerzo:
+                </span>
+                <div className="grid grid-cols-5 gap-2">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => {
+                    const isSelected = rpe === num
+                    let btnStyle = 'bg-surface hover:bg-surface-container border-outline-variant text-primary'
+                    
+                    if (num <= 3) {
+                      if (isSelected) btnStyle = 'bg-tertiary text-on-tertiary border-tertiary ring-4 ring-tertiary/30 shadow-soft-md'
+                    } else if (num <= 6) {
+                      if (isSelected) btnStyle = 'bg-amber-warm text-white border-amber-warm ring-4 ring-warning/30 shadow-soft-md'
+                    } else if (num <= 8) {
+                      if (isSelected) btnStyle = 'bg-secondary text-on-secondary border-secondary ring-4 ring-secondary/30 shadow-soft-md'
+                    } else {
+                      if (isSelected) btnStyle = 'bg-error text-on-error border-error ring-4 ring-error/30 shadow-soft-md'
+                    }
+
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setRpe(num)}
+                        className={`min-h-[52px] rounded-2xl border-2 font-black text-xl sm:text-2xl flex flex-col items-center justify-center transition-all active:scale-95 ${btnStyle}`}
+                        aria-pressed={isSelected}
+                      >
+                        <span>{num}</span>
+                        <span className="text-[9px] font-bold opacity-80 -mt-1 uppercase">
+                          {num <= 3 ? 'Suave' : (num <= 6 ? 'Medio' : (num <= 8 ? 'Fuerte' : 'Máx'))}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
 
