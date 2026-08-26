@@ -76,23 +76,28 @@ async def call_ollama(prompt: str) -> dict:
             "messages": [{"role": "user", "content": prompt}],
             "response_format": {"type": "json_object"}
         }
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
-            resp.raise_for_status()
-            content = resp.json()["choices"][0]["message"]["content"]
-            # Limpiar posibles bloques markdown ```json ... ```
-            clean_json = content.strip()
-            if clean_json.startswith("```"):
-                clean_json = clean_json.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-            return json.loads(clean_json)
-    else:
-        async with httpx.AsyncClient(timeout=180.0) as client:
-            resp = await client.post(
-                f"{OLLAMA_URL}/api/generate",
-                json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
-            )
-            resp.raise_for_status()
-            return json.loads(resp.json()["response"])
+        try:
+            async with httpx.AsyncClient(timeout=45.0) as client:
+                resp = await client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+                if resp.status_code == 200:
+                    content = resp.json()["choices"][0]["message"]["content"]
+                    clean_json = content.strip()
+                    if clean_json.startswith("```"):
+                        clean_json = clean_json.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+                    return json.loads(clean_json)
+                else:
+                    print(f"OpenRouter status {resp.status_code}: {resp.text}, usando fallback.")
+        except Exception as e:
+            print(f"Excepción en OpenRouter ({e}), usando fallback.")
+
+    # Fallback a Ollama local
+    async with httpx.AsyncClient(timeout=180.0) as client:
+        resp = await client.post(
+            f"{OLLAMA_URL}/api/generate",
+            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
+        )
+        resp.raise_for_status()
+        return json.loads(resp.json()["response"])
 
 
 def build_prompt(profile: dict, safe_exercises: list) -> str:

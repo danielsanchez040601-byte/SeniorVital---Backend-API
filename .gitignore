@@ -11,8 +11,10 @@ __pycache__/
 *.pyd
 
 # Variables de entorno
+.env
 .env.local
 .env.*.local
+**/.env
 
 # Directorios de IDEs
 .vscode/
