@@ -57,10 +57,10 @@ export default function TopAppBar({ title, showBack = false, user = null }) {
               </div>
               <div className="text-xs">
                 <p className="font-bold text-primary truncate max-w-[100px]">
-                  {user.profile?.name || user.email.split('@')[0]}
+                  {user?.profile?.name || user?.email?.split('@')?.[0] || 'Usuario'}
                 </p>
                 <span className="text-[10px] text-tertiary font-bold uppercase tracking-wider">
-                  {user.role}
+                  {user?.role || 'senior'}
                 </span>
               </div>
             </div>

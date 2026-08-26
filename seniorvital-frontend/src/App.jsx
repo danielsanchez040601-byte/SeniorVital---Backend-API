@@ -36,10 +36,10 @@ export default function App() {
             </div>
             <div className="flex flex-col text-left">
               <span className="text-xs font-extrabold text-primary truncate max-w-[110px]">
-                {user.profile?.name || user.email.split('@')[0]}
+                {user?.profile?.name || user?.email?.split('@')?.[0] || 'Usuario'}
               </span>
               <span className="text-[10px] text-secondary font-bold uppercase tracking-wider">
-                {user.role}
+                {user?.role || 'senior'}
               </span>
             </div>
             <button 
