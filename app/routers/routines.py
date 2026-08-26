@@ -67,30 +67,47 @@ async def generate_routine(req: GenerateRequest, db: AsyncSession = Depends(get_
                 "warmup": existing.warmup_data,
             }
 
-    # Obtener perfil del adulto mayor
-    profile_result = await db.execute(
-        select(SeniorProfile).filter(SeniorProfile.user_id == req.user_id)
-    )
-    profile = profile_result.scalars().first()
-
+    # System Prompt Clínico Oficial — Coach SeniorVital
     sys_prompt = """
-    Genera una rutina de ejercicios segura para un adulto mayor.
-    Responde SOLO con un JSON válido usando estrictamente este esquema:
+    Eres el "Coach SeniorVital", un asistente clínico de inteligencia artificial especializado en bienestar y actividad física para adultos mayores de 60 años.
+    Tu misión es diseñar una rutina de ejercicios diaria altamente personalizada, segura y preventiva.
+
+    REGLAS CLÍNICAS GERONTOLÓGICAS OBLIGATORIAS:
+    1. SEGURIDAD ANTE TODO: Si el paciente tiene dolor articular o nivel sedentario (Nivel 1), prescribe ejercicios sentados en silla o con apoyo fijo. Nunca prescribas saltos ni cargas de alto impacto.
+    2. ESTRUCTURA OBLIGATORIA: Toda rutina debe tener una fase de calentamiento articular ('warmup') de 3-5 minutos y de 3 a 4 ejercicios principales ('exercises').
+    3. PROGRESIÓN SEGURA: Series de 1 a 3, con 6 a 12 repeticiones o duraciones de 2 a 5 minutos, con descansos adecuados.
+    4. TONO Y LENGUAJE: Nombres claros y descriptivos (ej. "Sentadillas asistidas en silla con apoyo", "Rotación articular de tobillos").
+
+    RESPONDE EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO CON ESTA ESTRUCTURA EXACTA:
     {
-      "exercises": [{"name": "nombre", "sets": 2, "reps": 10, "duration_min": 5}],
-      "warmup": [{"name": "nombre", "sets": 1, "reps": 5}]
+      "warmup": [
+        {"name": "Rotación suave de cuello y hombros", "sets": 1, "reps": 5, "duration_min": 2}
+      ],
+      "exercises": [
+        {"name": "Sentadillas asistidas en silla", "sets": 2, "reps": 8, "duration_min": 4, "description": "Levantarse y sentarse con apoyo firme.", "target_muscles": ["cuádriceps", "glúteos"]},
+        {"name": "Elevación de talones con apoyo", "sets": 2, "reps": 10, "duration_min": 3, "description": "Ponerse de puntillas sosteniéndose del respaldo.", "target_muscles": ["pantorrillas"]},
+        {"name": "Respiración diafragmática profunda", "sets": 1, "reps": 5, "duration_min": 2, "description": "Inspirar profundamente por la nariz y exhalar despacio.", "target_muscles": ["respiratorio"]}
+      ]
     }
     """
-    user_prompt = "Crea una rutina básica y suave para empezar el día."
+
+    user_prompt = "Prescribe una rutina segura para el día de hoy."
     if profile:
-        user_prompt = f"Edad: {profile.age or 70}, Nivel: {profile.fitness_level}. Restricciones: {', '.join(profile.medical_conditions)}."
+        conditions = ', '.join(profile.medical_conditions) if profile.medical_conditions else "Ninguna reportada"
+        user_prompt = (
+            f"Perfil del Adulto Mayor:\n"
+            f"- Edad: {profile.age or 70} años\n"
+            f"- Nivel Funcional: Nivel {profile.fitness_level} (1: Sedentario/Silla, 2: Movilidad Ligera, 3: Activo)\n"
+            f"- Condiciones Clínicas / Dolores: {conditions}\n"
+            f"- Objetivos: {profile.objectives or 'Mejorar movilidad y prevenir caídas'}"
+        )
 
     routine_data = None
     gemini_key = settings.GEMINI_API_KEY or settings.GOOGLE_API_KEY
 
-    # 1. Prioridad: Google AI Studio Directo (Gemini 3.6 Flash / Ultrarrápido)
+    # 1. Prioridad: Google AI Studio Directo (Gemini Flash / Ultrarrápido)
     if gemini_key:
-        for gem_model in ["gemini-3.6-flash", "gemini-flash-latest"]:
+        for gem_model in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-3.6-flash", "gemini-flash-latest"]:
             try:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{gem_model}:generateContent?key={gemini_key}"
                 full_prompt = f"{sys_prompt}\n\nDatos del Adulto Mayor:\n{user_prompt}"

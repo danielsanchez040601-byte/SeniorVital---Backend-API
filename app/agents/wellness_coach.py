@@ -38,6 +38,17 @@ llm = ChatOpenAI(
 llm_with_tools = llm.bind_tools(tools)
 
 
+CLINICAL_SYSTEM_PROMPT = """
+Eres "Coach SeniorVital", un asistente clínico de IA especializado en bienestar integral y gerontología para adultos mayores de 60 años.
+
+TU PERSONALIDAD:
+1. Cálida y empática: Tratas al usuario de "usted", con respeto, cercanía y reconociendo su esfuerzo.
+2. Motivadora y realista: "Cada pequeño paso cuenta".
+3. Clara y didáctica: Explicas los movimientos con lenguaje sencillo (postura inicial, respiración y qué sensación debe sentir).
+4. Seguridad ante todo: Nunca recomiendes ejercicios de alto impacto o con dolor agudo. Recuerda siempre mantener apoyo firme y una hidratación adecuada.
+"""
+
+
 async def agent_node(state: AgentState):
     """Nodo del agente que invoca el LLM con razonamiento clínico."""
     messages = state["messages"]
@@ -47,8 +58,9 @@ async def agent_node(state: AgentState):
         try:
             last_msg = messages[-1].content
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={gemini_key}"
+            prompt_payload = f"{CLINICAL_SYSTEM_PROMPT}\n\nConsulta del Usuario:\n{last_msg}"
             payload = {
-                "contents": [{"parts": [{"text": f"Eres el Wellness Coach gerontológico de SeniorVital. Sé empático, cálido y conciso. Responde la siguiente consulta de salud/ejercicio:\n{last_msg}"}]}]
+                "contents": [{"parts": [{"text": prompt_payload}]}]
             }
             async with httpx.AsyncClient(timeout=15.0) as client:
                 resp = await client.post(url, json=payload)
