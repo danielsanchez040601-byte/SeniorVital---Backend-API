@@ -180,10 +180,17 @@ export const api = {
 
   // Exercise Catalog
   async listExercises() {
-    return fastFetch(`${API_BASE_URL}/catalog/exercises`, {
-      method: 'GET',
-      headers: getHeaders(),
-    }, 2500, 'exercises_catalog');
+    try {
+      return await fastFetch(`${API_BASE_URL}/api/v1/exercises/`, {
+        method: 'GET',
+        headers: getHeaders(),
+      }, 2500, 'exercises_catalog');
+    } catch (_) {
+      return fastFetch(`${API_BASE_URL}/catalog/exercises`, {
+        method: 'GET',
+        headers: getHeaders(),
+      }, 2500, 'exercises_catalog');
+    }
   },
 
   // Tracking
