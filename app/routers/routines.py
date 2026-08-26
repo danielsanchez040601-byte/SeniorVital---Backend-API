@@ -74,41 +74,53 @@ async def generate_routine(req: GenerateRequest, db: AsyncSession = Depends(get_
     profile_result = await db.execute(select(models.SeniorProfile).filter(models.SeniorProfile.user_id == req.user_id))
     profile = profile_result.scalars().first()
     
-    # Prepare LLM request
-    llm = ChatOpenAI(
-        api_key=os.getenv("OPENROUTER_API_KEY"),
-        base_url="https://openrouter.ai/api/v1",
-        model=os.getenv("DEFAULT_LLM_MODEL", "inclusionai/ling-3.0-flash:free"),
-        temperature=0.7
-    )
+    # Lista de modelos gratuitos de respaldo para alta disponibilidad ante rate limits (429)
+    preferred_model = os.getenv("DEFAULT_LLM_MODEL", "google/gemma-4-31b-it:free")
+    if preferred_model == "google/gemma-4-31b:free":
+        preferred_model = "google/gemma-4-31b-it:free"
+
+    candidate_models = [
+        preferred_model,
+        "google/gemma-4-26b-a4b-it:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "mistralai/mistral-7b-instruct:free"
+    ]
     
-    sys_prompt = """
-    Genera una rutina de ejercicios segura para un adulto mayor.
-    Responde SOLO con un JSON válido usando estrictamente este esquema, sin texto extra:
-    {
-      "exercises": [{"name": "nombre", "sets": 2, "reps": 10, "duration_min": 5}],
-      "warmup": [{"name": "nombre", "sets": 1, "reps": 5}]
-    }
-    """
-    
-    user_prompt = "Crea una rutina básica y suave para empezar el día."
-    if profile:
-        user_prompt = f"Edad: {profile.age}, Nivel: {profile.fitness_level}. Restricciones: {', '.join(profile.medical_conditions)}."
-    
-    try:
-        resp = await llm.ainvoke([
-            SystemMessage(content=sys_prompt),
-            HumanMessage(content=user_prompt)
-        ])
-        content = resp.content.strip()
-        if content.startswith("```json"):
-            content = content.split("```json")[1].split("```")[0].strip()
-        elif content.startswith("```"):
-            content = content.split("```")[1].split("```")[0].strip()
-            
-        routine_data = json.loads(content)
-    except Exception as e:
-        print("Error generating routine with AI:", e)
+    routine_data = None
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+
+    if openrouter_key:
+        for model_name in candidate_models:
+            try:
+                llm = ChatOpenAI(
+                    api_key=openrouter_key,
+                    base_url="https://openrouter.ai/api/v1",
+                    model=model_name,
+                    temperature=0.7,
+                    default_headers={
+                        "HTTP-Referer": "https://seniorvital-backend.onrender.com",
+                        "X-Title": "SeniorVital"
+                    }
+                )
+                resp = await llm.ainvoke([
+                    SystemMessage(content=sys_prompt),
+                    HumanMessage(content=user_prompt)
+                ])
+                content = resp.content.strip()
+                if content.startswith("```json"):
+                    content = content.split("```json")[1].split("```")[0].strip()
+                elif content.startswith("```"):
+                    content = content.split("```")[1].split("```")[0].strip()
+                    
+                routine_data = json.loads(content)
+                if routine_data and "exercises" in routine_data:
+                    print(f"Rutina generada exitosamente con modelo: {model_name}")
+                    break
+            except Exception as model_err:
+                print(f"Aviso ({model_name}): {model_err}. Intentando siguiente modelo de respaldo...")
+
+    if not routine_data or "exercises" not in routine_data:
+        print("Usando rutina preventiva clínica por defecto (Fallback seguro).")
         routine_data = DEFAULT_ROUTINE
         
     # Guardar en BD
