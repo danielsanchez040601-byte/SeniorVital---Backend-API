@@ -1,22 +1,24 @@
 import os
-import re
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import declarative_base
+from .config import settings
 
-load_dotenv()
+# Formatear URL para el driver asíncrono asyncpg
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-# Obtener URL y forzar el driver asíncrono
-database_url = os.getenv("DATABASE_URL")
-if not database_url:
-    raise ValueError("DATABASE_URL no está definida en .env")
+# Crear motor asíncrono con pool optimizado para Cloud / Supabase
+engine = create_async_engine(
+    db_url,
+    echo=False,
+    pool_pre_ping=True,
+    pool_size=10,
+    max_overflow=20
+)
 
-if database_url.startswith("postgresql://"):
-    database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-
-engine = create_async_engine(database_url, echo=False)
-
-AsyncSessionLocal = sessionmaker(
+# Fabrica de sesiones asíncronas
+AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
     expire_on_commit=False
@@ -24,6 +26,11 @@ AsyncSessionLocal = sessionmaker(
 
 Base = declarative_base()
 
+
 async def get_db():
+    """Generador de dependencias de sesión asíncrona de base de datos."""
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+        finally:
+            await session.close()

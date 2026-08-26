@@ -1,37 +1,98 @@
-# Entornos virtuales & dependencias
-venv/
-.venv/
-env/
-node_modules/
+# ==============================================================================
+# Git Ignore Estricto — SeniorVital Backend API
+# Estándar de Seguridad: Cero Secretos y Archivos Basura en Repositorio
+# ==============================================================================
 
-# Archivos compilados Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Variables de entorno
+# Variables de entorno y secretos
 .env
 .env.local
 .env.*.local
-**/.env
+*.env
 
-# Directorios de IDEs
-.vscode/
-.idea/
+# Entornos virtuales de Python
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
 
-# Bases de datos locales & analytics
+# Archivos compilados y caches de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Pruebas y Cobertura
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Bases de datos locales y analytics
 *.sqlite3
 *.db
 *.duckdb
 *.duckdb.wal
 
-# Build Outputs
-dist/
-build/
-.cache/
-.pytest_cache/
+# Logs de servicios y procesos
+logs/
+*.log
+*.pid
 
-# OS Files
+# IDEs y Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Archivos de Sistema Operativo
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Microservicios locales antiguos y carpetas de desarrollo local
+SeniorVital-Backend/
+auth-profile-service/
+catalog-service/
+dashboard-service/
+gateway/
+notification-service/
+routines-ai-service/
+tracking-service/
+seniorvital_shared/
+storage/
+tests/
+scripts/
+seniorvital-frontend/
+Proyecto SeniorVital Wellness/
+test_phase*.py
+migrate_db.py
+rag_*.py
+rag_*.json
+run_local.ps1
+pytest.ini
+init_db.sql
+Procfile
+render.yaml

@@ -1,7 +1,0 @@
-INFO:     127.0.0.1:56805 - "GET /catalog/exercises HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55610 - "GET /catalog/exercises HTTP/1.1" 200 OK
-INFO:     127.0.0.1:55610 - "GET /catalog/exercises HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59715 - "GET /storage/videos/equilibrio.mp4 HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:59543 - "GET /catalog/exercises HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59543 - "GET /catalog/exercises HTTP/1.1" 200 OK
-INFO:     127.0.0.1:58201 - "GET /storage/videos/equilibrio.mp4 HTTP/1.1" 404 Not Found
