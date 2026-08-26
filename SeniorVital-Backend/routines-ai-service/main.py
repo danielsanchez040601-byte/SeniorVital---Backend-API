@@ -54,20 +54,45 @@ app = FastAPI(
 )
 
 
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+
 async def call_ollama(prompt: str) -> dict:
-    """Envía un prompt a Ollama y parsea la respuesta JSON.
+    """Envía un prompt a OpenRouter o Ollama y parsea la respuesta JSON.
 
     :param prompt: Texto del prompt para el modelo.
-    :raises httpx.HTTPError: Si la llamada a Ollama falla.
+    :raises httpx.HTTPError: Si la llamada al LLM falla.
     :return: Diccionario con la respuesta parseada.
     """
-    async with httpx.AsyncClient(timeout=180.0) as client:
-        resp = await client.post(
-            f"{OLLAMA_URL}/api/generate",
-            json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
-        )
-        resp.raise_for_status()
-        return json.loads(resp.json()["response"])
+    if OPENROUTER_API_KEY:
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "HTTP-Referer": "https://seniorvital-backend.onrender.com",
+            "X-Title": "SeniorVital",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": DEFAULT_LLM_MODEL,
+            "messages": [{"role": "user", "content": prompt}],
+            "response_format": {"type": "json_object"}
+        }
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+            resp.raise_for_status()
+            content = resp.json()["choices"][0]["message"]["content"]
+            # Limpiar posibles bloques markdown ```json ... ```
+            clean_json = content.strip()
+            if clean_json.startswith("```"):
+                clean_json = clean_json.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+            return json.loads(clean_json)
+    else:
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            resp = await client.post(
+                f"{OLLAMA_URL}/api/generate",
+                json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
+            )
+            resp.raise_for_status()
+            return json.loads(resp.json()["response"])
 
 
 def build_prompt(profile: dict, safe_exercises: list) -> str:
