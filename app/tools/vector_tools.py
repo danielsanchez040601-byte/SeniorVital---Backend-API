@@ -2,12 +2,16 @@ import os
 from langchain_core.tools import tool
 from ..config import settings
 
-# Embeddings nativos con Hugging Face (384 dimensiones)
+# Delegar el cómputo a la API Serverless de Hugging Face para no saturar la RAM (<512MB en Render)
 try:
-    from langchain_huggingface import HuggingFaceEmbeddings
-    embeddings = HuggingFaceEmbeddings(model_name=settings.EMBEDDING_MODEL)
+    from langchain_huggingface import HuggingFaceEndpointEmbeddings
+    hf_token = os.environ.get("HF_TOKEN") or settings.HF_TOKEN
+    embeddings = HuggingFaceEndpointEmbeddings(
+        model=settings.EMBEDDING_MODEL,
+        huggingfacehub_api_token=hf_token
+    )
 except Exception as e:
-    print(f"[VectorTools Warning] Error inicializando HuggingFaceEmbeddings: {e}")
+    print(f"[VectorTools Warning] Error inicializando HuggingFaceEndpointEmbeddings: {e}")
     embeddings = None
 
 
