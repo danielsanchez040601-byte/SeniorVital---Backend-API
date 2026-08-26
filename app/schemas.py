@@ -1,4 +1,9 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
+try:
+    from pydantic import EmailStr
+except ImportError:
+    EmailStr = str
+
 from typing import List, Optional
 from datetime import datetime, date
 from .models import RoleEnum, RoutineStatusEnum
