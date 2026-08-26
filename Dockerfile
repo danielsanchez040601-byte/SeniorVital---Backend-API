@@ -30,7 +30,7 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH=/root/.local/bin:$PATH \
-    PORT=8000
+    PORT=10000
 
 # Instalar librerías de tiempo de ejecución
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -44,8 +44,8 @@ COPY --from=builder /root/.local /root/.local
 # Copiar código fuente de la aplicación
 COPY . /app
 
-# Puerto dinámico expuesto para Render.com
-EXPOSE 8000
+# Puerto por defecto para Render.com (10000)
+EXPOSE 10000
 
 # Ejecutar el servidor ASGI con soporte para el puerto dinámico de Render ($PORT)
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
