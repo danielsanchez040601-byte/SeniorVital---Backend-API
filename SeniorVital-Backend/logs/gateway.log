@@ -1,0 +1,12 @@
+INFO:     Started server process [10556]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:59406 - "GET / HTTP/1.1" 502 Bad Gateway
+INFO:     127.0.0.1:59527 - "GET / HTTP/1.1" 502 Bad Gateway
+INFO:     127.0.0.1:60068 - "GET /auth/ HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60104 - "GET /catalog/exercises HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60306 - "GET /auth/ HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60343 - "GET /catalog/exercises HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61248 - "GET /catalog/exercises HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61277 - "POST /auth/login HTTP/1.1" 200 OK

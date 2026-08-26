@@ -1,0 +1,12 @@
+INFO:     Started server process [21400]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8005 (Press CTRL+C to quit)
+INFO:     127.0.0.1:58598 - "GET /dashboard/insights/00000000-0000-0000-0000-000000000000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58725 - "GET /dashboard/insights/00000000-0000-0000-0000-000000000000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59325 - "GET /dashboard/insights/00000000-0000-0000-0000-000000000000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59355 - "GET /dashboard/progress/00000000-0000-0000-0000-000000000000 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59524 - "GET /dashboard/progress/00000000-0000-0000-0000-000000000000 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61106 - "GET /dashboard/insights/00000000-0000-0000-0000-000000000000 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61136 - "GET /dashboard/progress/00000000-0000-0000-0000-000000000000 HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61158 - "GET /dashboard/progress/c9ea0398-2381-42a6-b78c-005f5ce2d086 HTTP/1.1" 200 OK

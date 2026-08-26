@@ -1,8 +1,8 @@
-# Entornos virtuales
+# Entornos virtuales & dependencias
 venv/
 .venv/
 env/
-.env
+node_modules/
 
 # Archivos compilados Python
 __pycache__/
@@ -11,12 +11,25 @@ __pycache__/
 *.pyd
 
 # Variables de entorno
-.env
+.env.local
+.env.*.local
 
 # Directorios de IDEs
 .vscode/
 .idea/
 
-# SQLite / bases de datos locales
+# Bases de datos locales & analytics
 *.sqlite3
 *.db
+*.duckdb
+*.duckdb.wal
+
+# Build Outputs
+dist/
+build/
+.cache/
+.pytest_cache/
+
+# OS Files
+.DS_Store
+Thumbs.db

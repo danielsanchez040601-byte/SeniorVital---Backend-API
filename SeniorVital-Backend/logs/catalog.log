@@ -1,0 +1,17 @@
+INFO:     Started server process [12508]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8002 (Press CTRL+C to quit)
+INFO:     127.0.0.1:58564 - "GET /catalog/exercises HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59208 - "POST /catalog/exercises HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:59240 - "GET /catalog/exercises HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59500 - "POST /catalog/exercises HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:60038 - "POST /catalog/exercises HTTP/1.1" 201 Created
+INFO:     127.0.0.1:60109 - "GET /catalog/exercises HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60275 - "POST /catalog/exercises HTTP/1.1" 201 Created
+INFO:     127.0.0.1:60347 - "GET /catalog/exercises HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60448 - "GET /catalog/exercises HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60897 - "POST /catalog/exercises HTTP/1.1" 201 Created
+INFO:     127.0.0.1:60925 - "GET /catalog/exercises HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60952 - "GET /catalog/exercises/dd5fd4f8-9531-4493-a7cc-dbade0257fd7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61254 - "GET /catalog/exercises HTTP/1.1" 200 OK
