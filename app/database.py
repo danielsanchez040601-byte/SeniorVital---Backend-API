@@ -11,12 +11,20 @@ elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+as
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 # Crear motor asíncrono con pool defensivo optimizado para Supabase (puerto 6543 / Pooler)
+connect_args = {}
+if "6543" in db_url or "pooler.supabase.com" in db_url:
+    connect_args = {
+        "prepared_statement_cache_size": 0,
+        "statement_cache_size": 0
+    }
+
 engine = create_async_engine(
     db_url,
     echo=False,
     pool_size=5,
     max_overflow=5,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    connect_args=connect_args
 )
 
 # Fábrica de sesiones asíncronas
