@@ -67,6 +67,12 @@ async def generate_routine(req: GenerateRequest, db: AsyncSession = Depends(get_
                 "warmup": existing.warmup_data,
             }
 
+    # 1. Consultar perfil clínico del adulto mayor desde la base de datos (PostgreSQL/Supabase)
+    profile_result = await db.execute(
+        select(SeniorProfile).filter(SeniorProfile.user_id == req.user_id)
+    )
+    profile = profile_result.scalars().first()
+
     # System Prompt Clínico Oficial — Coach SeniorVital
     sys_prompt = """
     Eres el "Coach SeniorVital", un asistente clínico de inteligencia artificial especializado en bienestar y actividad física para adultos mayores de 60 años.
