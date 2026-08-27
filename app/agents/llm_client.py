@@ -7,13 +7,10 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 from ..config import settings
 
-# 1. Modelos principales de Google AI Studio (Prioridad Absoluta con GEMINI_API_KEY)
+# 1. Modelos principales de Google AI Studio (Activos y verificados con GEMINI_API_KEY)
 PRIMARY_GEMINI_MODELS = [
-    "gemini-3.6-flash",
-    "gemini-flash-latest",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash"
+    "gemini-3.6-flash",  # Máxima prioridad: Modo JSON nativo y alta velocidad
+    "gemini-3.5-flash"   # Respaldo inmediato en Google AI Studio
 ]
 
 # 2. Modelos de respaldo activos y verificados en OpenRouter (Solo si Google AI Studio falla)
