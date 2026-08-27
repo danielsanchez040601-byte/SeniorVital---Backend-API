@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from .config import settings
 from .database import engine, Base
-from .routers import auth, chat, exercises, routines
+from .routers import auth, chat, exercises, routines, tracking, dashboard, notify
 
 
 @asynccontextmanager
@@ -44,6 +44,9 @@ app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(exercises.router)
 app.include_router(routines.router)
+app.include_router(tracking.router)
+app.include_router(dashboard.router)
+app.include_router(notify.router)
 
 
 @app.get("/", tags=["Health"])
