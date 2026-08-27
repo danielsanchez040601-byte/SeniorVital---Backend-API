@@ -50,7 +50,7 @@ def evaluar_riesgo_paciente(historial_rpe: list, dias_inactividad: int, dolor_re
 def procesar_alerta_fatiga(senior_id: int, rpe: int, dolor: str = None) -> Dict[str, Any]:
     """Genera evento de alerta si el esfuerzo supera los umbrales seguros."""
     es_alta_fatiga = rpe >= 8
-    tiene_dolor = dolor and dolor.lower() != "sin dolor"
+    tiene_dolor = bool(dolor and dolor.lower() not in ["sin dolor", "ninguno", "ninguna", "no"])
 
     return {
         "senior_id": senior_id,
@@ -59,3 +59,30 @@ def procesar_alerta_fatiga(senior_id: int, rpe: int, dolor: str = None) -> Dict[
         "dolor_zona": dolor if tiene_dolor else None,
         "ajuste_sugerido": "Reducir series en 50% para próxima sesión" if es_alta_fatiga else "Continuar plan"
     }
+
+
+async def evaluar_riesgo_fatiga(paciente_id: str, rpe_score: int, dolor_reportado: str = None, db=None) -> Dict[str, Any]:
+    """Evalúa la fatiga clínica, el esfuerzo RPE reportado y el riesgo de abandono."""
+    es_alta_fatiga = rpe_score >= 8
+    tiene_dolor = bool(dolor_reportado and dolor_reportado.lower() not in ["sin dolor", "ninguno", "ninguna", "no"])
+
+    nivel = "BAJO"
+    if es_alta_fatiga or tiene_dolor:
+        nivel = "ALTO" if (rpe_score >= 9 or tiene_dolor) else "MEDIO"
+
+    return {
+        "paciente_id": str(paciente_id),
+        "user_id": str(paciente_id),
+        "rpe_score": rpe_score,
+        "riesgo": nivel.lower(),
+        "nivel_riesgo": nivel,
+        "es_alerta": es_alta_fatiga or tiene_dolor,
+        "dolor_reportado": dolor_reportado,
+        "status": "evaluado",
+        "accion_recomendada": (
+            "Intercalar ejercicios en silla y reducir repeticiones en la próxima sesión."
+            if es_alta_fatiga or tiene_dolor
+            else "Mantener progresión actual y felicitar adherencia constante."
+        )
+    }
+
