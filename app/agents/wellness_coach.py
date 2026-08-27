@@ -22,9 +22,7 @@ tools = [consultar_historial_medico, registrar_evento_salud]
 # Configuración del LLM
 gemini_key = settings.GEMINI_API_KEY or settings.GOOGLE_API_KEY
 openrouter_key = settings.OPENROUTER_API_KEY
-default_model = settings.DEFAULT_LLM_MODEL
-if default_model == "google/gemma-4-31b:free":
-    default_model = "google/gemma-4-31b-it:free"
+default_model = settings.DEFAULT_LLM_MODEL or "google/gemma-4-31b:free"
 
 llm = ChatOpenAI(
     openai_api_key=openrouter_key or "sk-dummy-key",

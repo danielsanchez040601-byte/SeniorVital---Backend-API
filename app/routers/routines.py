@@ -134,13 +134,14 @@ async def generate_routine(req: GenerateRequest, db: AsyncSession = Depends(get_
 
     # 2. Respaldo: OpenRouter Multimodelo
     if (not routine_data or "exercises" not in routine_data) and settings.OPENROUTER_API_KEY:
-        preferred_model = settings.DEFAULT_LLM_MODEL
-        if preferred_model == "google/gemma-4-31b:free":
-            preferred_model = "google/gemma-4-31b-it:free"
+        preferred_model = settings.DEFAULT_LLM_MODEL or "google/gemma-4-31b:free"
 
         candidate_models = [
             preferred_model,
+            "google/gemma-4-31b-it:free",
             "google/gemma-4-26b-a4b-it:free",
+            "z-ai/glm-5.2:free",
+            "thinking-machines/inkling:free",
             "meta-llama/llama-3.3-70b-instruct:free",
             "mistralai/mistral-7b-instruct:free"
         ]
