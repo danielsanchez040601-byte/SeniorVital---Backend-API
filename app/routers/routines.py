@@ -53,11 +53,18 @@ async def generate_routine(req: GenerateRequest, db: AsyncSession = Depends(get_
     """Genera una rutina clínica adaptada con IA (Google AI Studio / OpenRouter / Fallback)."""
     today = date.today()
 
+    # Parsear ID de usuario de forma segura (admite int, str, "demo-user", etc.)
+    raw_uid = req.user_id if req.user_id is not None else (req.senior_id or 1)
+    try:
+        target_user_id = int(raw_uid)
+    except (ValueError, TypeError):
+        target_user_id = 1
+
     # Si no se fuerza la regeneración, retornamos la rutina existente
     if not req.force:
         result = await db.execute(
             select(DailyRoutine)
-            .filter(DailyRoutine.senior_id == req.user_id)
+            .filter(DailyRoutine.senior_id == target_user_id)
             .filter(DailyRoutine.assigned_date == today)
         )
         existing = result.scalars().first()
@@ -70,7 +77,7 @@ async def generate_routine(req: GenerateRequest, db: AsyncSession = Depends(get_
 
     # 1. Consultar perfil clínico del adulto mayor desde la base de datos (PostgreSQL/Supabase)
     profile_result = await db.execute(
-        select(SeniorProfile).filter(SeniorProfile.user_id == req.user_id)
+        select(SeniorProfile).filter(SeniorProfile.user_id == target_user_id)
     )
     profile = profile_result.scalars().first()
 
@@ -122,7 +129,7 @@ async def generate_routine(req: GenerateRequest, db: AsyncSession = Depends(get_
 
     # Guardar en Base de Datos
     new_routine = DailyRoutine(
-        senior_id=req.user_id,
+        senior_id=target_user_id,
         assigned_date=today,
         status=RoutineStatusEnum.PENDING,
         exercises_data=routine_data.get("exercises", []),

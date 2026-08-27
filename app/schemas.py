@@ -4,7 +4,7 @@ try:
 except ImportError:
     EmailStr = str
 
-from typing import List, Optional
+from typing import List, Optional, Union, Any
 from datetime import datetime, date
 from .models import RoleEnum, RoutineStatusEnum
 
@@ -85,8 +85,9 @@ class ExerciseResponse(ExerciseBase):
 
 # --- Routine Schemas ---
 class GenerateRequest(BaseModel):
-    user_id: int
-    force: bool = False
+    user_id: Optional[Union[int, str]] = 1
+    senior_id: Optional[Union[int, str]] = None
+    force: Optional[bool] = False
 
 
 class DailyRoutineBase(BaseModel):
