@@ -1,15 +1,14 @@
 import os
 from typing import Annotated, TypedDict
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
-import httpx
-import json
 
 from ..config import settings
 from ..tools.vector_tools import consultar_historial_medico, registrar_evento_salud
+from .llm_client import call_llm_text, OPENROUTER_FALLBACK_MODELS
 
 
 class AgentState(TypedDict):
@@ -18,22 +17,6 @@ class AgentState(TypedDict):
 
 # Herramientas clínicas asignadas al Wellness Coach
 tools = [consultar_historial_medico, registrar_evento_salud]
-
-# Configuración del LLM
-gemini_key = settings.GEMINI_API_KEY or settings.GOOGLE_API_KEY
-openrouter_key = settings.OPENROUTER_API_KEY
-default_model = settings.DEFAULT_LLM_MODEL or "google/gemma-4-31b:free"
-
-llm = ChatOpenAI(
-    openai_api_key=openrouter_key or "sk-dummy-key",
-    openai_api_base="https://openrouter.ai/api/v1",
-    model_name=default_model,
-    default_headers={
-        "HTTP-Referer": "https://seniorvital-backend.onrender.com",
-        "X-Title": "Senior Vital Wellness Coach"
-    }
-)
-llm_with_tools = llm.bind_tools(tools)
 
 
 CLINICAL_SYSTEM_PROMPT = """
@@ -55,40 +38,48 @@ Eres el "Agente Wellness Coach", un asistente médico preventivo y experto en ge
 
 
 async def agent_node(state: AgentState):
-    """Nodo del agente que invoca el LLM con razonamiento clínico."""
+    """Nodo del agente que invoca el LLM con razonamiento clínico y Fallback Resiliente."""
     messages = state["messages"]
+    last_msg = messages[-1].content if messages else "¿Cómo puedo ejercitarme seguro hoy?"
 
-    # 1. Prioridad: Google AI Studio Directo si está configurado
-    if gemini_key:
-        try:
-            last_msg = messages[-1].content
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={gemini_key}"
-            prompt_payload = f"{CLINICAL_SYSTEM_PROMPT}\n\nConsulta del Usuario:\n{last_msg}"
-            payload = {
-                "contents": [{"parts": [{"text": prompt_payload}]}]
-            }
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.post(url, json=payload)
-                if resp.status_code == 200:
-                    text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-                    from langchain_core.messages import AIMessage
-                    return {"messages": [AIMessage(content=text.strip())]}
-        except Exception as e:
-            print(f"[WellnessCoach Google Fallback] {e}")
+    # 1. Intento primario y fallback multimodelo mediante el cliente central
+    ai_response = await call_llm_text(
+        system_prompt=CLINICAL_SYSTEM_PROMPT,
+        user_prompt=str(last_msg),
+        timeout=12.0
+    )
 
-    # 2. Respaldo: OpenRouter con function calling
-    try:
-        response = await llm_with_tools.ainvoke(messages)
-        return {"messages": [response]}
-    except Exception as e:
-        print(f"[WellnessCoach OpenRouter Fallback] {e}")
-        from langchain_core.messages import AIMessage
-        fallback_text = (
-            "¡Hola! Como tu Wellness Coach de SeniorVital, te recomiendo realizar movimientos suaves y controlados, "
-            "mantener una respiración constante y una buena postura. Recuerda hidratarte periódicamente. "
-            "Si experimentas dolor articular o molestia, detén la actividad y consulta a tu fisioterapeuta."
-        )
-        return {"messages": [AIMessage(content=fallback_text)]}
+    if ai_response:
+        return {"messages": [AIMessage(content=ai_response)]}
+
+    # 2. Respaldo secundario: LangChain ChatOpenAI con enlace a Tools
+    if settings.OPENROUTER_API_KEY:
+        for model_name in OPENROUTER_FALLBACK_MODELS:
+            try:
+                llm = ChatOpenAI(
+                    openai_api_key=settings.OPENROUTER_API_KEY,
+                    openai_api_base="https://openrouter.ai/api/v1",
+                    model_name=model_name,
+                    timeout=10.0,
+                    default_headers={
+                        "HTTP-Referer": "https://seniorvital-backend.onrender.com",
+                        "X-Title": "Senior Vital Wellness Coach"
+                    }
+                )
+                llm_with_tools = llm.bind_tools(tools)
+                response = await llm_with_tools.ainvoke(messages)
+                return {"messages": [response]}
+            except Exception as e:
+                print(f"⚠️ [WellnessCoach OpenRouter Tool Error] {model_name}: {e}")
+
+    # 3. Mecanismo de degradación clínica elegante
+    print("🛡️ [WellnessCoach] Activando respuesta clínica segura por degradación elegante.")
+    fallback_text = (
+        "¡Hola! Como tu Wellness Coach de SeniorVital, te recomiendo realizar movimientos suaves y controlados, "
+        "mantener una respiración constante y una buena postura. Recuerda hidratarte periódicamente. "
+        "Si experimentas dolor articular o molestia, detén la actividad y consulta a tu fisioterapeuta."
+    )
+    return {"messages": [AIMessage(content=fallback_text)]}
 
 
 # Construir el grafo de LangGraph
