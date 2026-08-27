@@ -3,21 +3,23 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import declarative_base
 from .config import settings
 
-# Formatear URL para el driver asíncrono asyncpg
+# Formatear URL para el driver asíncrono asyncpg y conexión a Supabase
 db_url = settings.DATABASE_URL
-if db_url.startswith("postgresql://"):
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-# Crear motor asíncrono con pool optimizado para Cloud / Supabase
+# Crear motor asíncrono con pool defensivo optimizado para Supabase (puerto 6543 / Pooler)
 engine = create_async_engine(
     db_url,
     echo=False,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20
+    pool_size=5,
+    max_overflow=5,
+    pool_pre_ping=True
 )
 
-# Fabrica de sesiones asíncronas
+# Fábrica de sesiones asíncronas
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,

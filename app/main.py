@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+from sqlalchemy import text
 from .config import settings
 from .database import engine, Base
 from .routers import auth, chat, exercises, routines, tracking, dashboard, notify
@@ -10,13 +11,16 @@ from .routers import auth, chat, exercises, routines, tracking, dashboard, notif
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Inicialización y limpieza del ciclo de vida de la aplicación."""
-    print("🚀 [SeniorVital] Inicializando tablas y esquemas en PostgreSQL / Supabase...")
+    print("🚀 [SeniorVital] Inicializando tablas y esquemas en PostgreSQL / Supabase con pgvector...")
     try:
         async with engine.begin() as conn:
+            # 1. Habilitar extensión vectorial pgvector si no existe
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            # 2. Sincronizar modelos relacionales
             await conn.run_sync(Base.metadata.create_all)
-        print("✅ [SeniorVital] Conexión a Base de Datos establecida.")
+        print("✅ [SeniorVital] Conexión a Base de Datos y extensión pgvector establecidas.")
     except Exception as e:
-        print(f"⚠️ [SeniorVital Warning] Conexión a DB en modo diferido: {e}")
+        print(f"⚠️ [SeniorVital Warning] Inicialización de DB en modo resiliente: {e}")
     yield
     print("🛑 [SeniorVital] Cerrando conexiones...")
 

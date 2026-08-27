@@ -96,3 +96,5 @@ pytest.ini
 init_db.sql
 Procfile
 render.yaml
+node_modules/
+*.example.example
