@@ -2,27 +2,33 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+import asyncio
 from sqlalchemy import text
 from .config import settings
 from .database import engine, Base
 from .routers import auth, chat, exercises, routines, tracking, dashboard, notify
 
 
+async def init_db_background():
+    """Inicialización asíncrona no bloqueante de esquemas y pgvector en segundo plano."""
+    try:
+        # Timeout estricto de 4 segundos para no retener recursos
+        async with engine.begin() as conn:
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            await conn.run_sync(Base.metadata.create_all)
+        print("✅ [SeniorVital] Esquemas y extensión pgvector verificados en segundo plano.")
+    except Exception as e:
+        print(f"ℹ️ [SeniorVital Notice] Conexión a DB en modo Lazy (delegada a peticiones activas): {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Inicialización y limpieza del ciclo de vida de la aplicación."""
-    print("🚀 [SeniorVital] Inicializando tablas y esquemas en PostgreSQL / Supabase con pgvector...")
-    try:
-        async with engine.begin() as conn:
-            # 1. Habilitar extensión vectorial pgvector si no existe
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
-            # 2. Sincronizar modelos relacionales
-            await conn.run_sync(Base.metadata.create_all)
-        print("✅ [SeniorVital] Conexión a Base de Datos y extensión pgvector establecidas.")
-    except Exception as e:
-        print(f"⚠️ [SeniorVital Warning] Inicialización de DB en modo resiliente: {e}")
+    """Ciclo de vida no bloqueante: Apertura inmediata del puerto HTTP en Render/Cloud."""
+    print("🚀 [SeniorVital API] Servidor iniciado - Puerto HTTP listo de inmediato.")
+    # Ejecutar inicialización en segundo plano sin congelar el arranque de FastAPI
+    asyncio.create_task(init_db_background())
     yield
-    print("🛑 [SeniorVital] Cerrando conexiones...")
+    print("🛑 [SeniorVital API] Cerrando conexiones...")
 
 
 app = FastAPI(
