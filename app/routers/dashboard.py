@@ -10,15 +10,26 @@ from ..models import ExerciseRecord, DailyHabit, HealthEvent, User, SeniorProfil
 router = APIRouter(prefix="/dashboard", tags=["Dashboard & Analytics"])
 
 
+def parse_user_id(raw_id) -> int:
+    """Extrae el ID numérico de forma tolerante a UUIDs, cadenas o enteros."""
+    try:
+        if raw_id and "-" in str(raw_id):
+            return int(str(raw_id).split("-")[-1])
+        return int(raw_id or 1)
+    except (ValueError, TypeError):
+        return 1
+
+
 @router.get("/progress/{user_id}")
-async def get_weekly_progress(user_id: int, db: AsyncSession = Depends(get_db)):
+async def get_weekly_progress(user_id: str, db: AsyncSession = Depends(get_db)):
     """Calcula el progreso semanal, adherencia, promedio RPE y series completadas."""
+    uid = parse_user_id(user_id)
     one_week_ago = datetime.utcnow() - timedelta(days=7)
 
     # 1. Registros de ejercicios de la última semana
     records_result = await db.execute(
         select(ExerciseRecord)
-        .filter(ExerciseRecord.senior_id == user_id)
+        .filter(ExerciseRecord.senior_id == uid)
         .filter(ExerciseRecord.completed_at >= one_week_ago)
     )
     records = records_result.scalars().all()
@@ -36,7 +47,8 @@ async def get_weekly_progress(user_id: int, db: AsyncSession = Depends(get_db)):
     adherence_pct = min(100, int((days_active / target_days) * 100)) if days_active > 0 else 0
 
     return {
-        "user_id": user_id,
+        "user_id": str(user_id),
+        "senior_id": uid,
         "days_active": days_active,
         "target_days": target_days,
         "adherence_percentage": adherence_pct,
@@ -48,11 +60,12 @@ async def get_weekly_progress(user_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/projection/{user_id}")
-async def get_projection(user_id: int, db: AsyncSession = Depends(get_db)):
+async def get_projection(user_id: str, db: AsyncSession = Depends(get_db)):
     """Proyección funcional y preventiva a 4 semanas para el adulto mayor."""
+    uid = parse_user_id(user_id)
     # Consultar perfil clínico
     profile_result = await db.execute(
-        select(SeniorProfile).filter(SeniorProfile.user_id == user_id)
+        select(SeniorProfile).filter(SeniorProfile.user_id == uid)
     )
     profile = profile_result.scalars().first()
     fitness_lvl = profile.fitness_level if profile else 1
@@ -70,7 +83,8 @@ async def get_projection(user_id: int, db: AsyncSession = Depends(get_db)):
     ]
 
     return {
-        "user_id": user_id,
+        "user_id": str(user_id),
+        "senior_id": uid,
         "current_level": fitness_lvl,
         "projection_weeks": weeks,
         "clinical_goal": "Incremento de autonomía funcional en transferencias y prevención activa de caídas."
@@ -78,12 +92,13 @@ async def get_projection(user_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/insights/{user_id}")
-async def get_insights(user_id: int, db: AsyncSession = Depends(get_db)):
+async def get_insights(user_id: str, db: AsyncSession = Depends(get_db)):
     """Insights clínicos basados en hábitos y fatiga."""
+    uid = parse_user_id(user_id)
     # Consultar eventos de salud
     events_result = await db.execute(
         select(HealthEvent)
-        .filter(HealthEvent.user_id == user_id)
+        .filter(HealthEvent.user_id == uid)
         .order_by(HealthEvent.created_at.desc())
         .limit(5)
     )
@@ -104,7 +119,8 @@ async def get_insights(user_id: int, db: AsyncSession = Depends(get_db)):
             break
 
     return {
-        "user_id": user_id,
+        "user_id": str(user_id),
+        "senior_id": uid,
         "insights": insights_list
     }
 
