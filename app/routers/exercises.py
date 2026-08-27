@@ -8,6 +8,18 @@ from ..models import Exercise
 from ..schemas import ExerciseCreate, ExerciseResponse
 
 router = APIRouter(prefix="/api/v1/exercises", tags=["Exercises (Library)"])
+catalog_router = APIRouter(prefix="/catalog", tags=["Catalog"])
+
+
+@catalog_router.get("/exercises", response_model=List[ExerciseResponse])
+async def list_exercises_catalog(
+    skip: int = 0, 
+    limit: int = 100, 
+    level: Optional[int] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """Alias para compatibilidad con clientes que consultan /catalog/exercises."""
+    return await list_exercises(skip=skip, limit=limit, level=level, db=db)
 
 
 @router.get("/", response_model=List[ExerciseResponse])

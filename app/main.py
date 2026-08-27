@@ -53,6 +53,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(exercises.router)
+app.include_router(exercises.catalog_router)
 app.include_router(routines.router)
 app.include_router(tracking.router)
 app.include_router(dashboard.router)
