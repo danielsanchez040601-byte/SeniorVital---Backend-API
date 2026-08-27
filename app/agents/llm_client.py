@@ -7,7 +7,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 from ..config import settings
 
-# 1. Modelos principales de Google AI Studio (Prioridad Absoluta)
+# 1. Modelos principales de Google AI Studio (Prioridad Absoluta con GEMINI_API_KEY)
 PRIMARY_GEMINI_MODELS = [
     "gemini-3.6-flash",
     "gemini-flash-latest",
@@ -16,14 +16,13 @@ PRIMARY_GEMINI_MODELS = [
     "gemini-1.5-flash"
 ]
 
-# 2. Modelos de respaldo en OpenRouter (Solo si Google AI Studio falla)
+# 2. Modelos de respaldo activos y verificados en OpenRouter (Solo si Google AI Studio falla)
 OPENROUTER_FALLBACK_MODELS = [
-    "thinkingmachines/inkling:free",
-    "google/gemini-flash-1.5",
-    "meta-llama/llama-3-8b-instruct:free",
-    "qwen/qwen-2.5-7b-instruct:free",
-    settings.DEFAULT_LLM_MODEL or "google/gemma-4-31b:free",
-    "z-ai/glm-5.2:free"
+    "openrouter/free",                # Enrutador dinámico oficial de modelos gratuitos
+    "google/gemma-4-31b-it:free",      # Google Gemma 31B (Activo y funcional)
+    "google/gemma-4-26b-a4b-it:free",  # Google Gemma 26B
+    "z-ai/glm-5.2:free",               # GLM 5.2
+    "minimax/minimax-m3:free"          # MiniMax M3
 ]
 
 
@@ -31,7 +30,7 @@ async def call_llm_text(system_prompt: str, user_prompt: str, timeout: float = 1
     """
     Invoca el LLM con arquitectura de Prioridad y Fallback Resiliente:
     1. Proveedor Principal: Google AI Studio (gemini-3.6-flash / gemini-flash-latest con GEMINI_API_KEY).
-    2. Proveedor de Respaldo: Cadena iterativa de modelos en OpenRouter (OPENROUTER_API_KEY).
+    2. Proveedor de Respaldo: Cadena iterativa de modelos activos en OpenRouter (OPENROUTER_API_KEY).
     3. Retorna None si todos fallan para activar la degradación clínica elegante.
     """
     gemini_key = settings.GEMINI_API_KEY or settings.GOOGLE_API_KEY
