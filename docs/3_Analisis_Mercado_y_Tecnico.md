@@ -1,80 +1,102 @@
-# 📊 Análisis de Mercado y Técnico (FinOps & Arquitectura) — SeniorVital
-**Evaluación Estratégica, Benchmark Competitivo y Decisiones de Ingeniería**
+# 📊 Sprint 2 & 4: Análisis Técnico, Económico y FinOps de la Arquitectura Cloud-Native
+
+**Materia:** Ingeniería de Software y Base de Datos  
+**Docente:** Dra. Yaskelly Yedra  
+**Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
+**Proyecto:** SeniorVital — Plataforma de Prescripción y Acompañamiento Gerontológico  
 
 ---
 
-## 1. Análisis de Mercado y Estado del Arte (*Silver Economy*)
+## 💡 1. Justificación de la Adaptación Tecnológica (Cloud-Native & Open Stack)
 
-### 1.1 Contexto Demográfico y Oportunidad
-El envejecimiento poblacional representa una de las transformaciones demográficas más significativas del siglo XXI. Para 2050, el número de personas mayores de 60 años superará los 2,100 millones a nivel global. El sedentarismo en este segmento conlleva a sarcopenia, pérdida de autonomía y elevados costes sanitarios asociados a caídas.
-
-### 1.2 Benchmark Competitivo
-
-| Plataforma | Enfoque Principal | IA / RAG Adaptativo | Accesibilidad Gerontológica | Visión Cuidador / Physio | Modelo de Costes |
-| :--- | :--- | :---: | :---: | :---: | :--- |
-| **SilverSneakers GO** | Ejercicio general en casa | ❌ No (rutinas estáticas) | 🟡 Media | ❌ No | Suscripción B2B (Seguros) |
-| **Mighty Health** | Coaching metabólico | 🟡 Básico (Reglas) | 🟡 Media | ❌ No | B2C ($15-20 / mes) |
-| **Bold Age** | Prevención de caídas | ❌ No | 🟢 Buena | 🟡 Parcial | B2B2C |
-| **SeniorVital (Propuesta)** | **Wellness gerontológico integral con IA clínica y RPE adaptativo** | 🟢 **Sí (Multi-Agente + RAG pgvector)** | 🟢 **Excelente (WCAG AA, targets >48px)** | 🟢 **Sí (Vista Espejo + Panel Clínico)** | **Cloud-Native Freemium / B2B2C** |
-
----
-
-## 2. Decisiones de Arquitectura Técnica y Justificación
+Durante el diseño de la arquitectura para el ecosistema **SeniorVital**, el equipo evaluó la viabilidad técnica, operativa y financiera entre una infraestructura monolítica en Google Cloud Platform (GCP) tradicional vs un stack moderno cloud-native abierto:
 
 ```mermaid
 graph LR
-    subgraph Frontend
-        React[React 18 + Vite]
-        Tailwind[Tailwind CSS Tokens]
+    subgraph GCP_PaaS["Enfoque GCP Tradicional"]
+        GCP_AppEngine["App Engine / Cloud Run"]
+        GCP_CloudSQL["Cloud SQL (PostgreSQL)"]
+        GCP_Vertex["Vertex AI (PaLM 2 / Gemini Enterprise)"]
+        GCP_Cost["Costo Base Estimado: ~$85 - $120 USD/mes"]
     end
 
-    subgraph Backend_Cloud
-        FastAPI[FastAPI Monolito Modular]
-        SQLAlchemy[SQLAlchemy Async ORM]
+    subgraph Open_Cloud["Enfoque SeniorVital Cloud-Native (Adoptado)"]
+        Render_App["Render Web Service (Docker Container)"]
+        Supa_DB["Supabase PostgreSQL (Pooler PgBouncer + pgvector)"]
+        Studio_AI["Google AI Studio (Gemini 3.6 Flash) + OpenRouter Fallback"]
+        Open_Cost["Costo Base Estimado: $0.00 USD (Free-Tier Optimizado)"]
     end
 
-    subgraph Datos_e_IA
-        Supabase[(Supabase PostgreSQL + pgvector)]
-        GoogleAI[Google AI Studio / Gemini 3.6 Flash]
-        OpenRouter[OpenRouter Fallback Pool]
-    end
-
-    React -->|HTTPS / JWT| FastAPI
-    FastAPI --> SQLAlchemy
-    SQLAlchemy --> Supabase
-    FastAPI -->|Inferencia Directa| GoogleAI
-    FastAPI -->|Respaldo| OpenRouter
+    GCP_PaaS -.->|Evolución Tecnológica & Eficiencia| Open_Cloud
 ```
 
-### 2.1 Backend: FastAPI + Python 3.11+
-* **Justificación:** Alto rendimiento con programación asíncrona nativa (`async`/`await`), generación automática de documentación OpenAPI / Swagger (`/docs`), validación rigurosa de esquemas con Pydantic V2 y compatibilidad nativa con el ecosistema de IA (LangChain, LangGraph).
+### Tabla Comparativa de Arquitectura
 
-### 2.2 Base de Datos: Supabase PostgreSQL con Extensión `pgvector`
-* **Justificación:** Estabilidad empresarial ACID con soporte nativo de vectores multidimensionales (`vector(384)` con embeddings de *Hugging Face all-MiniLM-L6-v2*). Permite combinar en una sola base de datos transacciones relacionales tradicionales (usuarios, rutinas) y búsquedas semánticas por similitud coseno (*RAG*).
-
-### 2.3 Inferencia de IA: Estrategia Híbrida (Google AI Studio + OpenRouter)
-* **Justificación:** 
-  - **Google AI Studio (`gemini-3.6-flash`):** Capa principal de alta velocidad (<1s de latencia), cuota gratuita privada de 15 RPM y capacidades avanzadas de razonamiento clínico.
-  - **OpenRouter (Pool Gratuito):** Capa secundaria de respaldo multimodelo (`gemma-4-31b-it`, `llama-3.3-70b`) con conmutación automática ante saturación.
+| Dimensión Técnica | Enfoque GCP Tradicional | Stack SeniorVital Adoptado | Ventajas del Stack SeniorVital |
+| :--- | :--- | :--- | :--- |
+| **Capa de Cómputo** | Google Cloud Run / App Engine | **Render Web Service (Docker)** | Despliegues automáticos directos desde GitHub (`git push origin main`), manejo nativo de `$PORT` y cero sobrecarga de configuración de VPCs complejas. |
+| **Base de Datos** | Google Cloud SQL (PostgreSQL) | **Supabase (PostgreSQL 15 + pgvector)** | Motor relacional de alto rendimiento con PgBouncer en puerto 6543, soporte nativo de embeddings vectoriales para búsqueda semántica y panel administrativo visual. |
+| **Motor de IA** | Vertex AI API | **Google AI Studio + OpenRouter** | Inferencia directa mediante clave personal con modelo de última generación `gemini-3.6-flash` (alta velocidad de tokens y modo JSON nativo) con respaldo multinivel en OpenRouter. |
+| **Persistencia Vectorial** | Vertex Vector Search | **Extensión `pgvector` en Supabase** | Co-localización de datos relacionales y vectores en la misma base de datos sin requerir un clúster vectorial externo costoso. |
+| **Costos Operativos (FinOps)** | $85.00 – $140.00 USD/mes | **$0.00 USD/mes (Tier Académico / Startup)** | Máxima eficiencia de costos y escalabilidad predecible para pruebas y producción. |
 
 ---
 
-## 3. Análisis Económico y Estrategia FinOps (Cloud-Native)
+## 📈 2. Análisis Económico y Proyección FinOps a Escala
 
-### 3.1 Estimación de Costes de Infraestructura (Fase MVP / 1,000 Usuarios Activos)
+```mermaid
+pie title Distribución de Costos Proyectados a 10,000 Usuarios Activos ($/mes)
+    "Render Compute (Standard Instance)" : 25
+    "Supabase Pro (Compute + pgvector)" : 25
+    "Google AI Studio Token Consumption" : 18
+    "CDN & Almacenamiento Multimedia" : 7
+```
 
-| Componente | Proveedor / Servicio | Plan / Tier | Coste Mensual ($ USD) |
-| :--- | :--- | :--- | :---: |
-| **Backend API** | Render.com | Free Web Service (512 MB RAM, 0.1 CPU) | **$0.00** |
-| **Frontend Web App** | Vercel / Cloudflare Pages / Render | Free Tier (CDN Global, SSL incluido) | **$0.00** |
-| **Base de Datos & pgvector** | Supabase | Free Tier (500 MB DB, 2 vCPU compartido) | **$0.00** |
-| **Inferencia LLM** | Google AI Studio | Free Tier (1,500 req/día, 15 RPM) | **$0.00** |
-| **Embeddings Semánticos** | Hugging Face (`sentence-transformers`) | Local / In-Process (CPU) | **$0.00** |
-| **Dominio y DNS** | Cloudflare DNS | Free Tier | **$0.00** |
-| **TOTAL MENSUAL ESTIMADO (MVP)** | — | — | **$0.00 / mes** |
+### Simulación de Costos por Escalas de Carga
 
-### 3.2 Estrategia de Escalado (Fase Comercial / >10,000 Usuarios)
-* **Render Individual Instance (Starter):** $7/mes (elimina cold start y amplía memoria a 1 GB).
-* **Supabase Pro Tier:** $25/mes (8 GB almacenamiento, backups continuos).
-* **Google Gemini Pay-as-you-go:** $0.075 por 1M tokens de entrada (~$15/mes para 10k rutinas diarias).
-* **Coste total de operación a escala:** < $50 USD / mes para sostener más de 10,000 adultos mayores activos.
+| Métrica / Recurso | Nivel 1: Desarrollo / Académico (Actual) | Nivel 2: Piloto Geriátrico (500 Residentes) | Nivel 3: Producción Masiva (10,000 Usuarios) |
+| :--- | :---: | :---: | :---: |
+| **Usuarios Activos Diarios (DAU)** | 10 – 50 | 500 | 10,000 |
+| **Invocaciones de Inferencia LLM / día** | ~100 | ~1,500 | ~35,000 |
+| **Render Web Service** | $0.00 (Free Tier) | $7.00 (Starter) | $25.00 (Standard) |
+| **Supabase PostgreSQL + pgvector** | $0.00 (Free Tier) | $0.00 (Free Tier) | $25.00 (Pro Tier) |
+| **Google AI Studio (Gemini 3.6 Flash)** | $0.00 (Free Tier Quota) | $3.50 | $18.00 |
+| **OpenRouter Fallback** | $0.00 (Modelos libres) | $1.20 | $5.00 |
+| **Costo Total Mensual** | **$0.00 USD** | **$11.70 USD** | **$73.00 USD** |
+| **Costo Promedio por Adulto Mayor / mes** | $0.00 | $0.023 USD | $0.0073 USD |
+
+---
+
+## 🛡️ 3. Estrategia de Resiliencia y Fallback de Inferencia IA
+
+Para garantizar una disponibilidad del **99.9%** en la prescripción de ejercicios clínicos, el subsistema de IA implementa una arquitectura en cascada orientada a la tolerancia de fallos:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Senior as Adulto Mayor / Frontend
+    participant API as FastAPI Router (/routines/generate)
+    participant Client as LLM Client (llm_client.py)
+    participant Studio as Google AI Studio (gemini-3.6-flash)
+    participant Router as OpenRouter (Free Fallback Pool)
+    participant Local as Generador Clínico Determinístico
+
+    Senior->>API: POST /routines/generate
+    API->>Client: generate_routine_json(user_profile, fatigue_history)
+    
+    alt Inferencia Primaria (Google AI Studio)
+        Client->>Studio: Invocación con Structured JSON Output
+        Studio-->>Client: Rutina adaptada (3-5 ejercicios)
+        Client-->>API: JSON validado
+    else Falla Primaria (Error 429 / 503 / Timeout)
+        Client->>Router: Activación Fallback OpenRouter (openrouter/free)
+        Router-->>Client: Rutina generada
+        Client-->>API: JSON parseado y validado
+    else Falla Secundaria (Pérdida de conectividad externa)
+        Client->>Local: Algoritmo clínico determinístico local
+        Local-->>Client: Rutina geriátrica segura por defecto
+        Client-->>API: Rutina de contingencia
+    end
+
+    API-->>Senior: HTTP 200 OK con Rutina del Día
+```

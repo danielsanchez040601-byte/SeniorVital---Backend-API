@@ -1,167 +1,218 @@
-# 📐 Modelado Arquitectónico y Diagramas UML — SeniorVital
-**Documentación Viva como Código (*Markdown as-Code con Mermaid.js*)**
+# 📐 Sprint 1, 2 & 4: Modelado Visual y Diagramas UML Completos
+
+**Materia:** Ingeniería de Software y Base de Datos  
+**Docente:** Dra. Yaskelly Yedra  
+**Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
+**Proyecto:** SeniorVital — Arquitectura y Modelado Orientado a Objetos  
 
 ---
 
-## 1. Diagrama de Arquitectura de Componentes (C4 Nivel 2)
+## 👥 1. Diagrama de Casos de Uso del Sistema (UML Use Case Diagram)
 
 ```mermaid
-graph TB
-    subgraph Cliente["Capa de Presentación (Frontend Web)"]
-        UI_Senior["Módulo Adulto Mayor (Home, RPE, Hábitos)"]
-        UI_Caregiver["Módulo Cuidador (Vista Espejo)"]
-        UI_Admin["Módulo Fisioterapeuta (Panel Clínico)"]
+graph LR
+    Senior((Adulto Mayor))
+    Caregiver((Cuidador / Familiar))
+    Physio((Fisioterapeuta / Admin))
+    LLM((Google Gemini / OpenRouter))
+
+    subgraph SeniorVital_System["Plataforma SeniorVital"]
+        UC1(CU-01: Iniciar Sesión / Autenticarse)
+        UC2(CU-02: Consultar Rutina Diaria)
+        UC3(CU-03: Generar Rutina Adaptada con IA)
+        UC4(CU-04: Registrar Esfuerzo RPE Borg y Dolor)
+        UC5(CU-05: Conversar con Wellness Coach)
+        UC6(CU-06: Registrar Hábitos de Agua y Sueño)
+        UC7(CU-07: Monitorear Semáforo de Residentes)
+        UC8(CU-08: Despachar Alerta SOS / Notificación)
     end
 
-    subgraph Backend["Capa de Servicios y Negocio (FastAPI en Render)"]
-        Router_Auth["Router: /auth (Seguridad & JWT)"]
-        Router_Routines["Router: /routines (Prescripción AI)"]
-        Router_Exercises["Router: /api/v1/exercises (Catálogo)"]
-        Router_Chat["Router: /api/v1/chat (Asistente RAG)"]
-        
-        Agent_Wellness["Agente Wellness Coach (LangGraph)"]
-        Agent_Preventive["Agente Preventivo (Fatiga & Inactividad)"]
-        Guardrails["Capa de Seguridad Clínica (Guardrails)"]
-    end
+    Senior --> UC1
+    Senior --> UC2
+    Senior --> UC3
+    Senior --> UC4
+    Senior --> UC5
+    Senior --> UC6
+    Senior --> UC8
 
-    subgraph Persistencia["Capa de Datos y Memoria Vectorial"]
-        DB_SQL["PostgreSQL Relacional (Usuarios, Rutinas, RPE)"]
-        DB_Vector["Extensión pgvector (Embeddings 384d)"]
-    end
+    Caregiver --> UC1
+    Caregiver --> UC7
+    Caregiver --> UC8
 
-    subgraph Inferencia["Proveedores de IA en la Nube"]
-        Google_AI["Google AI Studio (Gemini 3.6 Flash)"]
-        OpenRouter_Pool["OpenRouter (Fallback Multimodelo)"]
-    end
+    Physio --> UC1
+    Physio --> UC7
 
-    UI_Senior -->|REST / JSON / JWT| Router_Auth
-    UI_Senior -->|REST / JSON| Router_Routines
-    UI_Senior -->|REST / JSON| Router_Chat
-    UI_Caregiver -->|REST / JSON| Router_Routines
-    UI_Admin -->|REST / JSON| Router_Exercises
-
-    Router_Routines --> Agent_Wellness
-    Router_Chat --> Agent_Wellness
-    Agent_Wellness --> Guardrails
-    Agent_Wellness --> DB_Vector
-    Agent_Wellness -->|Inferencia Directa| Google_AI
-    Agent_Wellness -.->|Conmutación ante 429| OpenRouter_Pool
-
-    Router_Auth --> DB_SQL
-    Router_Exercises --> DB_SQL
-    Router_Routines --> DB_SQL
-    Agent_Preventive --> DB_SQL
+    UC3 -.->|<<include>>| LLM
+    UC5 -.->|<<include>>| LLM
 ```
 
 ---
 
-## 2. Diagrama Entidad-Relación (ERD de Base de Datos)
+## 🏛️ 2. Diagrama de Clases del Dominio (UML Class Diagram)
 
 ```mermaid
-erDiagram
-    USERS ||--o| SENIOR_PROFILES : "posee"
-    USERS ||--o{ DAILY_ROUTINES : "recibe"
-    USERS ||--o{ EXERCISE_RECORDS : "registra"
-    USERS ||--o{ HEALTH_EVENTS : "reporta"
-    DAILY_ROUTINES ||--|{ ROUTINE_EXERCISES : "contiene"
-    EXERCISES ||--o{ ROUTINE_EXERCISES : "referenciado en"
-
-    USERS {
-        int id PK
-        string email UK
-        string password_hash
-        string full_name
-        string role "senior | caregiver | admin"
-        timestamp created_at
+classDiagram
+    class User {
+        +int id
+        +string email
+        +string password_hash
+        +string full_name
+        +RoleEnum role
+        +datetime created_at
+        +verify_password(plain_password) bool
     }
 
-    SENIOR_PROFILES {
-        int id PK
-        int user_id FK
-        int age
-        float weight_kg
-        float height_cm
-        string[] medical_conditions
-        int fitness_level "1 a 3"
-        string[] equipment_available
-        string objectives
+    class RoleEnum {
+        <<enumeration>>
+        SENIOR
+        CAREGIVER
+        ADMIN
+        PHYSIO
     }
 
-    EXERCISES {
-        int id PK
-        string name
-        string description
-        string video_url
-        int progression_level "1 a 4"
-        string[] contraindications
-        string[] target_muscles
+    class SeniorProfile {
+        +int id
+        +int user_id
+        +int fitness_level
+        +string mobility_limitations
+        +string chronic_conditions
+        +string emergency_contact
+        +datetime updated_at
     }
 
-    DAILY_ROUTINES {
-        int id PK
-        int senior_id FK
-        date assigned_date
-        string status "PENDING | COMPLETED | SKIPPED"
-        jsonb exercises_data
-        jsonb warmup_data
+    class Exercise {
+        +int id
+        +string name
+        +string description
+        +string category
+        +int target_rpe
+        +string video_url
+        +list[float] embedding
     }
 
-    EXERCISE_RECORDS {
-        int id PK
-        int senior_id FK
-        int exercise_id FK
-        int sets_completed
-        int reps_completed
-        int rpe_score "1 a 10"
-        string reported_pain "Sin Dolor | Rodilla | Espalda | Hombro | etc"
-        timestamp recorded_at
+    class DailyRoutine {
+        +int id
+        +int user_id
+        +date routine_date
+        +string status
+        +int perceived_difficulty
+        +string ai_feedback
     }
 
-    HEALTH_EVENTS {
-        int id PK
-        int user_id FK
-        string event_type "FATIGUE_ALERT | INACTIVITY | PAIN_SPIKE"
-        jsonb details
-        timestamp created_at
+    class ExerciseRecord {
+        +int id
+        +int user_id
+        +int exercise_id
+        +int sets_completed
+        +int reps_completed
+        +int rpe_score
+        +string reported_pain
+        +datetime recorded_at
     }
+
+    class DailyHabit {
+        +int id
+        +int user_id
+        +date record_date
+        +int water_glasses
+        +float sleep_hours
+    }
+
+    User "1" -- "1" SeniorProfile : posee
+    User "1" -- "*" DailyRoutine : tiene asignadas
+    User "1" -- "*" ExerciseRecord : registra
+    User "1" -- "*" DailyHabit : reporta
+    DailyRoutine "*" -- "*" Exercise : contiene
+    Exercise "1" -- "*" ExerciseRecord : es ejecutado en
+    User --> RoleEnum : clasificado por
 ```
 
 ---
 
-## 3. Diagrama de Secuencia: Prescripción Inteligente y Registro RPE
+## 🔄 3. Diagrama de Secuencia: Registro de Esfuerzo RPE y Alerta Preventiva
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Senior as Adulto Mayor
-    participant App as Frontend (Home.jsx)
-    participant API as FastAPI Backend (/routines)
-    participant Agent as Wellness Coach (LangGraph)
+    participant UI as Frontend React (Modal RPE)
+    participant API as FastAPI Router (/tracking/record)
+    participant Prev as Agente Preventivo
     participant DB as Supabase PostgreSQL
-    participant AI as Google AI Studio (Gemini 3.6 Flash)
+    participant Push as Servicio Web Push (/notify/send)
+    actor Care as Cuidador Asignado
 
-    Senior->>App: Abre la aplicación
-    App->>API: GET /routines/today?user_id=1
-    API->>DB: Consultar rutina del día
-    alt Rutina ya existe
-        DB-->>API: Retorna DailyRoutine
-        API-->>App: JSON Rutina (200 OK)
-    else No existe rutina
-        API->>DB: Obtener perfil médico (Edad: 72, Artrosis)
-        DB-->>API: SeniorProfile
-        API->>Agent: Invocar generación de rutina
-        Agent->>AI: Solicitar prescripción adaptada
-        AI-->>Agent: JSON con warmup + 3 ejercicios seguros
-        Agent->>DB: INSERT INTO daily_routines
-        DB-->>API: Confirmación de persistencia
-        API-->>App: JSON Rutina generada (200 OK)
+    Senior->>UI: Completa ejercicio y selecciona RPE = 8 ("Muy Difícil") + Dolor Rodilla
+    UI->>API: POST /tracking/record (user_id, exercise_id, rpe=8, pain="rodilla")
+    API->>DB: INSERT into exercise_records (...)
+    DB-->>API: Confirmación de inserción (ID=102)
+
+    API->>Prev: analyze_session_fatigue(user_id, rpe=8, pain="rodilla")
+    Prev->>Prev: Evalúa umbrales clínicos (RPE >= 8 -> Alerta Ámbar/Roja)
+    
+    Prev->>DB: UPDATE senior_status SET risk_level = 'amber'
+    Prev->>Push: Trigger notificación de supervisión requerida
+    Push-->>Care: Notificación Push: "Carlos reportó fatiga RPE 8 en rodilla"
+
+    API-->>UI: HTTP 200 OK {"status": "success", "alert_triggered": true}
+    UI-->>Senior: Muestra mensaje empático de descanso preventivo
+```
+
+---
+
+## 🤖 4. Diagrama de Arquitectura del Ecosistema Multi-Agente
+
+```mermaid
+graph TB
+    subgraph Entrada["Capa de Consulta e Interacción"]
+        Req["Petición de Usuario (Rutina o Chat)"]
     end
-    App-->>Senior: Muestra rutina y videos en pantalla
 
-    Senior->>App: Toca "Registrar Esfuerzo" (RPE=5, Sin Dolor)
-    App->>API: POST /tracking/record (RPE=5, pain=None)
-    API->>DB: INSERT INTO exercise_records
-    DB-->>API: OK
-    API-->>App: Registro completado con éxito
-    App-->>Senior: Refuerzo positivo y actualización de calendario
+    subgraph Orquestacion["Orquestador de Agentes (LangGraph)"]
+        Guard["Guardrails Clínicos (Filtro de Emergencias Médicas)"]
+        Coach["Wellness Coach (Razonamiento Gerontológico)"]
+        Prev["Agente Preventivo (Fatiga & Adherencia)"]
+    end
+
+    subgraph Memoria["Memoria Semántica & Contexto"]
+        PGV[("pgvector: Embeddings de Ejercicios")]
+        Hist[("Historial Clínico & RPE de Supabase")]
+    end
+
+    subgraph Inferencia["Capa de Modelos LLM"]
+        G_AI["Google AI Studio (Gemini 3.6 Flash - Primario)"]
+        OR_AI["OpenRouter (Free Fallback Pool)"]
+        Det_AI["Generador Clínico Determinístico"]
+    end
+
+    Req --> Guard
+    Guard -->|Consulta Válida| Coach
+    Guard -->|Emergencia Detectada| Alerta_Emergencia["Respuesta de Seguridad Inmediata"]
+
+    Coach --> PGV
+    Coach --> Hist
+    Coach --> Prev
+
+    Coach -->|1. Intento Primario| G_AI
+    G_AI -.->|Falla 429/503| OR_AI
+    OR_AI -.->|Falla de Red| Det_AI
+
+    Prev --> Alerta_Cuidador["Notificación a Cuidador"]
+```
+
+---
+
+## ⏳ 5. Diagrama de Estados de una Rutina Diaria (State Machine Diagram)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pendiente : Generada por el sistema / IA
+    Pendiente --> En_Progreso : El usuario inicia el primer ejercicio
+    En_Progreso --> En_Progreso : Registro de cada ejercicio (RPE)
+    En_Progreso --> Pausada_Por_Fatiga : RPE >= 9 o Dolor Agudo detectado
+    Pausada_Por_Fatiga --> En_Progreso : El usuario reanuda tras descanso
+    Pausada_Por_Fatiga --> Finalizada_Incompleta : El usuario decide finalizar
+    En_Progreso --> Completada : Todos los ejercicios finalizados
+    Completada --> [*] : Cálculo de adherencia y feedback
+    Finalizada_Incompleta --> [*] : Notificación al cuidador
 ```

@@ -1,84 +1,73 @@
-# 📋 Especificaciones Funcionales y No Funcionales — SeniorVital
-**Plataforma Inteligente de Gestión Wellness Gerontológica**  
-*Cumplimiento Estricto: SWEBOK V4 & Norma de Calidad ISO/IEC 25010*
+# 📋 Sprint 1: Especificaciones de Requisitos y Calidad del Software (ISO/IEC 25010)
+
+**Materia:** Ingeniería de Software y Base de Datos  
+**Docente:** Dra. Yaskelly Yedra  
+**Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
+**Proyecto:** SeniorVital — Ecosistema Inteligente de Bienestar Gerontológico  
+**Estándares de Referencia:** SWEBOK v4, ISO/IEC 25010, WCAG 2.1 AA  
 
 ---
 
-## 1. Visión General y Alcance del Sistema
-SeniorVital es una plataforma de salud digital (*HealthTech / Silver Economy*) diseñada para acompañar a personas mayores de 60 años en su actividad física, prevención de sarcopenia y adherencia a hábitos saludables. El sistema integra un ecosistema de agentes inteligentes de IA, memoria semántica basada en *Retrieval-Augmented Generation* (RAG) con `pgvector` sobre Supabase PostgreSQL, e interfaces adaptadas a principios de gerontodiseño y accesibilidad universal.
+## 🎯 1. Propósito y Alcance del Sistema
+**SeniorVital** es una plataforma tecnológica *HealthTech / Silver Economy* diseñada para promover la autonomía, mitigar la sarcopenia y prevenir el deterioro funcional en adultos mayores de 60 años mediante prescripción adaptativa de ejercicios, registro de fatiga mediante la escala de percepción del esfuerzo (Borg RPE) y acompañamiento conversacional seguro con agentes de Inteligencia Artificial.
 
 ---
 
-## 2. Requisitos Funcionales (RF) — Especificación Formal
+## 📌 2. Requisitos Funcionales (RF)
 
-### 2.1 Módulo de Gestión de Identidad y Perfiles Clínicos (`/auth`)
-* **RF-AUTH-01 (Registro y Roles):** El sistema debe permitir el registro de usuarios asignando estrictamente uno de los tres roles definidos: `senior` (adulto mayor), `caregiver` (cuidador familiar) o `admin` (fisioterapeuta / administrador clínico).
-* **RF-AUTH-02 (Seguridad Criptográfica):** Las contraseñas deben ser hasheadas con algoritmo *Bcrypt* con factor de trabajo adecuado antes de su almacenamiento en la base de datos.
-* **RF-AUTH-03 (Perfil de Salud Geriátrico):** Los usuarios de rol `senior` deben contar con un perfil de salud estructurado que incluya edad, peso, altura, nivel de condición física (1 a 3), condiciones médicas (hipertensión, osteoporosis, artrosis, etc.), objetivos y equipamiento disponible.
-* **RF-AUTH-04 (Autenticación JWT):** El login debe emitir un token JWT firmado (*HS256*) con expiración configurable, permitiendo autenticación *Stateless*.
-* **RF-AUTH-05 (Vinculación Senior-Cuidador):** Un cuidador puede vincularse a un adulto mayor para acceder a su vista de seguimiento no invasiva.
-
-### 2.2 Módulo de Catálogo Clínico de Ejercicios (`/api/v1/exercises`)
-* **RF-CAT-01 (Biblioteca de Progresión):** El catálogo debe clasificar los ejercicios en 4 niveles de progresión geriátrica (Nivel 1: Movilidad articular sentada, Nivel 2: Fuerza isométrica asistida, Nivel 3: Equilibrio dinámico, Nivel 4: Funcional avanzado).
-* **RF-CAT-02 (Filtro por Contraindicaciones):** La consulta de ejercicios debe permitir filtrar o excluir dinámicamente aquellos ejercicios que coincidan con las restricciones médicas del paciente (ej. evitar flexión profunda en gonartrosis).
-* **RF-CAT-03 (Multimedia y Guía):** Cada ejercicio debe contener descripción paso a paso, grupos musculares objetivo y enlace a recurso visual/video.
-
-### 2.3 Módulo de Generación Inteligente de Rutinas (`/routines`)
-* **RF-ROUT-01 (Prescripción Personalizada con IA):** El agente *Wellness Coach* debe prescribir diariamente una rutina adaptada a la edad, condición y fatiga histórica del adulto mayor.
-* **RF-ROUT-02 (Estructura Clínica Obligatoria):** Toda rutina generada debe incluir fase de *Calentamiento articular* (`warmup`), fase de *Ejercicios principales* (`exercises` con series, repeticiones y tiempo) y recomendaciones de hidratación.
-* **RF-ROUT-03 (Idempotencia Diaria):** Si el usuario ya cuenta con una rutina generada en la fecha actual, el sistema retornará la rutina existente a menos que se fuerce explícitamente (`force=True`).
-
-### 2.4 Módulo de Interacción Conversacional RAG (`/api/v1/chat`)
-* **RF-CHAT-01 (Agente Wellness Empático):** El agente conversacional debe responder dudas sobre ejercicios, dolor o bienestar con tono cálido, empático y terminología clara.
-* **RF-CHAT-02 (Memoria Semántica RAG):** El agente debe consultar la base de conocimiento gerontológico vectorial mediante similitud coseno (`pgvector`) para fundamentar sus respuestas.
-* **RF-CHAT-03 (Guardrails Determinísticos):** Toda respuesta generada por el LLM debe pasar por una capa de seguridad clínica en Python puro que filtre recomendaciones farmacológicas no autorizadas o ejercicios de alto impacto lesivos.
-
-### 2.5 Módulo de Registro de Esfuerzo y Analítica Preventiva (`/tracking`)
-* **RF-TRK-01 (Escala de Esfuerzo Percibido RPE 1-10):** El sistema debe registrar la intensidad subjetiva tras cada sesión usando la escala Borg/RPE (1: Muy suave a 10: Esfuerzo máximo).
-* **RF-TRK-02 (Reporte Articular):** El usuario debe poder reportar si sintió dolor o molestia en articulaciones específicas (rodilla, cadera, hombro, espalda).
-* **RF-TRK-03 (Detección de Fatiga Crítica):** Si un adulto mayor registra un RPE $\ge 8$ en dos sesiones continuas o reporta dolor articular agudo, el agente preventivo debe ajustar automáticamente la dificultad a la baja y notificar al cuidador.
+| Código | Módulo | Requisito Funcional | Prioridad (MoSCoW) | Criterio de Aceptación |
+| :--- | :--- | :--- | :---: | :--- |
+| **RF-01** | **Autenticación & RBAC** | El sistema debe permitir el registro e inicio de sesión de usuarios categorizados por roles (*Senior*, *Caregiver*, *Admin/Fisioterapeuta*) mediante tokens JWT y contraseñas hasheadas con Bcrypt. | **Must Have** | Registro en `/auth/register` (HTTP 201) y login en `/auth/login` (HTTP 200) con emisión de token JWT y claims de rol. |
+| **RF-02** | **Perfil Gerontológico** | Al registrar un adulto mayor, el sistema debe inicializar automáticamente un perfil clínico con nivel de condición física base, patologías y preferencias. | **Must Have** | Creación en tabla `senior_profiles` con clave foránea hacia `users.id`. |
+| **RF-03** | **Catálogo de Ejercicios** | El sistema debe proveer un catálogo de ejercicios adaptados (fuerza isométrica, movilidad articular, equilibrio y flexibilidad) con recursos multimedia demostrativos. | **Must Have** | `GET /api/v1/exercises/` y `GET /catalog/exercises` retornan catálogo estructurado en formato JSON. |
+| **RF-04** | **Prescripción de Rutina con IA** | El sistema debe prescribir diariamente una rutina de 3 a 5 ejercicios adaptados al nivel de condición física y al historial de fatiga del adulto mayor mediante IA generativa. | **Must Have** | `POST /routines/generate` invoca al agente de IA y devuelve rutina con `routine_id`, lista de ejercicios y series/repeticiones. |
+| **RF-05** | **Consulta de Rutina Diaria** | El usuario debe poder consultar su rutina del día, tolerando identificadores numéricos y UUIDs sintéticos generados por el cliente frontend. | **Must Have** | `GET /routines/today?user_id={id}` devuelve la rutina del día o estado `pending` si aún no ha iniciado. |
+| **RF-06** | **Registro de Esfuerzo (Borg RPE)** | El adulto mayor debe registrar la finalización de cada ejercicio ingresando la escala Borg RPE (1 al 10) y síntomas de dolor articular. | **Must Have** | `POST /tracking/record` almacena el registro en `exercise_records` y evalúa fatiga clínica. |
+| **RF-07** | **Acompañamiento Conversacional (Coach)** | El sistema debe ofrecer un chat conversacional empático (*Wellness Coach*) con guardrails de seguridad médica que rechace consultas de diagnóstico farmacológico o urgencias agudas. | **Must Have** | `POST /api/v1/chat` filtra consultas de emergencia y responde con consejos gerontológicos basados en evidencia. |
+| **RF-08** | **Registro de Hábitos Diarios** | El sistema debe permitir el registro de ingesta de agua (vasos) y horas de sueño para evaluación holística del bienestar. | **Should Have** | `POST /tracking/habits` y `GET /tracking/habits/{user_id}/{date}` gestionan el balance hídrico y descanso. |
+| **RF-09** | **Dashboard y Proyección Funcional** | El sistema debe calcular el índice de adherencia semanal y generar proyecciones funcionales de fuerza/movilidad a 4 semanas. | **Should Have** | `GET /dashboard/progress/{user_id}` y `GET /dashboard/projection/{user_id}` devuelven analíticas del paciente. |
+| **RF-10** | **Semáforo Clínico para Cuidadores** | Los cuidadores deben disponer de una matriz visual con semáforo de riesgo (Verde: adherencia óptima, Ámbar: fatiga moderada RPE $\ge 7$, Rojo: dolor reportado o inactividad $>3$ días). | **Must Have** | `GET /dashboard/residents` retorna lista de adultos mayores asignados con estado clínico consolidado. |
+| **RF-11** | **Alertas y Notificaciones SOS** | El sistema debe emitir alertas push y despachar eventos de emergencia ante reporte de dolor articular severo o activación de botón SOS. | **Must Have** | `POST /notify/send` distribuye la alerta al cuidador o familiar enlazado. |
+| **RF-12** | **Búsqueda Semántica de Ejercicios** | El sistema debe permitir la recuperación de ejercicios similares por descripción textual mediante embeddings vectoriales de 384 dimensiones. | **Could Have** | Función vectorial `match_exercises` sobre la extensión `pgvector` en Supabase. |
 
 ---
 
-## 3. Requisitos No Funcionales (RNF) — Norma ISO/IEC 25010
+## 🛡️ 3. Requisitos No Funcionales (RNF) — Modelo de Calidad ISO/IEC 25010
 
 ```mermaid
 graph TD
-    ISO[Norma ISO/IEC 25010 en SeniorVital]
-    ISO --> Usab[Usabilidad & Gerontodiseño]
-    ISO --> Rend[Eficiencia de Desempeño]
-    ISO --> Seg[Seguridad & Privacidad]
-    ISO --> Fiab[Fiabilidad & Resiliencia]
-    ISO --> Mant[Mantenibilidad & SWEBOK V4]
-    ISO --> Port[Portabilidad Cloud-Native]
+    ISO[ISO/IEC 25010: Calidad del Producto de Software]
+    ISO --> Usab[1. Usabilidad & Accesibilidad Senior]
+    ISO --> Perf[2. Eficiencia de Desempeño]
+    ISO --> Rel[3. Fiabilidad & Resiliencia]
+    ISO --> Sec[4. Seguridad & Privacidad]
+    ISO --> Port[5. Portabilidad & Compatibilidad]
+    ISO --> Maint[6. Mantenibilidad & Modularidad]
+
+    Usab --> U1["WCAG 2.1 AA (Targets >= 48px, Contraste >= 4.5:1)"]
+    Perf --> P1["Latencia P95 < 200ms en API, < 1.8s en LLM"]
+    Rel --> R1["Cadena de Fallback (Gemini -> OpenRouter -> Determinístico)"]
+    Sec --> S1["Cifrado Bcrypt, JWT Stateless, Cero secretos en Git"]
+    Port --> PO1["Contenedor Docker universal desplegable en Render"]
+    Maint --> M1["Arquitectura Monolito Modular FastAPI + Clean Code"]
 ```
 
-### 3.1 Usabilidad y Gerontodiseño (WCAG 2.1 Nivel AA)
-* **RNF-USAB-01 (Accesibilidad Táctil):** Todo botón o elemento interactivo debe tener un área táctil mínima de $48 \times 48\,\text{px}$ (recomendado $56\text{px}$).
-* **RNF-USAB-02 (Contraste y Tipografía):** Contraste de color mínimo de $4.5:1$ en texto normal y $3:1$ en texto grande. Tipografías legibles (*Inter*, *Lexend*) con tamaño base $\ge 18\,\text{px}$.
-* **RNF-USAB-03 (Diseño No Punitivo):** El sistema no debe penalizar la pérdida de rachas; el calendario y mensajes deben enfocarse en refuerzo positivo y metas de autocuidado.
+### 3.1 Usabilidad (Accesibilidad Gerontológica WCAG 2.1 AA)
+* **RNF-01 (Áreas de Contacto Táctil):** Todo botón interactivo en la interfaz debe tener un tamaño mínimo de **$48 \times 48\text{ px}$** y un espaciado inter-elemento $\ge 12\text{ px}$ para evitar pulsaciones erróneas por temblor senil o artritis.
+* **RNF-02 (Contraste Cromático y Legibilidad):** La tipografía debe emplear fuentes de trazo limpio (*Inter*, *Roboto*) con tamaño base $\ge 18\text{ px}$ y un ratio de contraste de color mínimo de **$4.5:1$** en texto normal y **$7:1$** en texto grande sobre fondos oscuros o claros.
+* **RNF-03 (Cognición y Carga Mental):** El flujo de interacción debe ser lineal (*One-Action-at-a-Time*), evitando modales anidados y empleando lenguaje empático, claro y libre de tecnicismos médicos alarmistas.
 
 ### 3.2 Eficiencia de Desempeño
-* **RNF-PERF-01 (Tiempo de Respuesta API):** Los endpoints transaccionales (auth, catálogo, tracking) deben responder en un tiempo $t < 200\,\text{ms}$ en el percentil 95 ($P_{95}$).
-* **RNF-PERF-02 (Latencia de Inferencia IA):** La generación de rutinas y respuestas de chat con Google AI Studio (`gemini-3.6-flash`) debe completarse en $t < 2.0\,\text{s}$.
-* **RNF-PERF-03 (Caché SWR Frontend):** El frontend debe implementar *Stale-While-Revalidate* en memoria para transiciones instantáneas ($0\,\text{ms}$) entre pantallas ya visitadas.
+* **RNF-04 (Latencia de la API):** El 95% de las peticiones HTTP convencionales (`GET`, `POST`) deben resolverse en un tiempo **$P_{95} < 200\text{ ms}$**.
+* **RNF-05 (Tiempo de Inferencia IA):** La generación de rutinas adaptadas con IA mediante Google AI Studio (`gemini-3.6-flash`) no debe exceder **$1.8\text{ segundos}$**.
 
-### 3.3 Seguridad y Confidencialidad
-* **RNF-SEC-01 (Cero Secretos Quemados):** Ninguna credencial, llave de API (`GEMINI_API_KEY`, `OPENROUTER_API_KEY`) ni URL de base de datos debe residir en el código fuente.
-* **RNF-SEC-02 (Protección de Datos Sanitarios):** La base de datos en Supabase PostgreSQL debe comunicarse mediante conexiones cifradas TLS/SSL (`sslmode=require`).
-* **RNF-SEC-03 (Control de Acceso Basado en Roles - RBAC):** Los endpoints clínicos de auditoría y ajuste manual solo son accesibles con credenciales de rol `admin`.
+### 3.3 Fiabilidad y Tolerancia a Fallos
+* **RNF-06 (Estrategia Multi-Nivel de Fallback):** Ante errores de cuota (HTTP 429), saturación (HTTP 503) o caída de red en Google AI Studio, el sistema debe redirigir la inferencia automáticamente a **OpenRouter** (`openrouter/free`, `google/gemma-4-31b-it:free`) y, en caso extremo, generar una rutina clínica determinística sin interrumpir el servicio al usuario.
+* **RNF-07 (Arranque No Bloqueante en Cloud):** El proceso de inicialización de esquemas en la base de datos debe ejecutarse de manera asíncrona no bloqueante para garantizar que el servidor web abra el puerto HTTP asignado por Render en **$< 1.0\text{ segundo}$** evitando *port scan timeouts*.
 
-### 3.4 Fiabilidad, Resiliencia y Disponibilidad
-* **RNF-REL-01 (Alta Disponibilidad Híbrida):** El subsistema de IA implementa conmutación de tres niveles:
-  1. *Nivel Primario:* Google AI Studio (`gemini-3.6-flash`).
-  2. *Nivel Secundario:* OpenRouter Multi-Model (`gemma-4-31b-it`, `llama-3.3-70b`, `mistral-7b`).
-  3. *Nivel de Respaldo Clínico:* Generador determinístico de rutina segura ante corte total de red.
-* **RNF-REL-02 (Tolerancia a Fallos):** Si la base de datos o el backend experimentan un arranque en frío, el frontend debe mantener una interfaz no bloqueante con fallback inmediato.
+### 3.4 Seguridad
+* **RNF-08 (Protección Criptográfica):** Las contraseñas se almacenan mediante el algoritmo `Bcrypt` con salt dinámico y límite estricto de 72 bytes.
+* **RNF-09 (Autenticación y Autorización RBAC):** Las sesiones se gestionan mediante tokens **JWT (JSON Web Tokens)** con firma HMAC-SHA256 y expiración configurable. Ningún secreto o API key debe estar codificado en duro en el repositorio.
 
-### 3.5 Mantenibilidad (SWEBOK V4)
-* **RNF-MAN-01 (Monolito Modular):** El código debe estar desacoplado en capas limpias (`routers`, `models`, `schemas`, `agents`, `tools`) facilitando su evolución independiente o migración a microservicios.
-* **RNF-MAN-02 (Tipado Fuerte):** 100% de los endpoints y entidades deben estar validados con *Pydantic V2* y tipado estricto de Python 3.11+.
-
-### 3.6 Portabilidad y Despliegue Cloud-Native
-* **RNF-PORT-01 (Contenerización Docker):** La aplicación debe ejecutarse en cualquier entorno mediante un `Dockerfile` ligero basado en `python:3.11-slim`.
-* **RNF-PORT-02 (Render.com Compliance):** El servidor `uvicorn` debe enlazar dinámicamente al puerto asignado por la variable de entorno `$PORT` (`0.0.0.0:$PORT`).
+### 3.5 Mantenibilidad y Portabilidad
+* **RNF-10 (Containerización Multiplataforma):** El backend debe empaquetarse en una imagen **Docker** basada en `python:3.11-slim`, garantizando ejecución idéntica tanto en entornos de desarrollo local como en el Web Service de **Render.com**.
