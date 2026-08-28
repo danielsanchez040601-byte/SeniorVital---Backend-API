@@ -11,15 +11,21 @@ from ..schemas import UserCreate, UserResponse, LoginRequest, TokenResponse, Sen
 from ..config import settings
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+import bcrypt
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    pwd_bytes = password.encode('utf-8')[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        pwd_bytes = plain_password.encode('utf-8')[:72]
+        hash_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(pwd_bytes, hash_bytes)
+    except Exception:
+        return False
 
 
 def create_access_token(data: dict) -> str:
@@ -79,4 +85,9 @@ async def login(credentials: LoginRequest, db: AsyncSession = Depends(get_db)):
 @router.get("/me")
 async def get_me():
     """Retorna información del usuario conectado."""
-    return {"status": "authenticated", "service": "SeniorVital Auth"}
+    return {
+        "status": "authenticated",
+        "service": "SeniorVital Auth",
+        "email": "demo@seniorvital.com",
+        "role": "senior"
+    }
