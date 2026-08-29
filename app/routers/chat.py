@@ -3,6 +3,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from ..schemas import ChatRequest, ChatResponse
 from ..agents.wellness_coach import wellness_agent, CLINICAL_SYSTEM_PROMPT
+from ..agents.rag_processor import rag_processor
 
 router = APIRouter(prefix="/api/v1", tags=["AI Clinical Chat"])
 
@@ -24,7 +25,18 @@ def apply_guardrails(text: str) -> str:
 async def chat_endpoint(req: ChatRequest):
     """Endpoint conversacional del Wellness Coach con RAG y Guardrails clínicos."""
     try:
-        system_prompt = f"{CLINICAL_SYSTEM_PROMPT}\nID de contexto del paciente actual: {req.user_id}."
+        # Recuperación de contexto clínico semántico (RAG)
+        retrieved_chunks = rag_processor.retrieve_relevant_context(req.query, top_k=2)
+        context_lines = []
+        for c in retrieved_chunks:
+            context_lines.append(f"• {c['condicion']} ({c['categoria']}): {c['contenido_texto']} [Fuente: {c['metadata']['fuente']}]")
+        rag_context = "\n".join(context_lines) if context_lines else "Sin contraindicaciones específicas en catálogo."
+
+        system_prompt = (
+            f"{CLINICAL_SYSTEM_PROMPT}\n\n"
+            f"[CONTEXTO CLÍNICO RECUPERADO (RAG)]:\n{rag_context}\n"
+            f"ID de contexto del paciente actual: {req.user_id}."
+        )
 
         messages = [
             SystemMessage(content=system_prompt),
