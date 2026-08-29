@@ -58,6 +58,7 @@ export default function App() {
             <Route path="/video" element={<Video user={user} />} />
             <Route path="/progress" element={<Progress user={user} />} />
             <Route path="/caregiver" element={<CaregiverView user={user} />} />
+            <Route path="/caregiver-dashboard" element={<CaregiverView user={user} />} />
             <Route path="/admin" element={<AdminDashboard user={user} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

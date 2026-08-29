@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import TopAppBar from '../components/TopAppBar'
 import BottomNavBar from '../components/BottomNavBar'
+import ChatWellnessModal from '../components/ChatWellnessModal'
 import api from '../api'
 
 export default function Home({ user: propUser }) {
   const navigate = useNavigate()
   const user = propUser || api.getCurrentUser()
   
+  // AI Chat Modal state
+  const [showChatModal, setShowChatModal] = useState(false)
+
   // Routine states
   const [routine, setRoutine] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -195,6 +199,36 @@ export default function Home({ user: propUser }) {
               <span>{generating ? 'Generando con IA...' : 'Adaptar Rutina Hoy'}</span>
             </button>
           </div>
+        </section>
+
+        {/* Banner Asistente Wellness Coach IA (RAG & ReAct) */}
+        <section className="bg-gradient-to-r from-primary to-primary-container text-on-primary rounded-3xl p-6 shadow-soft-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center shrink-0 shadow-soft-sm">
+              <span className="material-symbols-outlined text-3xl text-on-secondary">forum</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <h3 className="text-headline-sm font-bold text-white">
+                  Consultar al Wellness Coach IA
+                </h3>
+                <span className="text-[10px] bg-secondary-container text-secondary font-black uppercase px-2 py-0.5 rounded-full">
+                  2.0 ReAct
+                </span>
+              </div>
+              <p className="text-body-sm text-white/80">
+                Pregunte sobre adaptación de ejercicios, prevención de dolor o dudas de movilidad.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowChatModal(true)}
+            className="min-h-[56px] px-6 rounded-2xl bg-secondary-container hover:bg-orange-200 text-secondary font-extrabold text-base shadow-soft-sm flex items-center justify-center gap-2 shrink-0 transition-all active:scale-95 w-full sm:w-auto"
+          >
+            <span className="material-symbols-outlined text-2xl">chat</span>
+            <span>Iniciar Conversación</span>
+          </button>
         </section>
 
         {/* 2. Calendario de Asistencia Salvia (Sin Rachas Punitivas) */}
@@ -558,6 +592,13 @@ export default function Home({ user: propUser }) {
           </div>
         </div>
       )}
+
+      {/* Modal de Conversación con el Wellness Coach IA */}
+      <ChatWellnessModal 
+        isOpen={showChatModal} 
+        onClose={() => setShowChatModal(false)} 
+        user={user} 
+      />
 
       <BottomNavBar />
     </div>
