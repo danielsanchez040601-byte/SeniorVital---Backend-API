@@ -85,7 +85,9 @@ seniorvital_shared/
 storage/
 tests/
 scripts/
-seniorvital-frontend/
+seniorvital-frontend/node_modules/
+seniorvital-frontend/dist/
+seniorvital-frontend/.vite/
 Proyecto SeniorVital Wellness/
 test_phase*.py
 migrate_db.py
