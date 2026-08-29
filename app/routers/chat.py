@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from ..schemas import ChatRequest, ChatResponse
-from ..agents.wellness_coach import wellness_agent, CLINICAL_SYSTEM_PROMPT
+from ..agents.wellness_coach import wellness_coach_agent, REACT_SYSTEM_PROMPT
 
 router = APIRouter(prefix="/api/v1", tags=["AI Clinical Chat"])
 
@@ -22,26 +22,13 @@ def apply_guardrails(text: str) -> str:
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(req: ChatRequest):
-    """Endpoint conversacional del Wellness Coach con RAG y Guardrails clínicos."""
+    """Endpoint conversacional del Wellness Coach 2.0 con ReAct, Tool Calling y Guardrails clínicos."""
     try:
-        system_prompt = f"{CLINICAL_SYSTEM_PROMPT}\nID de contexto del paciente actual: {req.user_id}."
-
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=req.query)
-        ]
-
-        try:
-            final_state = await wellness_agent.ainvoke({"messages": messages})
-            raw_response_text = final_state["messages"][-1].content
-        except Exception as agent_err:
-            print(f"[Chat Warning] Fallback activado: {agent_err}")
-            raw_response_text = (
-                "¡Hola! Como tu Wellness Coach de SeniorVital, te recomiendo realizar movimientos suaves y controlados, "
-                "mantener una respiración constante y una buena postura. Recuerda hidratarte periódicamente. "
-                "Si experimentas dolor o molestia intensa, suspende la actividad de inmediato y notifícalo a tu cuidador o médico."
-            )
-
+        react_result = await wellness_coach_agent.execute_react_cycle(
+            user_id=str(req.user_id),
+            query=req.query
+        )
+        raw_response_text = react_result.get("response", "")
         secured_response = apply_guardrails(raw_response_text)
         is_safe = secured_response == raw_response_text
 
@@ -53,6 +40,6 @@ async def chat_endpoint(req: ChatRequest):
     except Exception as e:
         print(f"Error en chat_endpoint: {e}")
         return ChatResponse(
-            response="Como tu asistente de SeniorVital, te sugiero descansar, mantenerte hidratado y realizar estiramientos ligeros de bajo impacto.",
+            response="Como su asistente de SeniorVital, le sugiero descansar, mantenerse hidratado y realizar estiramientos ligeros de bajo impacto.",
             is_safe=True
         )

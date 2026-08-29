@@ -89,8 +89,6 @@ seniorvital-frontend/
 Proyecto SeniorVital Wellness/
 test_phase*.py
 migrate_db.py
-rag_*.py
-rag_*.json
 run_local.ps1
 pytest.ini
 init_db.sql
