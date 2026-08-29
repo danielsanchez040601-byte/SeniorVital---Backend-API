@@ -319,6 +319,20 @@ export const api = {
       throw new Error(err.detail || 'Error al enviar notificación push');
     }
     return response.json();
+  },
+
+  // AI Clinical Chat & RAG Multiagent
+  async sendChatMessage(userId, query) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/chat`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ user_id: String(userId), query: query }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.detail || 'Error al comunicarse con el Asistente');
+    }
+    return response.json();
   }
 };
 
