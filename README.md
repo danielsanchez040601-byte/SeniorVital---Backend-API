@@ -53,38 +53,41 @@ La arquitectura de **SeniorVital 2.0 (Sprint 1)** implementa un pipeline RAG des
 
 ```mermaid
 flowchart TD
-    subgraph Ingesta_Knowledge [1. Ingesta y Procesamiento de Conocimiento]
-        Doc["Base Documental Clínica (10 Patologías Geriátricas)"]
-        Chunker["Segmentador Semántico Tripartito (src/knowledge/chunking/)"]
-        HF_Embed["Generador de Embeddings (384d - Hugging Face)"]
+    subgraph Ingesta_Knowledge [Ingesta y Procesamiento de Conocimiento]
+        Doc["Base Documental Clinica - 10 Patologias Geriatricas"]
+        Chunker["Segmentador Semantico Tripartito - src/knowledge/chunking/"]
+        HF_Embed["Generador de Embeddings 384d - Hugging Face"]
         
         Doc --> Chunker
-        Chunker -->|Chunks con Metadata: _DESC, _REC, _CONTRA| HF_Embed
+        Chunker -->|Metadata: _DESC, _REC, _CONTRA| HF_Embed
     end
 
-    subgraph Vector_Storage [2. Persistencia Vectorial Relacional]
-        PGV[("Supabase PostgreSQL + pgvector (Índice HNSW)")]
-        HF_Embed -->|Vectores Densos 384d| PGV
+    subgraph Vector_Storage [Persistencia Vectorial Relacional]
+        PGV[("Supabase PostgreSQL y pgvector - Indice HNSW")]
     end
 
-    subgraph RAG_Runtime [3. Runtime de Recuperación y Generación]
-        Query["Perfil del Adulto Mayor (Patologías y Nivel 1-4)"]
-        Retriever["Recuperador Semántico (src/rag/retriever/)"]
+    subgraph RAG_Runtime [Runtime de Recuperacion y Generacion]
+        Query["Perfil del Adulto Mayor - Patologias y Nivel 1-4"]
+        Retriever["Recuperador Semantico - src/rag/retriever/"]
         Context["Ensamblador de Contexto y Guardrails"]
-        Prompt["Prompt Clínico Aumentado con Evidencia"]
+        Prompt["Prompt Clinico Aumentado con Evidencia"]
         
-        LLM_Primary["Google AI Studio (Gemini Flash - Primario)"]
-        LLM_Fallback["OpenRouter Fallback Pool (Tolerancia a Fallos)"]
+        LLM_Primary["Google AI Studio - Gemini Flash Primario"]
+        LLM_Fallback["OpenRouter - Fallback Pool Contingencia"]
+        Response["Prescripcion Segura de Ejercicios"]
         
         Query --> Retriever
-        PGV <-->|Similitud Coseno Top-K=3| Retriever
         Retriever --> Context
         Context --> Prompt
         Prompt --> LLM_Primary
-        LLM_Primary -.->|Fallback 429/503| LLM_Fallback
-        LLM_Primary --> Response["Prescripción Segura de Ejercicios"]
+        LLM_Primary -.->|Fallback por saturacion| LLM_Fallback
+        LLM_Primary --> Response
         LLM_Fallback --> Response
     end
+
+    HF_Embed -->|Almacenamiento Vectores 384d| PGV
+    Retriever -->|Busqueda por Similitud Coseno Top-K=3| PGV
+    PGV -->|Fragmentos Clinicos Relevantes| Retriever
 ```
 
 ### Justificación del Stack Tecnológico:
