@@ -30,6 +30,7 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH=/root/.local/bin:$PATH \
+    PYTHONPATH=/app \
     PORT=10000
 
 # Instalar librerías de tiempo de ejecución
@@ -48,4 +49,4 @@ COPY . /app
 EXPOSE 10000
 
 # Ejecutar el servidor ASGI con soporte para el puerto dinámico de Render ($PORT)
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
+CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-10000}"]
