@@ -1,0 +1,1 @@
+from .hf_embeddings import HuggingFaceEmbeddingsGenerator

@@ -1,0 +1,268 @@
+{
+  "metadata": {
+    "title": "Base de Conocimiento Clínico-Gerontológica SeniorVital",
+    "version": "1.0.0",
+    "author": "Daniel Sánchez & Abdenago Nahmens (Team 5)",
+    "clinical_advisor": "Ing. Julio Matute",
+    "acknowledgement": "Agradecimiento y asesoría técnica-clínica del Ing. Julio Matute en la identificación y caracterización de patologías, afecciones y limitaciones funcionales en adultos mayores.",
+    "course": "Sistemas Inteligentes - Dra. Yaskelly Yedra",
+    "target_population": "Adultos mayores (+60)"
+  },
+  "pathologies": [
+    {
+      "id": "OA-01",
+      "name": "Osteoartritis de Rodilla y Cadera",
+      "category": "Musculoesquelética",
+      "description": "Enfermedad degenerativa del cartílago articular caracterizada por dolor nociceptivo compresivo, rigidez matutina (<30 min) e inhibición artrogénica del músculo cuádriceps.",
+      "biomechanical_limitations": [
+        "Dolor compresivo ante cargas axiales",
+        "Limitación en rango de flexión profunda",
+        "Inestabilidad articular en apoyo monopodal"
+      ],
+      "recommended_modalities": [
+        "Cadena cinética cerrada de bajo ángulo (sentadilla parcial asistida en silla <= 45-60 grados)",
+        "Ciclismo estático con sillín elevado",
+        "Natación y ejercicios acuáticos terapéuticos",
+        "Fortalecimiento isométrico de cuádriceps y glúteo medio"
+      ],
+      "strict_contraindications": [
+        "Pliometría y ejercicios con impacto (saltos)",
+        "Flexión de rodilla mayor a 90 grados con carga",
+        "Torsiones articulares bruscas y pivoteos",
+        "Uso de pesas libres pesadas sin supervisión"
+      ],
+      "safe_progression_levels": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "SAR-02",
+      "name": "Sarcopenia y Dinapenia Geriátrica",
+      "category": "Metabólica / Muscular",
+      "description": "Pérdida progresiva y generalizada de masa muscular esquelética, fuerza contráctil (dinapenia) y rendimiento físico funcional (<0.8 m/s velocidad de marcha).",
+      "biomechanical_limitations": [
+        "Disminución drástica de fuerza de prensión manual y potencia de extremidades inferiores",
+        "Mayor fatiga muscular ante esfuerzos repetitivos",
+        "Dificultad para la bipedestación sin apoyo de brazos"
+      ],
+      "recommended_modalities": [
+        "Entrenamiento de Fuerza Progresiva (PRT) al 40-80% 1-RM con descansos amplios (2-3 min)",
+        "Bandas elásticas de resistencia gradual",
+        "Calistenia adaptada (levantarse de la silla - Sit to Stand)",
+        "Ejercicios multiarticulares con peso corporal"
+      ],
+      "strict_contraindications": [
+        "Reposo prolongado o inmovilidad",
+        "Entrenamiento aeróbico exclusivo de baja intensidad (no estimula hipertrofia miofibrilar)",
+        "Ejercicios al fallo muscular extremo"
+      ],
+      "safe_progression_levels": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": "OST-03",
+      "name": "Osteoporosis y Fragilidad Ósea",
+      "category": "Ósea",
+      "description": "Deterioro de la microarquitectura ósea con pérdida de densidad mineral (DMO), que predispone a fracturas por fragilidad ante caídas de baja energía (cadera, vértebras, muñeca).",
+      "biomechanical_limitations": [
+        "Vulnerabilidad a fracturas por compresión vertebral",
+        "Hipercifosis dorsal y desplazamiento anterior del centro de gravedad"
+      ],
+      "recommended_modalities": [
+        "Protocolo HiRIT / LIFTMOR supervisado con sobrecarga axial controlada",
+        "Entrenamiento de equilibrio estático y dinámico (Tai Chi)",
+        "Extensión torácica y fortalecimiento de erectores espinales"
+      ],
+      "strict_contraindications": [
+        "Flexión espinal forzada con carga (abdominales crunch tradicionales)",
+        "Rotaciones y torsiones bruscas de tronco",
+        "Impactos de alta caída sin amortiguación"
+      ],
+      "safe_progression_levels": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "ICC-04",
+      "name": "Insuficiencia Cardíaca Crónica (ICC)",
+      "category": "Cardiovascular",
+      "description": "Síndrome clínico caracterizado por disfunción miocárdica que limita el gasto cardíaco ante la demanda metabólica del ejercicio.",
+      "biomechanical_limitations": [
+        "Disnea de esfuerzo y astenia precoz",
+        "Baja tolerancia al esfuerzo cardiovascular continuo"
+      ],
+      "recommended_modalities": [
+        "Actividad física rítmica continua a intensidad leve-moderada (Escala Borg 11-12)",
+        "Entrenamiento de la musculatura inspiratoria (PImax)",
+        "Paseos fraccionados con pausas activas"
+      ],
+      "strict_contraindications": [
+        "Ejercicio con ganancia de peso > 1.8 kg en 3 días (signo de congestión/edema)",
+        "Disnea paroxística en reposo",
+        "Angina inestable o arritmias ventriculares complejas"
+      ],
+      "safe_progression_levels": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": "DMT2-05",
+      "name": "Diabetes Mellitus Tipo 2 (DMT2)",
+      "category": "Endocrina / Metabólica",
+      "description": "Resistencia a la insulina con hiperglucemia crónica, asociada a micro y macroangiopatía y neuropatía periférica distal.",
+      "biomechanical_limitations": [
+        "Pérdida de sensibilidad propioceptiva en miembros inferiores",
+        "Mayor riesgo de hipotensión ortostática e hipoglucemia post-esfuerzo"
+      ],
+      "recommended_modalities": [
+        "Frecuencia semanal mínima de 150-300 min combinando resistencia y aeróbico",
+        "Monitoreo glucémico pre y post-sesión",
+        "Caminata nórdica y fortalecimiento de grandes grupos musculares"
+      ],
+      "strict_contraindications": [
+        "Iniciar sesión si glucemia < 100 mg/dL (riesgo hipoglucemia) o > 300 mg/dL con cetonuria",
+        "Maniobra de Valsalva si existe retinopatía diabética proliferativa",
+        "Caminar descalzo o calzado no amortiguado si hay neuropatía"
+      ],
+      "safe_progression_levels": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": "EPOC-06",
+      "name": "Enfermedad Pulmonar Obstructiva Crónica (EPOC)",
+      "category": "Respiratoria",
+      "description": "Limitación crónica del flujo aéreo no totalmente reversible, con disnea, fatiga de músculos respiratorios e hiperinflación dinámica.",
+      "biomechanical_limitations": [
+        "Fatiga precoz de cuádriceps por hipoxia tisular",
+        "Disnea limitante ante esfuerzos mantenidos"
+      ],
+      "recommended_modalities": [
+        "Entrenamiento por intervalos de alta intensidad relativa con descanso activo",
+        "Respiración con labios fruncidos durante la fase de esfuerzo concéntrico",
+        "Fortalecimiento de tren superior e inferior con pesas ligeras/elásticos"
+      ],
+      "strict_contraindications": [
+        "Desaturación arterial de oxígeno SpO2 < 88% durante la actividad",
+        "Actividad física en ambientes con contaminantes, polvo o frío extremo",
+        "Ejercicios durante fases de exacerbación bronquial infecciosa"
+      ],
+      "safe_progression_levels": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "PARK-07",
+      "name": "Enfermedad de Parkinson",
+      "category": "Neurológica",
+      "description": "Trastorno neurodegenerativo del sistema nervioso central caracterizado por bradicinesia, rigidez muscular, temblor de reposo e inestabilidad postural.",
+      "biomechanical_limitations": [
+        "Bloqueos o congelamiento de la marcha (Freezing)",
+        "Alteración en los ajustes posturales anticipatorios (APA)",
+        "Rigidez axial"
+      ],
+      "recommended_modalities": [
+        "Uso de pistas sensoriales auditivas rítmicas (metrónomo a 100-110 bpm)",
+        "Tai Chi y baile adaptado para coordinación y transferencias",
+        "Entrenamiento en fases 'ON' de medicación dopaminérgica"
+      ],
+      "strict_contraindications": [
+        "Caminadoras / cintas rodantes sin arnés de suspensión anticaídas",
+        "Doble tarea motora compleja sin supervisión en estadios III-IV de Hoehn & Yahr",
+        "Giros bruscos sobre el propio eje sin disociación de cinturas"
+      ],
+      "safe_progression_levels": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "ACV-08",
+      "name": "Secuelas de Accidente Cerebrovascular (ACV / Ictus)",
+      "category": "Neurológica / Vascular",
+      "description": "Déficit neurológico focal con hemiparesia o hemiplejía, espasticidad piramidal, negligencia espacial y alteración del esquema corporal.",
+      "biomechanical_limitations": [
+        "Patrón sinérgico flexor en miembro superior y extensor en miembro inferior",
+        "Riesgo de subluxación gleno-humeral en hombro hemipléjico"
+      ],
+      "recommended_modalities": [
+        "Terapia de movimiento inducido por restricción (CIMT) adaptada",
+        "Reeducación de la marcha con soporte parcial de peso",
+        "Cicloergómetro con correas bilaterales y ejercicios orientados a tareas funcionales"
+      ],
+      "strict_contraindications": [
+        "Cargas pesadas que incrementen la espasticidad piramidal",
+        "Tracción pasiva brusca del brazo parético",
+        "Ejercicios en superficies inestables sin asistencia física directa"
+      ],
+      "safe_progression_levels": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": "LUMB-09",
+      "name": "Lumbalgia Mecánica Crónica y Espondiloartrosis",
+      "category": "Musculoesquelética / Columna",
+      "description": "Dolor en región lumbosacra derivado de discopatías, artrosis facetaria y desacondicionamiento de la musculatura estabilizadora del core.",
+      "biomechanical_limitations": [
+        "Dolor ante bipedestación prolongada o flexión anterior mantenida de tronco",
+        "Rigidez articular en columna lumbar"
+      ],
+      "recommended_modalities": [
+        "Activación del músculo transverso abdominal y multífidos (patrón McGill Big 3)",
+        "Puente de glúteos bipodal y Bird-Dog adaptado",
+        "Estiramiento suave de cadena posterior e isquiotibiales en decúbito supino"
+      ],
+      "strict_contraindications": [
+        "Flexo-rotación combinada de columna lumbar bajo carga",
+        "Elevación de piernas estiradas en decúbito supino (incrementa momento flexor L4-S1)",
+        "Pesos muertos pesados sin técnica perfecta"
+      ],
+      "safe_progression_levels": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "FRAG-10",
+      "name": "Síndrome de Fragilidad Geriátrica",
+      "category": "Multisistémica / Geriátrica",
+      "description": "Estado de vulnerabilidad biológica ante factores estresores con disminución de reservas fisiológicas (Fenotipo de Fried >= 3 criterios).",
+      "biomechanical_limitations": [
+        "Agotamiento precoz, marcha lenta y debilidad generalizada",
+        "Alto riesgo de caídas recurrentes e institucionalización"
+      ],
+      "recommended_modalities": [
+        "Protocolo multicomponente Vivifrail adaptado (Rueda A / B)",
+        "Ejercicios sentados de movilidad articular y fuerza ligera con propio peso",
+        "Estimulación del equilibrio con apoyo bipodal amplio y marcha talón-punta con pasamanos"
+      ],
+      "strict_contraindications": [
+        "Entrenamiento extenuante continuo > 30 minutos sin descansos",
+        "Ejercicios de equilibrio dinámico sin apoyo físico disponible",
+        "Cambios posturales bruscos por riesgo de hipotensión ortostática"
+      ],
+      "safe_progression_levels": [
+        1,
+        2
+      ]
+    }
+  ]
+}

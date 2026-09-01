@@ -1,0 +1,182 @@
+{
+  "metrics": {
+    "hit_rate_at_3": 100.0,
+    "mrr": 1.0,
+    "precision_at_3": 1.0,
+    "avg_latency_ms": 783.52,
+    "p95_latency_ms": 1350.27,
+    "total_queries_evaluated": 10
+  },
+  "detailed_results": [
+    {
+      "id": "Q01",
+      "query": "Tengo osteoartritis de rodilla y dolor articular, que ejercicios estan estrictamente prohibidos?",
+      "expected_chunk_ids": [
+        "OA-01_CONTRA",
+        "OA-01_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "OA-01_CONTRA",
+        "OA-01_REC",
+        "OA-01_DESC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 1.0,
+      "latency_ms": 514.29
+    },
+    {
+      "id": "Q02",
+      "query": "Cuales son los ejercicios de fuerza y calistenia recomendados para sarcopenia y dinapenia?",
+      "expected_chunk_ids": [
+        "SAR-02_REC",
+        "SAR-02_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "SAR-02_REC",
+        "SAR-02_CONTRA",
+        "SAR-02_DESC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 1.0,
+      "latency_ms": 278.59
+    },
+    {
+      "id": "Q03",
+      "query": "Que protocolo de entrenamiento oseo y tai chi se aplica en osteoporosis para evitar fracturas?",
+      "expected_chunk_ids": [
+        "OST-03_REC",
+        "OST-03_CONTRA"
+      ],
+      "retrieved_chunk_ids": [
+        "OST-03_REC",
+        "OST-03_DESC",
+        "OST-03_CONTRA"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 1.0,
+      "latency_ms": 332.39
+    },
+    {
+      "id": "Q04",
+      "query": "Cuales son las contraindicaciones y senales de descompensacion en insuficiencia cardiaca?",
+      "expected_chunk_ids": [
+        "ICC-04_CONTRA",
+        "ICC-04_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "ICC-04_CONTRA",
+        "ICC-04_DESC",
+        "ICC-04_REC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 1.0,
+      "latency_ms": 912.62
+    },
+    {
+      "id": "Q05",
+      "query": "Cuales son los controles de glucemia y precauciones en diabetes mellitus tipo 2?",
+      "expected_chunk_ids": [
+        "DMT2-05_CONTRA",
+        "DMT2-05_REC"
+      ],
+      "retrieved_chunk_ids": [
+        "DMT2-05_DESC",
+        "DMT2-05_CONTRA",
+        "DMT2-05_REC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 1.0,
+      "latency_ms": 811.1
+    },
+    {
+      "id": "Q06",
+      "query": "Como se realiza el entrenamiento respiratorio con labios fruncidos en EPOC?",
+      "expected_chunk_ids": [
+        "EPOC-06_REC",
+        "EPOC-06_CONTRA"
+      ],
+      "retrieved_chunk_ids": [
+        "EPOC-06_DESC",
+        "EPOC-06_REC",
+        "EPOC-06_CONTRA"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 1.0,
+      "latency_ms": 1350.27
+    },
+    {
+      "id": "Q07",
+      "query": "Como debe entrenar el equilibrio y la marcha un paciente con enfermedad de Parkinson?",
+      "expected_chunk_ids": [
+        "PARK-07_REC",
+        "PARK-07_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "PARK-07_REC",
+        "PARK-07_DESC",
+        "PARK-07_CONTRA"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 1.0,
+      "latency_ms": 1054.63
+    },
+    {
+      "id": "Q08",
+      "query": "Que precauciones y ejercicios se aplican en secuelas de accidente cerebrovascular ACV?",
+      "expected_chunk_ids": [
+        "ACV-08_REC",
+        "ACV-08_CONTRA"
+      ],
+      "retrieved_chunk_ids": [
+        "ACV-08_CONTRA",
+        "ACV-08_REC",
+        "ACV-08_DESC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 1.0,
+      "latency_ms": 914.02
+    },
+    {
+      "id": "Q09",
+      "query": "Que ejercicios y movimientos estan prohibidos en lumbalgia mecanica y espondiloartrosis?",
+      "expected_chunk_ids": [
+        "LUMB-09_CONTRA",
+        "LUMB-09_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "LUMB-09_CONTRA",
+        "LUMB-09_REC",
+        "LUMB-09_DESC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 1.0,
+      "latency_ms": 764.86
+    },
+    {
+      "id": "Q10",
+      "query": "Cual es el plan vivifrail de movilidad para el sindrome de fragilidad geriatrica?",
+      "expected_chunk_ids": [
+        "FRAG-10_REC",
+        "FRAG-10_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "FRAG-10_DESC",
+        "FRAG-10_REC",
+        "FRAG-10_CONTRA"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 1.0,
+      "latency_ms": 902.42
+    }
+  ]
+}
