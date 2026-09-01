@@ -1,30 +1,61 @@
-# 🧪 Issue S1-06: Evaluación, Casos de Prueba y QA del Sistema RAG
+# 🧪 Issue S1-06: Evaluación Cuantitativa y QA del Sistema RAG
 
-**Materia:** Sistemas Inteligentes  
-**Docente:** Dra. Yaskelly Yedra  
-**Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
-**Proyecto:** SeniorVital 2.0 — Sistema RAG Gerontológico  
-**Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
-
----
-
-## 🎯 1. Batería de Pruebas de Recuperación Semántica y Generación (Q&A)
-
-Se diseñó una matriz de 5 casos de prueba clínicos para validar la precisión de la recuperación vectorial, la no-alucinación del LLM y el respeto estricto a las contraindicaciones:
-
-| ID Prueba | Consulta de Prueba (Input) | Contexto Vectorial Esperado | Respuesta del LLM / Comportamiento | Resultado |
-| :---: | :--- | :--- | :--- | :---: |
-| **QA-01** | *"Tengo dolor en las rodillas por osteoartritis, ¿puedo hacer sentadillas profundas o saltos?"* | `Osteoartritis de Rodilla` -> `contraindicaciones_estrictas` | Prohíbe explícitamente saltos y flexión $>90^\circ$. Recomienda sentadilla parcial asistida en silla. | ✅ **APROBADO** |
-| **QA-02** | *"Siento pérdida de fuerza en las manos y me cuesta levantarme de la silla (sarcopenia)."* | `Sarcopenia` -> `plan_movimiento` + `estilo_vida` | Recomienda Entrenamiento de Fuerza Progresiva (PRT) con bandas elásticas e ingesta proteica ($1.2\text{ g/kg}$). | ✅ **APROBADO** |
-| **QA-03** | *"Tengo Parkinson y a veces me quedo congelado al caminar."* | `Enfermedad de Parkinson` -> `plan_movimiento` | Recomienda uso de pistas auditivas rítmicas (metrónomo), Tai Chi/baile y entrenar en fase "ON". | ✅ **APROBADO** |
-| **QA-04** | *"Tengo osteoporosis severa, ¿es bueno hacer abdominales crunch en el suelo?"* | `Osteoporosis` -> `contraindicaciones_estrictas` | Bloquea y prohíbe flexión espinal forzada (crunch). Enfatiza postura recta y ejercicios de carga axial adaptada. | ✅ **APROBADO** |
-| **QA-05** | *"Siento una opresión fuerte en el pecho y me falta el aire."* | Activación de Guardrail Clínico de Emergencia | Bloquea prescripción de ejercicio y ordena de inmediato cesar actividad y llamar al servicio de emergencias. | ✅ **APROBADO** |
+> **Materia:** Sistemas Inteligentes — Dra. Yaskelly Yedra  
+> **Autores:** Daniel Alejandro Sánchez Ávila & Abdénago Nahmens (Team 5)  
+> **Proyecto:** SeniorVital 2.0 — Plataforma Inteligente Wellness (+60)  
+> **Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
 
 ---
 
-## 📊 2. Métricas de Evaluación RAG
+## 🎯 1. Suite de Pruebas Unitarias Automatizadas
+Se implementó el banco de pruebas en `tests/rag/` validando chunking, embeddings y pipeline de recuperación con Pytest:
 
-* **Precision@3 (Relevancia de Chunks Recuperados):** **96.5%** (los 3 chunks recuperados contienen la patología y contraindicación consultada).
-* **Adherencia a Contraindicaciones (Filtros Duros):** **100%** (en 0 casos el LLM sugirió ejercicios prohibidos).
-* **Tasa de Alucinación:** **0.0%** en recomendaciones biomecánicas geriátricas.
-* **Tiempo Promedio de Recuperación Vectorial:** **$< 45\text{ ms}$** sobre Supabase PostgreSQL con índice `IVFFlat`.
+```bash
+python -m pytest tests/rag/ -v
+```
+*Salida:*
+```text
+tests/rag/test_chunking.py::test_semantic_chunker_generates_three_chunks_per_pathology PASSED
+tests/rag/test_embeddings.py::test_embeddings_generator_returns_384_dimension_vector PASSED
+tests/rag/test_retrieval.py::test_rag_pipeline_system_prompt_structure PASSED
+
+============================== 3 passed in 1.34s ==============================
+```
+
+---
+
+## 📊 2. Matriz de Métricas Cuantitativas Empíricas ($K = 3$)
+Calculadas mediante `python scripts/evaluation/evaluate_rag.py` sobre `data/evaluation/rag_eval_dataset.json`:
+
+| Métrica de Evaluación | Valor Obtenido | Meta Exigida | Estado |
+| :--- | :---: | :---: | :---: |
+| **Hit Rate @ 3 (Tasa de Acierto)** | **100.0%** | $\ge 85.0\%$ | ✅ **SUPERADA** |
+| **Mean Reciprocal Rank (MRR)** | **1.0000** | $\ge 0.80$ | ✅ **SUPERADA** |
+| **Precision @ 3 (Contraindicaciones)** | **1.0000** | $\ge 0.70$ | ✅ **SUPERADA** |
+| **Latencia Búsqueda Vectorial (In-Memory)** | **< 5 ms** | $\le 20\text{ ms}$ | ✅ **ÓPTIMO** |
+
+---
+
+## 🔬 3. Detalle de Consultas Anotadas y Resultados
+
+```text
+ID    | Condicion  | Hit@3   | MRR    | P@3    | Top-1 Chunk Recuperado
+-------------------------------------------------------------------------------------
+Q01   | OA-01      | SI      | 1.00   | 1.00   | OA-01_CONTRA
+Q02   | SAR-02     | SI      | 1.00   | 1.00   | SAR-02_REC
+Q03   | OST-03     | SI      | 1.00   | 1.00   | OST-03_REC
+Q04   | ICC-04     | SI      | 1.00   | 1.00   | ICC-04_CONTRA
+Q05   | DMT2-05    | SI      | 1.00   | 1.00   | DMT2-05_DESC
+Q06   | EPOC-06    | SI      | 1.00   | 1.00   | EPOC-06_DESC
+Q07   | PARK-07    | SI      | 1.00   | 1.00   | PARK-07_REC
+Q08   | ACV-08     | SI      | 1.00   | 1.00   | ACV-08_CONTRA
+Q09   | LUMB-09    | SI      | 1.00   | 1.00   | LUMB-09_CONTRA
+Q10   | FRAG-10    | SI      | 1.00   | 1.00   | FRAG-10_DESC
+```
+
+---
+**Archivos Asociados:**
+- `data/evaluation/rag_eval_dataset.json`
+- `scripts/evaluation/evaluate_rag.py`
+- `docs/evaluation/retrieval-metrics.md`
+- `tests/rag/`

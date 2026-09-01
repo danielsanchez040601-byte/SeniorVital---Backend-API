@@ -1,104 +1,35 @@
-# 🏛️ Issue S1-07: Arquitectura Integral del Sistema RAG y Diagramas Mermaid
+# 🏛️ Issue S1-07: Arquitectura RAG Consolidada e Informe Técnico del Sprint 1
 
-**Materia:** Sistemas Inteligentes  
-**Docente:** Dra. Yaskelly Yedra  
-**Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
-**Proyecto:** SeniorVital 2.0 — Sistema RAG Gerontológico  
-**Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
-
----
-
-## 🏛️ 1. Diagrama de Arquitectura de Capas RAG
-
-```mermaid
-graph TB
-    subgraph Capa_Cliente["1. Capa Cliente & Experiencia de Usuario"]
-        UI["SeniorVital Frontend (React 18 + Vite)"]
-        ChatUI["Módulo de Chat Conversacional"]
-        RoutineUI["Módulo de Prescripción Diaria"]
-    end
-
-    subgraph Capa_Servicios["2. Capa de Servicios y Enrutamiento (FastAPI)"]
-        API["FastAPI Application Core"]
-        RouterChat["/api/v1/chat"]
-        RouterRoutine["/routines/generate"]
-        RAGProcessor["RAG Processor (rag_processor.py)"]
-    end
-
-    subgraph Capa_Embeddings["3. Capa de Vectorización Semántica"]
-        HF["Hugging Face (sentence-transformers/all-MiniLM-L6-v2)"]
-        Vec_Query["Vector de Consulta (384d Normalizado)"]
-    end
-
-    subgraph Capa_Persistencia["4. Capa de Persistencia Vectorial (Supabase)"]
-        Supa_Pooler[("Supabase PgBouncer Pooler (Puerto 6543)")]
-        Table_Rel[("Tablas Relacionales: users, senior_profiles, routines")]
-        Table_Vec[("Tabla Vectorial: clinical_knowledge (pgvector 384d)")]
-        Index_IVFFlat["Índice IVFFlat (Cosine Similarity)"]
-    end
-
-    subgraph Capa_Seguridad_Inferencia["5. Capa de Seguridad & Modelos LLM"]
-        Guardrails["Guardrails de Seguridad Clínica & Filtros Duros"]
-        Gemini["Google AI Studio (Gemini 3.6 Flash - Modelo Principal)"]
-        OpenRouter["OpenRouter (Fallback Multimodelo Libre)"]
-        Deterministic["Generador Clínico Determinístico Local"]
-    end
-
-    UI --> API
-    API --> RouterChat
-    API --> RouterRoutine
-    RouterChat --> RAGProcessor
-    RouterRoutine --> RAGProcessor
-
-    RAGProcessor --> HF
-    HF --> Vec_Query
-    Vec_Query --> Supa_Pooler
-    Supa_Pooler --> Table_Vec
-    Table_Vec --> Index_IVFFlat
-    Table_Vec -->|Top-k Chunks| RAGProcessor
-
-    RAGProcessor --> Guardrails
-    Guardrails -->|Prompt Aumentado| Gemini
-    Gemini -.->|Falla 429 / 503| OpenRouter
-    OpenRouter -.->|Falla de Red| Deterministic
-    
-    Gemini --> RAGProcessor
-    OpenRouter --> RAGProcessor
-    Deterministic --> RAGProcessor
-    RAGProcessor --> API
-    API --> UI
-```
+> **Materia:** Sistemas Inteligentes — Dra. Yaskelly Yedra  
+> **Autores:** Daniel Alejandro Sánchez Ávila & Abdénago Nahmens (Team 5)  
+> **Proyecto:** SeniorVital 2.0 — Plataforma Inteligente Wellness (+60)  
+> **Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
 
 ---
 
-## 🔄 2. Diagrama de Flujo de Datos para Ingesta y Recuperación
-
-```mermaid
-flowchart TD
-    subgraph Ingesta["Fase de Ingesta y Vectorización"]
-        DocClinico["Informe Clínico Maestro (10 Patologías)"] --> Chunking["Segmentación Semántica (40 Chunks Lógicos)"]
-        Chunking --> AddMeta["Inyección de Metadatos (Autoría, Fuentes, Reconocimiento Ing. Julio Matute)"]
-        AddMeta --> HF_Ingest["Vectorización con Hugging Face (all-MiniLM-L6-v2)"]
-        HF_Ingest --> PG_Insert["Persistencia en Supabase clinical_knowledge (pgvector)"]
-    end
-
-    subgraph Recuperacion["Fase de Inferencia en Tiempo Real"]
-        QueryUser["Consulta del Adulto Mayor"] --> HF_Query["Vectorización de Consulta (384d)"]
-        HF_Query --> CosineMatch["Búsqueda por Similitud de Coseno en pgvector"]
-        PG_Insert -.-> CosineMatch
-        CosineMatch --> TopChunks["Recuperación de Top 3 Chunks Clínicos"]
-        TopChunks --> PromptGen["Construcción de Prompt Aumentado + Guardrails"]
-        PromptGen --> LLM_Inference["Inferencia con Gemini 3.6 Flash / OpenRouter"]
-        LLM_Inference --> RespSafe["Respuesta Segura, Empática y Adaptada al Adulto Mayor"]
-    end
-```
+## 🎯 1. Resumen Ejecutivo del Sprint 1
+Se consolidó exitosamente el **Sprint Técnico 1 (15% del proyecto)** migrando la línea base hacia una arquitectura RAG inteligente y serverless:
+1. **Conocimiento Clínico Formalizado:** 10 patologías geriátricas, taxonomías y reglas de prescripción con asesoría del Ing. Julio Matute.
+2. **Chunking Semántico Tripartito:** 30 fragmentos con metadatos de seguridad y progresión funcional.
+3. **Persistencia Vectorial:** Tabla `clinical_knowledge_embeddings` con índice `HNSW` en Supabase PostgreSQL.
+4. **Pipeline RAG & Guardrails:** Inferencia con Google AI Studio y fallback OpenRouter.
+5. **Testing & QA:** 100% de pruebas unitarias en verde con Hit Rate de 100% y MRR de 1.0000.
 
 ---
 
-## 🌟 3. Reconocimiento y Créditos del Sprint 1
+## 📊 2. Matriz de Trazabilidad S1-01 $\rightarrow$ S1-07
 
-> **Reconocimiento especial al Ing. Julio Matute por su asesoría técnica y clínica en la validación de patologías, afecciones y enfermedades limitantes en adultos mayores, las cuales fundamentan esta base de conocimiento.**
+| Issue | Componente en `/src` | Documentación en `/docs` | Script / Prueba | Métrica / Resultado |
+| :--- | :--- | :--- | :--- | :--- |
+| **S1-01** | `data/knowledge_base/` | `docs/knowledge/` | Inspección JSON | 10 condiciones clínicas y asesoría Ing. Julio Matute |
+| **S1-02** | `src/knowledge/chunking/` | `docs/rag/chunking-strategy.md` | `tests/rag/test_chunking.py` | 30 chunks con metadatos preservados |
+| **S1-03** | `src/rag/embeddings/` | `docs/rag/embeddings-strategy.md` | `scripts/evaluation/test_hf_embeddings.py` | Modelo all-MiniLM-L6-v2 ($d=384$) |
+| **S1-04** | `src/rag/vector_store/` | `docs/rag/vector-database.md` | `scripts/indexing/index_pgvector.py` | Índice HNSW en PostgreSQL / pgvector |
+| **S1-05** | `src/rag/pipeline/` | `docs/architecture/rag-architecture.md` | `scripts/evaluation/demo_rag_pipeline.py` | Flujo E2E contextualizado con LLM |
+| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3 = 100%, MRR = 1.0000 |
+| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/` | 100% de los tests en verde |
 
-* **Desarrolladores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens.
-* **Docente Titular:** Dra. Yaskelly Yedra.
-* **Cátedra:** Sistemas Inteligentes — 2026.
+---
+**Archivos Asociados:**
+- `docs/architecture/rag-architecture.md`
+- `docs/reports/sprint-1-report.md`
