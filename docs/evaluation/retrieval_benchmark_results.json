@@ -3,8 +3,8 @@
     "hit_rate_at_3": 100.0,
     "mrr": 1.0,
     "precision_at_3": 1.0,
-    "avg_latency_ms": 783.52,
-    "p95_latency_ms": 1350.27,
+    "avg_latency_ms": 376.38,
+    "p95_latency_ms": 483.69,
     "total_queries_evaluated": 10
   },
   "detailed_results": [
@@ -23,7 +23,7 @@
       "hit": true,
       "reciprocal_rank": 1.0,
       "precision_at_k": 1.0,
-      "latency_ms": 514.29
+      "latency_ms": 308.31
     },
     {
       "id": "Q02",
@@ -40,7 +40,7 @@
       "hit": true,
       "reciprocal_rank": 1.0,
       "precision_at_k": 1.0,
-      "latency_ms": 278.59
+      "latency_ms": 329.34
     },
     {
       "id": "Q03",
@@ -57,7 +57,7 @@
       "hit": true,
       "reciprocal_rank": 1.0,
       "precision_at_k": 1.0,
-      "latency_ms": 332.39
+      "latency_ms": 357.41
     },
     {
       "id": "Q04",
@@ -74,7 +74,7 @@
       "hit": true,
       "reciprocal_rank": 1.0,
       "precision_at_k": 1.0,
-      "latency_ms": 912.62
+      "latency_ms": 304.39
     },
     {
       "id": "Q05",
@@ -91,7 +91,7 @@
       "hit": true,
       "reciprocal_rank": 1.0,
       "precision_at_k": 1.0,
-      "latency_ms": 811.1
+      "latency_ms": 444.3
     },
     {
       "id": "Q06",
@@ -108,7 +108,7 @@
       "hit": true,
       "reciprocal_rank": 1.0,
       "precision_at_k": 1.0,
-      "latency_ms": 1350.27
+      "latency_ms": 483.69
     },
     {
       "id": "Q07",
@@ -125,7 +125,7 @@
       "hit": true,
       "reciprocal_rank": 1.0,
       "precision_at_k": 1.0,
-      "latency_ms": 1054.63
+      "latency_ms": 355.62
     },
     {
       "id": "Q08",
@@ -142,7 +142,7 @@
       "hit": true,
       "reciprocal_rank": 1.0,
       "precision_at_k": 1.0,
-      "latency_ms": 914.02
+      "latency_ms": 389.6
     },
     {
       "id": "Q09",
@@ -159,7 +159,7 @@
       "hit": true,
       "reciprocal_rank": 1.0,
       "precision_at_k": 1.0,
-      "latency_ms": 764.86
+      "latency_ms": 389.91
     },
     {
       "id": "Q10",
@@ -176,7 +176,7 @@
       "hit": true,
       "reciprocal_rank": 1.0,
       "precision_at_k": 1.0,
-      "latency_ms": 902.42
+      "latency_ms": 401.28
     }
   ]
 }
