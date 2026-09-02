@@ -1,8 +1,8 @@
 """
-Recuperador Semántico Clínico con Filtrado por Metadatos.
+Recuperador Semántico Clínico con Filtrado por Metadatos y Telemetría Post-Ejecución.
 Integra generación de embeddings, consulta a base vectorial y auto-ingesta bajo demanda.
 """
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 import os
 import json
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -55,7 +55,7 @@ class ClinicalRetriever:
         session: Optional[AsyncSession] = None
     ) -> List[Dict[str, Any]]:
         """Recupera fragmentos relevantes aplicando umbral de similitud."""
-        query_vec = self.embeddings_gen.embed_query(query)
+        query_vec, mode = self.embeddings_gen.embed_query_with_telemetry(query)
         results = await self.vector_store.similarity_search(
             query_embedding=query_vec,
             top_k=top_k,
@@ -63,3 +63,26 @@ class ClinicalRetriever:
             session=session
         )
         return [r for r in results if r["similarity"] >= min_similarity]
+
+    async def retrieve_with_telemetry(
+        self, 
+        query: str, 
+        top_k: int = 3, 
+        condition_filter: Optional[str] = None,
+        min_similarity: float = 0.0,
+        session: Optional[AsyncSession] = None
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
+        """Recupera fragmentos relevantes y retorna además la telemetría post-ejecución."""
+        query_vec, embedding_mode = self.embeddings_gen.embed_query_with_telemetry(query)
+        results = await self.vector_store.similarity_search(
+            query_embedding=query_vec,
+            top_k=top_k,
+            condition_filter=condition_filter,
+            session=session
+        )
+        filtered = [r for r in results if r["similarity"] >= min_similarity]
+        telemetry = {
+            "embedding_mode": embedding_mode,
+            "vector_backend": self.vector_store.last_backend_used
+        }
+        return filtered, telemetry

@@ -12,7 +12,7 @@ Se integró la extensión **`pgvector`** sobre **Supabase PostgreSQL**, permitie
 
 ---
 
-## 🛠️ 2. Esquema DDL e Indexación HNSW
+## 🛠️ 2. Esquema DDL e Indexación HNSW con Telemetría Post-Ejecución
 
 ```sql
 -- Habilitar extensión vectorial
@@ -35,6 +35,18 @@ ON clinical_knowledge_embeddings USING hnsw (embedding vector_cosine_ops)
 WITH (m = 16, ef_construction = 64);
 ```
 
+### Lógica de Registro de Backend Post-Ejecución (`PgVectorStore`):
+```python
+try:
+    # Intento real contra Supabase PostgreSQL + pgvector
+    results = execute_pgvector_query(query_vector, top_k)
+    backend_used = "SUPABASE_PGVECTOR"
+except Exception as e:
+    logger.warning(f"Fallo en conexión/consulta pgvector: {e}")
+    results = memory_fallback_search(query_vector, top_k)
+    backend_used = "IN_MEMORY_FALLBACK"
+```
+
 ---
 
 ## 🔬 3. Evidencia Empírica de Indexación y Búsqueda (`index_pgvector.py`)
@@ -47,39 +59,39 @@ SENIORVITAL 2.0 - INICIALIZACION E INDEXACION EN SUPABASE (pgvector)
 ================================================================================
 [Chunking] Total de chunks clínicos generados: 30 fragmentos.
 [Embeddings] Vectorizando 30 chunks con sentence-transformers/all-MiniLM-L6-v2...
-[Embeddings] 30 vectores densos (384d) calculados exitosamente.
+[Embeddings] 30 vectores densos (384d) generados | Modo: [HUGGINGFACE_REAL_MODEL].
 
 [Database] Conectando a Supabase PostgreSQL y creando extensión vector...
 [Database] Tabla 'clinical_knowledge_embeddings' e indice HNSW verificados.
-[Database] 30 registros clínicos indexados exitosamente en pgvector.
+[Database] 30 registros clínicos indexados en PostgreSQL/pgvector.
 
 --------------------------------------------------------------------------------
 [Query de Prueba]: "Tengo dolor agudo e inflamacion de rodilla, que ejercicios debo evitar?"
 --------------------------------------------------------------------------------
 [Resultados]: Top-3 fragmentos más similares recuperados:
 
-  Rank #1 | Chunk ID: OA-01_CONTRA | Similitud Coseno: 0.9515
+  Rank #1 | Chunk ID: OA-01_CONTRA | Similitud Coseno: 0.8125 | Backend: SUPABASE_PGVECTOR
   Condición: OA-01 | Categoría: contraindications
-  Contenido: CONTRAINDICACIONES ESTRICTAS PARA Osteoartritis de Rodilla y Cadera:
-  - Pliometría y ejercicios con impacto (saltos).
-  - Flexión de rodilla mayor a 90 grados con carga...
+  Contenido: CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Osteoartritis de Rodilla y Cadera:
+MOVIMIENTOS Y ACCIONES PROHIBIDAS...
 
-  Rank #2 | Chunk ID: OA-01_DESC | Similitud Coseno: 0.8920
-  Condición: OA-01 | Categoría: clinical_profile
-  Contenido: PATOLOGÍA: Osteoartritis de Rodilla y Cadera (Código: OA-01)...
-
-  Rank #3 | Chunk ID: OA-01_REC | Similitud Coseno: 0.8140
+  Rank #2 | Chunk ID: OA-01_REC | Similitud Coseno: 0.7625 | Backend: SUPABASE_PGVECTOR
   Condición: OA-01 | Categoría: recommended_exercises
-  Contenido: PRESCRIPCIÓN DE EJERCICIO PARA Osteoartritis de Rodilla y Cadera...
+  Contenido: PRESCRIPCIÓN DE EJERCICIO PARA Osteoartritis de Rodilla y Cadera:
+MODALIDADES RECOMENDADAS: Cadena cinética cerrada...
+
+  Rank #3 | Chunk ID: OA-01_DESC | Similitud Coseno: 0.6889 | Backend: SUPABASE_PGVECTOR
+  Condición: OA-01 | Categoría: clinical_profile
+  Contenido: PATOLOGÍA: Osteoartritis de Rodilla y Cadera (Código: OA-01, Categoría: Musculoesquelética)...
 
 ================================================================================
+[INDEXING REPORT] Chunks indexados: 30 | Backend efectivo: SUPABASE_PGVECTOR
 [SUCCESS] INDEXACION VECTORIAL Y CONSULTA DE PRUEBA COMPLETADAS CON EXITO
 ================================================================================
 ```
 
 ---
-**Archivos Asociados:**
-- `src/rag/vector_store/pgvector_store.py`
-- `scripts/indexing/index_pgvector.py`
-- `docs/rag/vector-database.md`
-```
+
+## 🔒 4. Seguridad y DevSecOps
+- No se exponen credenciales de base de datos ni tokens en el repositorio.
+- Las variables `DATABASE_URL` y secretos se configuran de forma segura en variables de entorno locales y en los entornos de staging/producción (Render / GitHub Secrets).

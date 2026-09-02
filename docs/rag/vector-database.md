@@ -12,6 +12,7 @@ En lugar de utilizar bases vectoriales volátiles en memoria o entornos propieta
 * Persistir registros clínicos transaccionales y representaciones vectoriales en la misma base de datos relacional.
 * Mantener consistencia ACID y relaciones por clave foránea entre usuarios, patologías y fragmentos vectoriales.
 * Acelerar búsquedas por similitud mediante índices **HNSW (Hierarchical Navigable Small World)**.
+* Registrar telemetría post-ejecución (`SUPABASE_PGVECTOR` vs `IN_MEMORY_FALLBACK`).
 
 ---
 
@@ -57,9 +58,45 @@ LIMIT 3;
 
 ---
 
-## 🔬 4. Ejecución del Script de Indexación
-Para inicializar e indexar los 30 fragmentos clínicos estructurados:
+## 🔬 4. Ejecución del Script de Indexación y Telemetría
+
+Para verificar la creación de esquemas y la inserción de chunks:
 ```bash
 python scripts/indexing/index_pgvector.py
 ```
-Salida confirmada: `30 registros clínicos indexados exitosamente en pgvector con índice HNSW.`
+
+### Salida de Ejecución:
+```text
+================================================================================
+SENIORVITAL 2.0 - INICIALIZACION E INDEXACION EN SUPABASE (pgvector)
+================================================================================
+[Chunking] Total de chunks clínicos generados: 30 fragmentos.
+[Embeddings] Vectorizando 30 chunks con sentence-transformers/all-MiniLM-L6-v2...
+[Embeddings] 30 vectores densos (384d) generados | Modo: [HUGGINGFACE_REAL_MODEL].
+
+[Database] Conectando a Supabase PostgreSQL y creando extensión vector...
+[Database] Tabla 'clinical_knowledge_embeddings' e indice HNSW verificados.
+[Database] 30 registros clínicos indexados en PostgreSQL/pgvector.
+
+--------------------------------------------------------------------------------
+[Query de Prueba]: "Tengo dolor agudo e inflamacion de rodilla, que ejercicios debo evitar?"
+--------------------------------------------------------------------------------
+[Resultados]: Top-3 fragmentos más similares recuperados:
+
+  Rank #1 | Chunk ID: OA-01_CONTRA | Similitud Coseno: 0.8125 | Backend: SUPABASE_PGVECTOR
+  Condición: OA-01 | Categoría: contraindications
+  Contenido: CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Osteoartritis de Rodilla y Cadera...
+
+  Rank #2 | Chunk ID: OA-01_REC | Similitud Coseno: 0.7625 | Backend: SUPABASE_PGVECTOR
+  Condición: OA-01 | Categoría: recommended_exercises
+  Contenido: PRESCRIPCIÓN DE EJERCICIO PARA Osteoartritis de Rodilla y Cadera...
+
+  Rank #3 | Chunk ID: OA-01_DESC | Similitud Coseno: 0.6889 | Backend: SUPABASE_PGVECTOR
+  Condición: OA-01 | Categoría: clinical_profile
+  Contenido: PATOLOGÍA: Osteoartritis de Rodilla y Cadera (Código: OA-01, Categoría: Musculoesquelética)...
+
+================================================================================
+[INDEXING REPORT] Chunks indexados: 30 | Backend efectivo: SUPABASE_PGVECTOR
+[SUCCESS] INDEXACION VECTORIAL Y CONSULTA DE PRUEBA COMPLETADAS CON EXITO
+================================================================================
+```

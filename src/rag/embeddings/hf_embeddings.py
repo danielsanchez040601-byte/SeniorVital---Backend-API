@@ -1,16 +1,18 @@
 """
 Generador de Embeddings Semánticos para SeniorVital.
 Modelo: sentence-transformers/all-MiniLM-L6-v2 (384 dimensiones).
-Soporta inferencia directa vía Hugging Face Inference API / Local y fallback determinista semántico para CI/Testing.
+Soporta inferencia directa vía Hugging Face Inference API / Local con Telemetría en Tiempo de Ejecución (Post-Execution Telemetry).
 """
-from typing import List
+from typing import List, Tuple, Dict, Any, Optional
 import os
 import re
 import math
+import logging
 import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 # Vocabulario de conceptos clínicos clave mapeados a bandas de dimensión semántica (384d)
 CLINICAL_CONCEPT_BANDS = {
@@ -101,7 +103,7 @@ class HuggingFaceEmbeddingsGenerator:
         self.is_ci = os.getenv("CI", "false").lower() in ("true", "1")
         self.api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{self.model_name}"
         self.dimension = 384
-        self.mode = "FALLBACK_CI" if (self.is_ci or not self.api_token) else "HUGGINGFACE_REAL_MODEL"
+        self.last_mode = "NOT_EXECUTED"
 
     def _normalize(self, vec: List[float]) -> List[float]:
         """Normaliza un vector a norma euclidiana L2 unitaria."""
@@ -123,19 +125,29 @@ class HuggingFaceEmbeddingsGenerator:
 
         return self._normalize(vec)
 
-    def embed_query(self, text: str) -> List[float]:
-        """Genera embedding para una consulta de búsqueda."""
-        embeddings = self.embed_documents([text])
-        return embeddings[0] if embeddings else [0.0] * self.dimension
+    def embed_query_with_telemetry(self, text: str) -> Tuple[List[float], str]:
+        """Genera embedding y retorna (vector, modo_post_ejecucion)."""
+        vectors, mode = self.embed_documents_with_telemetry([text])
+        vec = vectors[0] if vectors else [0.0] * self.dimension
+        self.last_mode = mode
+        return vec, mode
 
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        """Genera embeddings para un lote de documentos clínicos."""
-        if self.is_ci or not self.api_token:
-            return [self._deterministic_mock_vector(t) for t in texts]
+    def embed_documents_with_telemetry(self, texts: List[str]) -> Tuple[List[List[float]], str]:
+        """
+        Genera embeddings para un lote con evaluación post-ejecución:
+        - Intento real contra Hugging Face API / modelo.
+        - Fallback determinista capturando excepción o ausencia de credenciales.
+        """
+        token = self.api_token or os.getenv("HF_TOKEN", "")
+        if self.is_ci or not token or "your_" in token.lower():
+            vectors = [self._deterministic_mock_vector(t) for t in texts]
+            mode = "FALLBACK_CI"
+            self.last_mode = mode
+            return vectors, mode
 
-        headers = {"Authorization": f"Bearer {self.api_token}"}
+        headers = {"Authorization": f"Bearer {token}"}
         try:
-            with httpx.Client(timeout=15.0) as client:
+            with httpx.Client(timeout=10.0) as client:
                 response = client.post(
                     self.api_url, 
                     headers=headers, 
@@ -143,10 +155,36 @@ class HuggingFaceEmbeddingsGenerator:
                 )
                 if response.status_code == 200:
                     data = response.json()
-                    if isinstance(data, list) and len(data) > 0 and isinstance(data[0], list):
-                        return [self._normalize(v) for v in data]
-                    elif isinstance(data, list) and len(data) > 0 and isinstance(data[0], (int, float)):
-                        return [self._normalize(data)]
-                return [self._deterministic_mock_vector(t) for t in texts]
-        except Exception:
-            return [self._deterministic_mock_vector(t) for t in texts]
+                    if isinstance(data, list) and len(data) > 0:
+                        if isinstance(data[0], list):
+                            vectors = [self._normalize(v) for v in data]
+                            mode = "HUGGINGFACE_REAL_MODEL"
+                            self.last_mode = mode
+                            return vectors, mode
+                        elif isinstance(data[0], (int, float)):
+                            vectors = [self._normalize(data)]
+                            mode = "HUGGINGFACE_REAL_MODEL"
+                            self.last_mode = mode
+                            return vectors, mode
+                # Si el status code fue distinto de 200
+                logger.warning(f"Respuesta inesperada de Hugging Face API: status={response.status_code}")
+                vectors = [self._deterministic_mock_vector(t) for t in texts]
+                mode = "FALLBACK_API_ERROR"
+                self.last_mode = mode
+                return vectors, mode
+        except Exception as e:
+            logger.warning(f"Fallo en inferencia HF: {e}")
+            vectors = [self._deterministic_mock_vector(t) for t in texts]
+            mode = "FALLBACK_API_ERROR" if token else "FALLBACK_CI"
+            self.last_mode = mode
+            return vectors, mode
+
+    def embed_query(self, text: str) -> List[float]:
+        """Genera embedding para una consulta de búsqueda."""
+        vec, mode = self.embed_query_with_telemetry(text)
+        return vec
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        """Genera embeddings para un lote de documentos clínicos."""
+        vectors, mode = self.embed_documents_with_telemetry(texts)
+        return vectors

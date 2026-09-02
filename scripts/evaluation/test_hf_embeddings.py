@@ -1,6 +1,6 @@
 """
 Script de Evaluación y Verificación de Embeddings Semánticos Hugging Face.
-Ejecuta la vectorización de 3 fragmentos clínicos reales y comprueba dimensiones y normas L2.
+Ejecuta la vectorización de 3 fragmentos clínicos reales y comprueba dimensiones, normas L2 y modo post-ejecución.
 """
 import os
 import sys
@@ -23,7 +23,6 @@ def main():
     generator = HuggingFaceEmbeddingsGenerator()
     print(f"[Config] Modelo Configurado: {generator.model_name}")
     print(f"[Config] Dimension Esperada: {generator.dimension}")
-    print(f"[Config] Modo de Operacion Activo: [{generator.mode}]")
     print("-" * 80)
 
     test_samples = [
@@ -48,11 +47,12 @@ def main():
         print(f"\n[Muestra {idx}/3]: {sample['id']} - {sample['condicion']}")
         print(f"[Texto]: \"{sample['text'][:85]}...\"")
         
-        vector = generator.embed_query(sample['text'])
+        vector, mode = generator.embed_query_with_telemetry(sample['text'])
         dim = len(vector)
         norm = compute_l2_norm(vector)
         first_five = [round(v, 6) for v in vector[:5]]
 
+        print(f"[Modo Post-Ejecucion]: [{mode}]")
         print(f"[Tensor] Dimension: {dim} float32 (Esperado: 384)")
         print(f"[Norma] Euclidiana L2: {norm:.4f} (Vector Unitario Normalizado)")
         print(f"[Floats] Primeros 5 Valores: {first_five}")
