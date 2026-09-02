@@ -1,5 +1,5 @@
 """
-Script de Demostración y Verificación del Pipeline RAG End-to-End.
+Script de Demostración y Verificación del Pipeline RAG End-to-End con Telemetría Post-Ejecución.
 Ejecuta 3 casos representativos:
 1. Caso A: Consulta clínica con contraindicaciones estrictas (Osteoartritis).
 2. Caso B: Plan de prescripción de ejercicios seguros (Sarcopenia).
@@ -7,6 +7,7 @@ Ejecuta 3 casos representativos:
 """
 import os
 import sys
+import json
 import asyncio
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -53,6 +54,7 @@ async def main():
 
         print(f"[Estado]: {res['status']}")
         print(f"[Proveedor]: {res['provider']}")
+        print(f"[Telemetria Post-Ejecucion]: {json.dumps(res.get('telemetry', {}), indent=2)}")
         
         chunks = res.get("retrieved_chunks", [])
         print(f"[Chunks Recuperados ({len(chunks)})]:")
@@ -61,9 +63,10 @@ async def main():
             print(f"   * Chunk ID: {c.get('chunk_id')} | Condicion: {c.get('condition_id')} | Similitud: {sim:.4f} | Tipo: {c.get('category')}")
 
         if res.get("context_injected"):
-            print(f"\n[Contexto Inyectado (Muestra)]:\n{res['context_injected'][:260]}...\n")
+            print(f"\n[Contexto Inyectado (Muestra)]:\n{res['context_injected'][:200]}...")
 
-        print(f"[Respuesta Generada]:\n{res['response']}")
+        resp_clean = res['response'].encode('ascii', 'ignore').decode('ascii')
+        print(f"\n[Respuesta Generada]:\n{resp_clean}")
         print("#" * 85)
 
     print("\n" + "=" * 85)

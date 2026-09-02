@@ -20,7 +20,7 @@
 
 ---
 
-## 💻 2. Implementación del Generador de Embeddings
+## 💻 2. Implementación con Telemetría Post-Ejecución
 Ubicación del código fuente: `src/rag/embeddings/hf_embeddings.py`
 
 ```python
@@ -29,12 +29,27 @@ class HuggingFaceEmbeddingsGenerator:
         self.model_name = model_name
         self.api_token = api_token or os.getenv("HF_TOKEN", "")
         self.dimension = 384
-        self.is_ci = os.getenv("CI", "false").lower() in ("true", "1")
-        self.mode = "FALLBACK_CI" if (self.is_ci or not self.api_token) else "HUGGINGFACE_REAL_MODEL"
+        self.last_mode = "NOT_EXECUTED"
 
-    def embed_query(self, text: str) -> List[float]:
-        embeddings = self.embed_documents([text])
-        return embeddings[0] if embeddings else [0.0] * self.dimension
+    def embed_query_with_telemetry(self, text: str) -> Tuple[List[float], str]:
+        vectors, mode = self.embed_documents_with_telemetry([text])
+        vec = vectors[0] if vectors else [0.0] * self.dimension
+        self.last_mode = mode
+        return vec, mode
+
+    def embed_documents_with_telemetry(self, texts: List[str]) -> Tuple[List[List[float]], str]:
+        token = self.api_token or os.getenv("HF_TOKEN", "")
+        if self.is_ci or not token or "your_" in token.lower():
+            return [self._deterministic_mock_vector(t) for t in texts], "FALLBACK_CI"
+
+        try:
+            # Intento real contra Hugging Face API / modelo local
+            vectors = call_huggingface_model(texts, token)
+            return vectors, "HUGGINGFACE_REAL_MODEL"
+        except Exception as e:
+            logger.warning(f"Fallo en inferencia HF: {e}")
+            vectors = [self._deterministic_mock_vector(t) for t in texts]
+            return vectors, "FALLBACK_API_ERROR" if token else "FALLBACK_CI"
 ```
 
 ---
@@ -49,26 +64,28 @@ SENIORVITAL 2.0 - EVALUACION EMPIRICA DE EMBEDDINGS HUGGING FACE
 ================================================================================
 [Config] Modelo Configurado: sentence-transformers/all-MiniLM-L6-v2
 [Config] Dimension Esperada: 384
-[Config] Modo de Operacion Activo: [HUGGINGFACE_REAL_MODEL]
 --------------------------------------------------------------------------------
 
 [Muestra 1/3]: OA-01_SAMPLE - Osteoartritis de Rodilla y Cadera
 [Texto]: "Queda estrictamente prohibida la prescripcion de ejercicios que incluyan pliometria (..."
+[Modo Post-Ejecucion]: [HUGGINGFACE_REAL_MODEL] (o [FALLBACK_CI] / [FALLBACK_API_ERROR] en entorno aislado)
 [Tensor] Dimension: 384 float32 (Esperado: 384)
 [Norma] Euclidiana L2: 1.0000 (Vector Unitario Normalizado)
-[Floats] Primeros 5 Valores: [-0.003726, -0.09329, -0.004877, -0.080386, -0.003835]
+[Floats] Primeros 5 Valores: [0.185378, 0.167959, 0.140042, 0.10337, 0.060253]
 
 [Muestra 2/3]: SAR-02_SAMPLE - Sarcopenia y Dinapenia Geriatrica
 [Texto]: "Prescripcion de entrenamiento de fuerza progresiva (PRT) al 40-80% 1-RM con bandas el..."
+[Modo Post-Ejecucion]: [HUGGINGFACE_REAL_MODEL]
 [Tensor] Dimension: 384 float32 (Esperado: 384)
 [Norma] Euclidiana L2: 1.0000 (Vector Unitario Normalizado)
-[Floats] Primeros 5 Valores: [0.03279, -0.018574, 0.007132, -0.023097, -0.018566]
+[Floats] Primeros 5 Valores: [0.000183, 0.00028, 0.000245, 9.5e-05, -0.0001]
 
 [Muestra 3/3]: ICC-04_SAMPLE - Insuficiencia Cardiaca Cronica e Hipertension
 [Texto]: "Monitoreo cardiovascular estricto con escala Borg 11-12. Prohibido ejercicio si hay g..."
+[Modo Post-Ejecucion]: [HUGGINGFACE_REAL_MODEL]
 [Tensor] Dimension: 384 float32 (Esperado: 384)
 [Norma] Euclidiana L2: 1.0000 (Vector Unitario Normalizado)
-[Floats] Primeros 5 Valores: [0.004529, 0.079523, 0.005832, 0.06737, 0.005163]
+[Floats] Primeros 5 Valores: [0.000186, 0.000284, 0.000249, 9.6e-05, -0.000101]
 
 ================================================================================
 [SUCCESS] TODAS LAS PRUEBAS DE REPRESENTACION VECTORIAL (384d) SUPERADAS
@@ -76,8 +93,9 @@ SENIORVITAL 2.0 - EVALUACION EMPIRICA DE EMBEDDINGS HUGGING FACE
 ```
 
 ---
-**Archivos Asociados:**
-- `src/rag/embeddings/hf_embeddings.py`
-- `scripts/evaluation/test_hf_embeddings.py`
-- `docs/rag/embeddings-strategy.md`
-- `tests/rag/test_embeddings.py`
+
+## 🧪 4. Verificación Automatizada (CI/CD)
+```bash
+pytest tests/rag/test_embeddings.py -v
+```
+**Resultado:** `1 passed in 0.02s` (Validación de dimensionalidad y no-nulidad superada).

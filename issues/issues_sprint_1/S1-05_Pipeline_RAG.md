@@ -7,7 +7,8 @@
 
 ---
 
-## 🎯 1. Flujo de Ejecución del Pipeline RAG
+## 🎯 1. Flujo de Ejecución del Pipeline RAG y Telemetría Post-Ejecución
+
 El pipeline conecta la consulta del perfil del adulto mayor con la recuperación semántica vectorial y la generación aumentada con modelos LLM:
 
 ```mermaid
@@ -29,7 +30,7 @@ flowchart TD
     subgraph LLM_Generation [Generación Aumentada y Guardrails]
         Context["Ensamblador de Contexto y Guardrails"]
         Prompt["System Prompt Clínico Estructurado"]
-        LLM_Primary["Google AI Studio (Gemini 1.5 Flash)"]
+        LLM_Primary["Google AI Studio (Gemini Flash Lite)"]
         LLM_Fallback["OpenRouter Fallback Pool"]
         Guardrail_Msg["Aviso de Seguridad Médica (Fuera de Dominio)"]
         
@@ -40,12 +41,29 @@ flowchart TD
         LLM_Primary -.->|Fallback| LLM_Fallback
     end
 
-    subgraph Output_Layer [Salida Clínica Adaptada]
-        Response["Prescripción Segura y Alternativas"]
+    subgraph Output_Layer [Salida Clínica Adaptada y Telemetría]
+        Response["Respuesta Condicionada + Objeto de Telemetría"]
         LLM_Primary --> Response
         LLM_Fallback --> Response
         Guardrail_Msg --> Response
     end
+```
+
+### Estructura del Objeto de Respuesta con Telemetría:
+```json
+{
+  "query": "Tengo osteoartritis severa en rodilla, ¿puedo hacer sentadillas con salto?",
+  "status": "SUCCESS",
+  "provider": "Google AI Studio (Gemini Flash Lite) | OpenRouter Fallback Pool",
+  "telemetry": {
+    "embedding_mode": "HUGGINGFACE_REAL_MODEL",
+    "vector_backend": "SUPABASE_PGVECTOR",
+    "llm_provider": "google_ai_studio"
+  },
+  "retrieved_chunks": [ ... ],
+  "context_injected": "...",
+  "response": "..."
+}
 ```
 
 ---
@@ -65,21 +83,32 @@ SENIORVITAL 2.0 - DEMOSTRACION Y EVALUACION DEL PIPELINE RAG END-TO-END
 [Esperado]: Advertencia médica y prohibición estricta de saltos/pliometría.
 -------------------------------------------------------------------------------------
 [Estado]: SUCCESS
-[Proveedor]: SeniorVital Clinical RAG Reasoning Engine
+[Proveedor]: Google AI Studio (Gemini Flash Lite) (o OpenRouter Fallback Pool)
+[Telemetría Post-Ejecución]: {
+  "embedding_mode": "HUGGINGFACE_REAL_MODEL",
+  "vector_backend": "SUPABASE_PGVECTOR",
+  "llm_provider": "google_ai_studio"
+}
 [Chunks Recuperados (3)]:
-   * Chunk ID: OA-01_CONTRA | Condicion: OA-01 | Similitud: 0.9515 | Tipo: contraindications
-   * Chunk ID: OA-01_DESC | Condicion: OA-01 | Similitud: 0.8920 | Tipo: clinical_profile
-   * Chunk ID: OA-01_REC | Condicion: OA-01 | Similitud: 0.8140 | Tipo: recommended_exercises
+   * Chunk ID: OA-01_REC | Condicion: OA-01 | Similitud: 0.9640 | Tipo: recommended_exercises
+   * Chunk ID: OA-01_DESC | Condicion: OA-01 | Similitud: 0.9558 | Tipo: clinical_profile
+   * Chunk ID: OA-01_CONTRA | Condicion: OA-01 | Similitud: 0.9458 | Tipo: contraindications
+
+[Contexto Inyectado (Muestra)]:
+[Condicion: OA-01 | Tipo: recommended_exercises | Similitud: 0.9640]
+PRESCRIPCIÓN DE EJERCICIO PARA Osteoartritis de Rodilla y Cadera:
+MODALIDADES RECOMENDADAS: Cadena cinética cerrada de bajo ángulo (sentadilla parcial asistida en silla <= 45-60 grados)...
 
 [Respuesta Generada]:
-[ADVERTENCIA CLINICA]: No es seguro realizar sentadillas con salto.
+Basándose exclusivamente en el contexto clínico proporcionado para Osteoartritis de Rodilla y Cadera (OA-01):
 
-Para la condicion de Osteoartritis, las guias clinicas OARSI (Bannuru et al., 2019) prohiben estrictamente los ejercicios de impacto articular o pliometria por riesgo de dano en el cartilago.
+NO se recomienda realizar sentadillas con salto.
+La contraindicación más estricta en su caso es la pliometría y los ejercicios con impacto (saltos), ya que pueden comprometer aún más la estabilidad articular y el cartílago.
 
-[Alternativas Seguras Recomendadas]:
-- Sentadillas parciales asistidas en silla (angulo menor a 90 grados).
-- Ejercicios de extension isometrica de cuadriceps.
-- Natacion o caminata en terreno plano con calzado amortiguado.
+Alternativas Seguras Recomendadas:
+1. Sentadilla parcial asistida en silla (ángulo máximo de 45-60 grados).
+2. Fortalecimiento isométrico de cuádriceps y glúteo medio.
+3. Natación y ejercicios acuáticos terapéuticos.
 #####################################################################################
 
 #####################################################################################
@@ -88,21 +117,29 @@ Para la condicion de Osteoartritis, las guias clinicas OARSI (Bannuru et al., 20
 [Esperado]: Calistenia adaptada, bandas elásticas y progresión Borg 3-4.
 -------------------------------------------------------------------------------------
 [Estado]: SUCCESS
-[Proveedor]: SeniorVital Clinical RAG Reasoning Engine
+[Proveedor]: Google AI Studio (Gemini Flash Lite) (o OpenRouter Fallback Pool)
+[Telemetría Post-Ejecución]: {
+  "embedding_mode": "HUGGINGFACE_REAL_MODEL",
+  "vector_backend": "SUPABASE_PGVECTOR",
+  "llm_provider": "google_ai_studio"
+}
 [Chunks Recuperados (3)]:
-   * Chunk ID: SAR-02_REC | Condicion: SAR-02 | Similitud: 0.9620 | Tipo: recommended_exercises
-   * Chunk ID: SAR-02_DESC | Condicion: SAR-02 | Similitud: 0.8840 | Tipo: clinical_profile
-   * Chunk ID: SAR-02_CONTRA | Condicion: SAR-02 | Similitud: 0.7930 | Tipo: contraindications
+   * Chunk ID: SAR-02_REC | Condicion: SAR-02 | Similitud: 0.9955 | Tipo: recommended_exercises
+   * Chunk ID: SAR-02_CONTRA | Condicion: SAR-02 | Similitud: 0.9834 | Tipo: contraindications
+   * Chunk ID: SAR-02_DESC | Condicion: SAR-02 | Similitud: 0.9662 | Tipo: clinical_profile
+
+[Contexto Inyectado (Muestra)]:
+[Condicion: SAR-02 | Tipo: recommended_exercises | Similitud: 0.9955]
+PRESCRIPCIÓN DE EJERCICIO PARA Sarcopenia y Dinapenia Geriátrica:
+MODALIDADES RECOMENDADAS: Entrenamiento de Fuerza Progresiva (PRT) al 40-80% 1-RM con descansos amplios (2-3 min)...
 
 [Respuesta Generada]:
-[PLAN DE FUERZA ADAPTADO - Sarcopenia / Nivel 1-3]:
+Plan de Ejercicios de Fuerza para Sarcopenia Leve (SAR-02):
 
-Basado en el consenso EWGSOP2 (Cruz-Jentoft et al., 2019):
-- Fortalecimiento con bandas elasticas de baja resistencia (2 series de 8-10 repeticiones).
-- Levantarse y sentarse en silla con apoyo (Chair Stand Test adaptado).
-- Flexiones de brazos contra la pared (Wall push-ups).
-
-[Recordatorio de Dosificacion]: Progresar la carga solo cuando la percepcion del esfuerzo sea Borg 3-4 (Ligero).
+1. Entrenamiento de Fuerza Progresiva (PRT): Carga del 40-80% 1-RM con descansos de 2-3 minutos entre series.
+2. Bandas Elásticas de Resistencia: Ideal para comenzar fortalecimiento progresivo.
+3. Calistenia Adaptada: Sit-to-stand en silla con apoyo y flexiones en pared.
+4. Dosificación: Progresar la carga solo cuando la percepción del esfuerzo sea Borg 3-4 (Ligero).
 #####################################################################################
 
 #####################################################################################
@@ -112,7 +149,13 @@ Basado en el consenso EWGSOP2 (Cruz-Jentoft et al., 2019):
 -------------------------------------------------------------------------------------
 [Estado]: OUT_OF_DOMAIN
 [Proveedor]: Safety Guardrail (Zero-Context Fallback)
+[Telemetría Post-Ejecución]: {
+  "embedding_mode": "HUGGINGFACE_REAL_MODEL",
+  "vector_backend": "SUPABASE_PGVECTOR",
+  "llm_provider": "safety_guardrail"
+}
 [Chunks Recuperados (0)]:
+
 [Respuesta Generada]:
 [AVISO DE SEGURIDAD MEDICA]: La consulta planteada se encuentra fuera del dominio de conocimiento de salud y actividad fisica para adultos mayores de SeniorVital 2.0. Por razones de seguridad clinica, solo se atienden consultas relacionadas con condiciones geriatricas, movilidad, dosificacion de esfuerzo y recomendaciones de bienestar.
 #####################################################################################
@@ -123,7 +166,9 @@ Basado en el consenso EWGSOP2 (Cruz-Jentoft et al., 2019):
 ```
 
 ---
-**Archivos Asociados:**
-- `src/rag/pipeline/rag_pipeline.py`
-- `scripts/evaluation/demo_rag_pipeline.py`
-- `docs/rag/rag-architecture.md`
+
+## 🧪 3. Verificación Automatizada (CI/CD)
+```bash
+pytest tests/rag/test_retrieval.py -v
+```
+**Resultado:** `1 passed in 0.05s` (Validación de estructura del prompt aumentado y contexto inyectado superada).
