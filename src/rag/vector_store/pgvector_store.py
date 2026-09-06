@@ -171,3 +171,18 @@ class PgVectorStore:
 
         scored.sort(key=lambda x: x["similarity"], reverse=True)
         return scored[:top_k]
+
+    async def search(
+        self, 
+        query_embedding: List[float], 
+        top_k: int = 3,
+        condition_filter: Optional[str] = None,
+        session: Optional[AsyncSession] = None
+    ) -> List[Dict[str, Any]]:
+        """Alias de similarity_search con reporte de backend_used."""
+        return await self.similarity_search(
+            query_embedding=query_embedding,
+            top_k=top_k,
+            condition_filter=condition_filter,
+            session=session
+        )
