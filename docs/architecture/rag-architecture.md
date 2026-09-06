@@ -43,7 +43,7 @@ flowchart TD
         
         Pipeline --> Prompt
         Prompt --> LLM_Primary
-        LLM_Primary -.->|Fallback 429/503| LLM_Fallback
+        LLM_Primary -.->|Fallback 429/503/Timeout| LLM_Fallback
         LLM_Fallback -.->|Fallback Offline| Deterministic_Engine
     end
 
@@ -57,15 +57,46 @@ flowchart TD
 
 ---
 
-## 2. Telemetría en Tiempo de Ejecución (Post-Execution Telemetry)
+## 2. Distinción Formal: Arquitectura Configurada vs. Efectivamente Ejecutada
 
-Para garantizar trazabilidad real y evitar reportes basados en configuración estática, el sistema recopila los backends que **efectivamente produjeron el resultado**:
+Para evitar ambigüedades técnicas y asegurar la reproducibilidad de los resultados, el sistema formaliza la diferencia entre lo soportado contractualmente y lo ejecutado empíricamente en cada corrida:
+
+### A. Arquitectura Configurada (Soporte Contractual del Sistema)
+1. **Capa de Embeddings:**
+   * Modelo: `sentence-transformers/all-MiniLM-L6-v2` ($d=384$).
+   * Inferencia: Hugging Face Inference API / Local.
+   * Normalización: Norma Euclidiana L2 unitaria ($||v||_2 = 1.0$).
+   * Resiliencia: Fallback determinista proyectado en 384 dimensiones.
+2. **Capa de Persistencia Vectorial:**
+   * Motor: PostgreSQL 15+ con extensión `pgvector` en Supabase.
+   * Tabla: `clinical_knowledge_embeddings`.
+   * Indexación: Índice `HNSW` (`vector_cosine_ops`, $m=16$, $ef\_construction=64$).
+   * Resiliencia: Almacenamiento en memoria con cálculo exacto de similitud coseno (`IN_MEMORY_FALLBACK`).
+3. **Capa de Razonamiento LLM:**
+   * Nivel 1: Google AI Studio (`gemini-flash-lite-latest`, `gemini-2.5-flash-lite`).
+   * Nivel 2: Pool OpenRouter (`liquid/lfm-2.5-2.6b:free`, `meta-llama/llama-3.2-3b-instruct:free`).
+   * Nivel 3: Motor de Razonamiento Clínico Determinista SeniorVital.
+4. **Guardrails de Seguridad:**
+   * Filtro semántico por umbral de relevancia ($\ge 0.40$).
+   * Zero-Context Fallback ante consultas fuera del dominio geriátrico.
+
+### B. Arquitectura Efectivamente Ejecutada (Evidencia Empírica de Pruebas)
+En las validaciones locales y runners de CI/CD:
+* **Embeddings:** `FALLBACK_API_ERROR` / `FALLBACK_CI` (vectorización determinista de 384d cuando no hay conexión externa o en entorno de test).
+* **Base Vectorial:** `IN_MEMORY_FALLBACK` (indexación y búsqueda vectorial en memoria de los 30 chunks clínicos).
+* **Proveedor LLM:** `deterministic_fallback` (generación segura basada en guías clínicas sin alucinaciones).
+
+---
+
+## 3. Telemetría en Tiempo de Ejecución (Post-Execution Telemetry)
+
+La asignación de estados se realiza exclusivamente tras la ejecución efectiva de cada bloque:
 
 ```json
 {
-  "query": "Tengo osteoartritis severa en rodilla, ¿puedo hacer sentadillas con salto?",
+  "query": "Tengo osteoartritis severa en rodilla, puedo hacer sentadillas con salto?",
   "status": "SUCCESS",
-  "provider": "Google AI Studio (Gemini Flash Lite) | OpenRouter Fallback Pool",
+  "provider": "SeniorVital Clinical RAG Reasoning Engine",
   "telemetry": {
     "embedding_mode": "HUGGINGFACE_REAL_MODEL | FALLBACK_CI | FALLBACK_API_ERROR",
     "vector_backend": "SUPABASE_PGVECTOR | IN_MEMORY_FALLBACK",
@@ -79,7 +110,7 @@ Para garantizar trazabilidad real y evitar reportes basados en configuración es
 
 ---
 
-## 3. Responsabilidad de Componentes y Decisiones de Diseño
+## 4. Responsabilidad de Componentes y Decisiones de Diseño
 
 | Componente | Módulo en `/src` | Responsabilidad Técnica | Decisión de Diseño Justificada |
 | :--- | :--- | :--- | :--- |
@@ -87,12 +118,12 @@ Para garantizar trazabilidad real y evitar reportes basados en configuración es
 | **Chunker** | `src/knowledge/chunking/` | Divide cada patología en fragmentos (`_DESC`, `_REC`, `_CONTRA`). | Evita contaminación entre prescripciones y contraindicaciones. |
 | **Embeddings** | `src/rag/embeddings/` | Genera vectores de 384 dimensiones (`all-MiniLM-L6-v2`). | Telemetría post-ejecución (`HUGGINGFACE_REAL_MODEL` vs fallback). |
 | **Vector Store** | `src/rag/vector_store/` | Persistencia en PostgreSQL + `pgvector` con índice `HNSW`. | Registro de backend (`SUPABASE_PGVECTOR` vs `IN_MEMORY_FALLBACK`). |
-| **Retriever** | `src/rag/retriever/` | Recuperación semántica Top-K con filtrado por metadatos. | Búsqueda coseno de alta velocidad ($< 5\text{ ms}$). |
+| **Retriever** | `src/rag/retriever/` | Recuperación semántica Top-K con filtrado por metadatos. | Búsqueda coseno de alta velocidad. |
 | **Pipeline E2E** | `src/rag/pipeline/` | Enrutamiento, guardrails de seguridad y generación LLM. | Guardrail para consultas fuera de dominio (Zero-Context Fallback). |
 
 ---
 
-## 4. Matriz de Trazabilidad S1-01 $\rightarrow$ S1-07
+## 5. Matriz de Trazabilidad S1-01 $\rightarrow$ S1-07
 
 | Issue | Entregable en `/src` | Documentación | Script de Prueba | Métrica / Resultado | Estado |
 | :--- | :--- | :--- | :--- | :--- | :---: |
