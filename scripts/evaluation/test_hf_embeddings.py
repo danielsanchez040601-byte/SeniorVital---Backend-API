@@ -58,9 +58,13 @@ def main():
         print(f"[Floats] Primeros 5 Valores: {first_five}")
         assert dim == 384, f"Error: Dimension invalida {dim}"
         assert abs(norm - 1.0) < 0.01, f"Error: Vector no normalizado (norma={norm})"
+        assert mode == "HUGGINGFACE_REAL_MODEL", (
+            f"Fallo de Validacion de Criterio S1-03: Se requiere ejecucion real con 'HUGGINGFACE_REAL_MODEL', "
+            f"pero se obtuvo '{mode}'. La evidencia no es valida para certificar inferencia real del modelo Hugging Face."
+        )
 
     print("\n" + "=" * 80)
-    print("[SUCCESS] TODAS LAS PRUEBAS DE REPRESENTACION VECTORIAL (384d) SUPERADAS")
+    print("[SUCCESS] TODAS LAS PRUEBAS DE REPRESENTACION VECTORIAL (384d) SUPERADAS (MODO REAL: HUGGINGFACE_REAL_MODEL)")
     print("=" * 80)
 
 

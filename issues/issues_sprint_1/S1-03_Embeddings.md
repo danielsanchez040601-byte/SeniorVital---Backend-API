@@ -68,27 +68,27 @@ SENIORVITAL 2.0 - EVALUACION EMPIRICA DE EMBEDDINGS HUGGING FACE
 
 [Muestra 1/3]: OA-01_SAMPLE - Osteoartritis de Rodilla y Cadera
 [Texto]: "Queda estrictamente prohibida la prescripcion de ejercicios que incluyan pliometria (..."
-[Modo Post-Ejecucion]: [HUGGINGFACE_REAL_MODEL] (o [FALLBACK_CI] / [FALLBACK_API_ERROR] en entorno aislado)
+[Modo Post-Ejecucion]: [HUGGINGFACE_REAL_MODEL]
 [Tensor] Dimension: 384 float32 (Esperado: 384)
 [Norma] Euclidiana L2: 1.0000 (Vector Unitario Normalizado)
-[Floats] Primeros 5 Valores: [0.185378, 0.167959, 0.140042, 0.10337, 0.060253]
+[Floats] Primeros 5 Valores: [0.001616, -0.02928, 0.023609, -0.064185, 0.002837]
 
 [Muestra 2/3]: SAR-02_SAMPLE - Sarcopenia y Dinapenia Geriatrica
 [Texto]: "Prescripcion de entrenamiento de fuerza progresiva (PRT) al 40-80% 1-RM con bandas el..."
 [Modo Post-Ejecucion]: [HUGGINGFACE_REAL_MODEL]
 [Tensor] Dimension: 384 float32 (Esperado: 384)
 [Norma] Euclidiana L2: 1.0000 (Vector Unitario Normalizado)
-[Floats] Primeros 5 Valores: [0.000183, 0.00028, 0.000245, 9.5e-05, -0.0001]
+[Floats] Primeros 5 Valores: [-0.012771, 0.070441, -0.119277, -0.047018, -0.018115]
 
 [Muestra 3/3]: ICC-04_SAMPLE - Insuficiencia Cardiaca Cronica e Hipertension
 [Texto]: "Monitoreo cardiovascular estricto con escala Borg 11-12. Prohibido ejercicio si hay g..."
 [Modo Post-Ejecucion]: [HUGGINGFACE_REAL_MODEL]
 [Tensor] Dimension: 384 float32 (Esperado: 384)
 [Norma] Euclidiana L2: 1.0000 (Vector Unitario Normalizado)
-[Floats] Primeros 5 Valores: [0.000186, 0.000284, 0.000249, 9.6e-05, -0.000101]
+[Floats] Primeros 5 Valores: [-0.014726, 0.075218, -0.07605, 0.013499, -0.088733]
 
 ================================================================================
-[SUCCESS] TODAS LAS PRUEBAS DE REPRESENTACION VECTORIAL (384d) SUPERADAS
+[SUCCESS] TODAS LAS PRUEBAS DE REPRESENTACION VECTORIAL (384d) SUPERADAS (MODO REAL: HUGGINGFACE_REAL_MODEL)
 ================================================================================
 ```
 

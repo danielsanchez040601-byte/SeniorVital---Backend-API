@@ -66,34 +66,35 @@ python scripts/evaluation/test_hf_embeddings.py
 ### Registro de Ejecución Real Obtenido:
 ```text
 ================================================================================
-SENIORVITAL 2.0 - PRUEBA REPRODUCIBLE DE EMBEDDINGS VECTORIALES (S1-03)
+SENIORVITAL 2.0 - EVALUACION EMPIRICA DE EMBEDDINGS HUGGING FACE
 ================================================================================
-[Config] Modelo Configurado: sentence-transformers/all-MiniLM-L6-v2 (dim=384)
-[Config] Estado Token HF: Configurado (Inferencia API Hugging Face)
-
+[Config] Modelo Configurado: sentence-transformers/all-MiniLM-L6-v2
+[Config] Dimension Esperada: 384
 --------------------------------------------------------------------------------
+
 [Muestra 1/3]: OA-01_SAMPLE - Osteoartritis de Rodilla y Cadera
-[Texto]: "Osteoartritis de Rodilla y Cadera. Dolor mecánico y rigidez articular matutina..."
-[Modo Inferencia]: [MODE: HUGGINGFACE_REAL_MODEL]
-[Tensor] Dimensión: 384 float32 | [Norma] Euclidiana L2: 1.0000
-[Vector (primeros 5 valores)]: [-0.003726, -0.09329, 0.052044, 0.019992, -0.015243]
+[Texto]: "Queda estrictamente prohibida la prescripcion de ejercicios que incluyan pliometria (..."
+[Modo Post-Ejecucion]: [HUGGINGFACE_REAL_MODEL]
+[Tensor] Dimension: 384 float32 (Esperado: 384)
+[Norma] Euclidiana L2: 1.0000 (Vector Unitario Normalizado)
+[Floats] Primeros 5 Valores: [0.001616, -0.02928, 0.023609, -0.064185, 0.002837]
 
---------------------------------------------------------------------------------
-[Muestra 2/3]: SAR-02_SAMPLE - Sarcopenia y Dinapenia Geriátrica
-[Texto]: "Sarcopenia y Dinapenia Geriátrica. Pérdida progresiva de masa muscular..."
-[Modo Inferencia]: [MODE: HUGGINGFACE_REAL_MODEL]
-[Tensor] Dimensión: 384 float32 | [Norma] Euclidiana L2: 1.0000
-[Vector (primeros 5 valores)]: [-0.046355, -0.051911, 0.038596, -0.013589, 0.005116]
+[Muestra 2/3]: SAR-02_SAMPLE - Sarcopenia y Dinapenia Geriatrica
+[Texto]: "Prescripcion de entrenamiento de fuerza progresiva (PRT) al 40-80% 1-RM con bandas el..."
+[Modo Post-Ejecucion]: [HUGGINGFACE_REAL_MODEL]
+[Tensor] Dimension: 384 float32 (Esperado: 384)
+[Norma] Euclidiana L2: 1.0000 (Vector Unitario Normalizado)
+[Floats] Primeros 5 Valores: [-0.012771, 0.070441, -0.119277, -0.047018, -0.018115]
 
---------------------------------------------------------------------------------
-[Muestra 3/3]: OST-03_SAMPLE - Osteoporosis y Riesgo de Fracturas
-[Texto]: "Osteoporosis y Riesgo de Fracturas. Deterioro de la microarquitectura ósea..."
-[Modo Inferencia]: [MODE: HUGGINGFACE_REAL_MODEL]
-[Tensor] Dimensión: 384 float32 | [Norma] Euclidiana L2: 1.0000
-[Vector (primeros 5 valores)]: [0.000492, -0.07038, 0.049405, 0.006935, -0.021008]
+[Muestra 3/3]: ICC-04_SAMPLE - Insuficiencia Cardiaca Cronica e Hipertension
+[Texto]: "Monitoreo cardiovascular estricto con escala Borg 11-12. Prohibido ejercicio si hay g..."
+[Modo Post-Ejecucion]: [HUGGINGFACE_REAL_MODEL]
+[Tensor] Dimension: 384 float32 (Esperado: 384)
+[Norma] Euclidiana L2: 1.0000 (Vector Unitario Normalizado)
+[Floats] Primeros 5 Valores: [-0.014726, 0.075218, -0.07605, 0.013499, -0.088733]
 
 ================================================================================
-[SUCCESS] TODAS LAS PRUEBAS DE REPRESENTACION VECTORIAL (384d) SUPERADAS
+[SUCCESS] TODAS LAS PRUEBAS DE REPRESENTACION VECTORIAL (384d) SUPERADAS (MODO REAL: HUGGINGFACE_REAL_MODEL)
 ================================================================================
 ```
 

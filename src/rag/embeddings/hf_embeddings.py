@@ -145,39 +145,51 @@ class HuggingFaceEmbeddingsGenerator:
             self.last_mode = mode
             return vectors, mode
 
-        headers = {"Authorization": f"Bearer {token}"}
         try:
-            with httpx.Client(timeout=10.0) as client:
-                response = client.post(
-                    self.api_url, 
-                    headers=headers, 
-                    json={"inputs": texts, "options": {"wait_for_model": True}}
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    if isinstance(data, list) and len(data) > 0:
-                        if isinstance(data[0], list):
-                            vectors = [self._normalize(v) for v in data]
-                            mode = "HUGGINGFACE_REAL_MODEL"
-                            self.last_mode = mode
-                            return vectors, mode
-                        elif isinstance(data[0], (int, float)):
-                            vectors = [self._normalize(data)]
-                            mode = "HUGGINGFACE_REAL_MODEL"
-                            self.last_mode = mode
-                            return vectors, mode
-                # Si el status code fue distinto de 200
-                logger.warning(f"Respuesta inesperada de Hugging Face API: status={response.status_code}")
-                vectors = [self._deterministic_mock_vector(t) for t in texts]
-                mode = "FALLBACK_API_ERROR"
-                self.last_mode = mode
-                return vectors, mode
-        except Exception as e:
-            logger.warning(f"Fallo en inferencia HF: {e}")
-            vectors = [self._deterministic_mock_vector(t) for t in texts]
-            mode = "FALLBACK_API_ERROR" if token else "FALLBACK_CI"
+            from huggingface_hub import InferenceClient
+            client = InferenceClient(token=token)
+            raw_data = client.feature_extraction(texts, model=self.model_name)
+            vectors = []
+            for item in raw_data:
+                vec = [float(x) for x in item]
+                vectors.append(self._normalize(vec))
+            mode = "HUGGINGFACE_REAL_MODEL"
             self.last_mode = mode
             return vectors, mode
+        except Exception as e_client:
+            logger.warning(f"Inferencia vía InferenceClient falló: {e_client}. Intentando HTTP directo...")
+            headers = {"Authorization": f"Bearer {token}"}
+            try:
+                with httpx.Client(timeout=10.0) as client:
+                    response = client.post(
+                        self.api_url, 
+                        headers=headers, 
+                        json={"inputs": texts, "options": {"wait_for_model": True}}
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        if isinstance(data, list) and len(data) > 0:
+                            if isinstance(data[0], list):
+                                vectors = [self._normalize(v) for v in data]
+                                mode = "HUGGINGFACE_REAL_MODEL"
+                                self.last_mode = mode
+                                return vectors, mode
+                            elif isinstance(data[0], (int, float)):
+                                vectors = [self._normalize(data)]
+                                mode = "HUGGINGFACE_REAL_MODEL"
+                                self.last_mode = mode
+                                return vectors, mode
+                    logger.warning(f"Respuesta inesperada de Hugging Face API: status={response.status_code}")
+                    vectors = [self._deterministic_mock_vector(t) for t in texts]
+                    mode = "FALLBACK_API_ERROR"
+                    self.last_mode = mode
+                    return vectors, mode
+            except Exception as e:
+                logger.warning(f"Fallo en inferencia HF: {e}")
+                vectors = [self._deterministic_mock_vector(t) for t in texts]
+                mode = "FALLBACK_API_ERROR" if token else "FALLBACK_CI"
+                self.last_mode = mode
+                return vectors, mode
 
     def embed_query(self, text: str) -> List[float]:
         """Genera embedding para una consulta de búsqueda."""
