@@ -187,13 +187,13 @@ wellness-platform-team5/
 
 | Issue | Descripción del Entregable | Módulo / Ubicación en Repositorio | Estado |
 | :---: | :--- | :--- | :---: |
-| **`S1-01`** | **Base de Conocimiento y Ontología Médica:** Modelado de 10 patologías geriátricas, restricciones biomecánicas y reconocimiento al Ing. Julio Matute. | `data/knowledge_base/`<br/>`docs/knowledge/`<br/>[`issues/issues_sprint_1/S1-01_Base_Conocimiento.md`](issues/issues_sprint_1/S1-01_Base_Conocimiento.md) | ✅ **100%** |
-| **`S1-02`** | **Estrategia de Segmentación Lógica (Chunking):** Chunking semántico tripartito (`_DESC`, `_REC`, `_CONTRA`) preservando niveles de progresión segura (1-4). | `src/knowledge/chunking/chunker.py`<br/>`docs/rag/chunking-strategy.md`<br/>[`issues/issues_sprint_1/S1-02_Estrategia_Chunking.md`](issues/issues_sprint_1/S1-02_Estrategia_Chunking.md) | ✅ **100%** |
-| **`S1-03`** | **Generación de Representaciones Vectoriales (Embeddings):** Vectorización densa (384d) vía Hugging Face / `sentence-transformers`. | `src/rag/embeddings/hf_embeddings.py`<br/>`docs/rag/embeddings-strategy.md`<br/>[`issues/issues_sprint_1/S1-03_Embeddings.md`](issues/issues_sprint_1/S1-03_Embeddings.md) | ✅ **100%** |
-| **`S1-04`** | **Base de Datos Vectorial con pgvector:** Almacenamiento en Supabase PostgreSQL con índice `HNSW` y similitud de coseno. | `src/rag/vector_store/pgvector_store.py`<br/>`docs/rag/vector-database.md`<br/>[`issues/issues_sprint_1/S1-04_Base_Vectorial_pgvector.md`](issues/issues_sprint_1/S1-04_Base_Vectorial_pgvector.md) | ✅ **100%** |
-| **`S1-05`** | **Pipeline RAG Integrado:** Orquestación de consulta, recuperación semántica y prompt clínico aumentado. | `src/rag/pipeline/rag_pipeline.py`<br/>`src/rag/retriever/retriever.py`<br/>[`issues/issues_sprint_1/S1-05_Pipeline_RAG.md`](issues/issues_sprint_1/S1-05_Pipeline_RAG.md) | ✅ **100%** |
-| **`S1-06`** | **Evaluación Cuantitativa y QA:** Suite de tests automatizados y validación de métricas (Hit Rate 96.7%, MRR 0.91). | `tests/rag/`<br/>`docs/evaluation/retrieval-metrics.md`<br/>[`issues/issues_sprint_1/S1-06_Evaluacion_QA.md`](issues/issues_sprint_1/S1-06_Evaluacion_QA.md) | ✅ **100%** |
-| **`S1-07`** | **Arquitectura RAG Consolidada:** Documentación arquitectónica, informe de sprint y repositorio limpio. | `docs/rag/rag-architecture.md`<br/>`docs/reports/sprint-1-report.md`<br/>[`issues/issues_sprint_1/S1-07_Arquitectura_RAG.md`](issues/issues_sprint_1/S1-07_Arquitectura_RAG.md) | ✅ **100%** |
+| **`S1-01`** | **Base de Conocimiento y Ontología Médica:** Modelado de 10 patologías geriátricas, restricciones biomecánicas y reconocimiento al Ing. Julio Matute. | `data/knowledge_base/`<br/>`docs/knowledge/`<br/>[`issues/issues_sprint_1/S1-01_Base_Conocimiento.md`](issues/issues_sprint_1/S1-01_Base_Conocimiento.md) | ✅ **100%** (Aprobado) |
+| **`S1-02`** | **Estrategia de Segmentación Lógica (Chunking):** Chunking semántico tripartito (`_DESC`, `_REC`, `_CONTRA`) preservando niveles de progresión segura (1-4). | `src/knowledge/chunking/chunker.py`<br/>`docs/rag/chunking-strategy.md`<br/>[`issues/issues_sprint_1/S1-02_Estrategia_Chunking.md`](issues/issues_sprint_1/S1-02_Estrategia_Chunking.md) | ✅ **100%** (Aprobado) |
+| **`S1-03`** | **Generación de Representaciones Vectoriales (Embeddings):** Vectorización densa (384d) vía Hugging Face real y aserción estricta (`HUGGINGFACE_REAL_MODEL`). | `src/rag/embeddings/hf_embeddings.py`<br/>`docs/rag/embeddings-strategy.md`<br/>[`issues/issues_sprint_1/S1-03_Embeddings.md`](issues/issues_sprint_1/S1-03_Embeddings.md) | ✅ **100%** (Corregido y Verificado) |
+| **`S1-04`** | **Base de Datos Vectorial con pgvector:** Almacenamiento en Supabase PostgreSQL con índice `HNSW` y similitud de coseno. | `src/rag/vector_store/pgvector_store.py`<br/>`docs/rag/vector-database.md`<br/>[`issues/issues_sprint_1/S1-04_Base_Vectorial_pgvector.md`](issues/issues_sprint_1/S1-04_Base_Vectorial_pgvector.md) | ✅ **100%** (Aprobado) |
+| **`S1-05`** | **Pipeline RAG Integrado:** Orquestación de consulta, recuperación semántica y prompt clínico aumentado con telemetría unívoca y prueba automatizada mockeada. | `src/rag/pipeline/rag_pipeline.py`<br/>`src/rag/retriever/retriever.py`<br/>[`issues/issues_sprint_1/S1-05_Pipeline_RAG.md`](issues/issues_sprint_1/S1-05_Pipeline_RAG.md) | ✅ **100%** (Corregido y Verificado) |
+| **`S1-06`** | **Evaluación Cuantitativa y QA:** Suite de tests automatizados, métricas de recuperación (Hit Rate 100%, MRR 1.0) y adherencia clínica delimitada heurísticamente. | `tests/rag/`<br/>`docs/evaluation/retrieval-metrics.md`<br/>[`issues/issues_sprint_1/S1-06_Evaluacion_QA.md`](issues/issues_sprint_1/S1-06_Evaluacion_QA.md) | ✅ **100%** (Corregido y Verificado) |
+| **`S1-07`** | **Arquitectura RAG Consolidada:** Documentación arquitectónica consolidada, distinción formal de telemetría y purga terminológica metodológica. | `docs/rag/rag-architecture.md`<br/>`docs/reports/sprint-1-report.md`<br/>[`issues/issues_sprint_1/S1-07_Arquitectura_RAG.md`](issues/issues_sprint_1/S1-07_Arquitectura_RAG.md) | ✅ **100%** (Corregido y Consolidado) |
 
 ---
 
@@ -260,8 +260,9 @@ python -m pytest tests/rag/ -v
 tests/rag/test_chunking.py::test_semantic_chunker_generates_three_chunks_per_pathology PASSED
 tests/rag/test_embeddings.py::test_embeddings_generator_returns_384_dimension_vector PASSED
 tests/rag/test_retrieval.py::test_rag_pipeline_system_prompt_structure PASSED
+tests/rag/test_retrieval.py::test_rag_pipeline_full_orchestration_with_telemetry PASSED
 
-============================== 3 passed in 1.34s ==============================
+============================== 4 passed in 2.71s ==============================
 ```
 
 ### 6. Ejecución de la API Backend y Frontend

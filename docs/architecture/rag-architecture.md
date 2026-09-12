@@ -39,7 +39,7 @@ flowchart TD
         Prompt["System Prompt con Contexto Inyectado"]
         LLM_Primary["Google AI Studio (Gemini Flash Lite)"]
         LLM_Fallback["OpenRouter Fallback Pool"]
-        Deterministic_Engine["Motor Clínico Determinista (Zero-Hallucination)"]
+        Deterministic_Engine["Motor Clínico Determinista Basado en Evidencia Recuperada (deterministic_fallback)"]
         
         Pipeline --> Prompt
         Prompt --> LLM_Primary
@@ -75,16 +75,16 @@ Para evitar ambigüedades técnicas y asegurar la reproducibilidad de los result
 3. **Capa de Razonamiento LLM:**
    * Nivel 1: Google AI Studio (`gemini-flash-lite-latest`, `gemini-2.5-flash-lite`).
    * Nivel 2: Pool OpenRouter (`liquid/lfm-2.5-2.6b:free`, `meta-llama/llama-3.2-3b-instruct:free`).
-   * Nivel 3: Motor de Razonamiento Clínico Determinista SeniorVital.
+   * Nivel 3: Motor de Razonamiento Clínico Determinista SeniorVital (`deterministic_fallback`).
 4. **Guardrails de Seguridad:**
    * Filtro semántico por umbral de relevancia ($\ge 0.40$).
    * Zero-Context Fallback ante consultas fuera del dominio geriátrico.
 
 ### B. Arquitectura Efectivamente Ejecutada (Evidencia Empírica de Pruebas)
 En las validaciones locales y runners de CI/CD:
-* **Embeddings:** `FALLBACK_API_ERROR` / `FALLBACK_CI` (vectorización determinista de 384d cuando no hay conexión externa o en entorno de test).
+* **Embeddings:** `HUGGINGFACE_REAL_MODEL` (en validación empírica S1-03 con modelo real) / `FALLBACK_CI` (en CI aislado sin secretos).
 * **Base Vectorial:** `IN_MEMORY_FALLBACK` (indexación y búsqueda vectorial en memoria de los 30 chunks clínicos).
-* **Proveedor LLM:** `deterministic_fallback` (generación segura basada en guías clínicas sin alucinaciones).
+* **Proveedor LLM:** `deterministic_fallback` (generación segura basada en evidencia de guías clínicas recuperadas).
 
 ---
 
@@ -92,15 +92,23 @@ En las validaciones locales y runners de CI/CD:
 
 La asignación de estados se realiza exclusivamente tras la ejecución efectiva de cada bloque:
 
+### A. Esquema Contractual y Valores Posibles:
+* **Valores Posibles del Proveedor (`provider`):** `"Google AI Studio (Gemini Flash Lite)"` | `"OpenRouter Fallback Pool"` | `"SeniorVital Clinical RAG Reasoning Engine"` | `"Safety Guardrail (Zero-Context Fallback)"`
+* **Valores Posibles del Objeto `telemetry`:**
+  * `embedding_mode`: `"HUGGINGFACE_REAL_MODEL"` | `"FALLBACK_CI"` | `"FALLBACK_API_ERROR"`
+  * `vector_backend`: `"SUPABASE_PGVECTOR"` | `"IN_MEMORY_FALLBACK"`
+  * `llm_provider`: `"google_ai_studio"` | `"openrouter"` | `"deterministic_fallback"` | `"safety_guardrail"`
+
+### B. Registro de Ejecución Empírica Concreta:
 ```json
 {
   "query": "Tengo osteoartritis severa en rodilla, puedo hacer sentadillas con salto?",
   "status": "SUCCESS",
   "provider": "SeniorVital Clinical RAG Reasoning Engine",
   "telemetry": {
-    "embedding_mode": "HUGGINGFACE_REAL_MODEL | FALLBACK_CI | FALLBACK_API_ERROR",
-    "vector_backend": "SUPABASE_PGVECTOR | IN_MEMORY_FALLBACK",
-    "llm_provider": "google_ai_studio | openrouter | deterministic_fallback"
+    "embedding_mode": "FALLBACK_API_ERROR",
+    "vector_backend": "IN_MEMORY_FALLBACK",
+    "llm_provider": "deterministic_fallback"
   },
   "retrieved_chunks": [ ... ],
   "context_injected": "...",
@@ -127,10 +135,10 @@ La asignación de estados se realiza exclusivamente tras la ejecución efectiva 
 
 | Issue | Entregable en `/src` | Documentación | Script de Prueba | Métrica / Resultado | Estado |
 | :--- | :--- | :--- | :--- | :--- | :---: |
-| **S1-01** | `data/knowledge_base/` | `docs/knowledge/` | Inspección JSON | 10 condiciones clínicas modeladas | ✅ **100%** |
-| **S1-02** | `src/knowledge/chunking/` | `docs/rag/chunking-strategy.md` | `tests/rag/test_chunking.py` | 30 chunks con metadatos | ✅ **100%** |
-| **S1-03** | `src/rag/embeddings/` | `docs/rag/embeddings-strategy.md` | `scripts/evaluation/test_hf_embeddings.py` | Modelo 384d, Norma L2 = 1.0000 | ✅ **100%** |
-| **S1-04** | `src/rag/vector_store/` | `docs/rag/vector-database.md` | `scripts/indexing/index_pgvector.py` | Índice HNSW en PostgreSQL / pgvector | ✅ **100%** |
-| **S1-05** | `src/rag/pipeline/` | `docs/architecture/rag-architecture.md` | `scripts/evaluation/demo_rag_pipeline.py` | Flujo E2E contextualizado con telemetría | ✅ **100%** |
-| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3 = 100%, MRR = 1.0000 | ✅ **100%** |
-| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/ -v` | 100% de la suite en verde | ✅ **100%** |
+| **S1-01** | `data/knowledge_base/` | `docs/knowledge/` | Inspección JSON | 10 condiciones clínicas modeladas | ✅ **100%** (Aprobado) |
+| **S1-02** | `src/knowledge/chunking/` | `docs/rag/chunking-strategy.md` | `tests/rag/test_chunking.py` | 30 chunks con metadatos | ✅ **100%** (Aprobado) |
+| **S1-03** | `src/rag/embeddings/` | `docs/rag/embeddings-strategy.md` | `scripts/evaluation/test_hf_embeddings.py` | Modelo 384d, L2=1.0000, inferencia real HF y aserción estricta superada | ✅ **100%** (Corregido y Verificado) |
+| **S1-04** | `src/rag/vector_store/` | `docs/rag/vector-database.md` | `scripts/indexing/index_pgvector.py` | Índice HNSW en PostgreSQL / pgvector | ✅ **100%** (Aprobado) |
+| **S1-05** | `src/rag/pipeline/` | `docs/architecture/rag-architecture.md` | `tests/rag/test_retrieval.py` | Orquestación E2E con mocks deterministas y telemetría unívoca | ✅ **100%** (Corregido y Verificado) |
+| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3=100%, MRR=1.0, Adherencia clínica heurística documentada | ✅ **100%** (Corregido y Verificado) |
+| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/ -v` | Arquitectura consolidada, purga terminológica y suite 4/4 en verde | ✅ **100%** (Corregido y Consolidado) |

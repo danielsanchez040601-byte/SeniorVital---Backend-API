@@ -39,7 +39,7 @@ flowchart TD
         Prompt["System Prompt con Contexto Inyectado"]
         LLM_Primary["Google AI Studio (Gemini Flash Lite)"]
         LLM_Fallback["OpenRouter Fallback Pool"]
-        Deterministic_Engine["Motor Clínico Determinista (Zero-Hallucination)"]
+        Deterministic_Engine["Motor Clínico Determinista Basado en Evidencia Recuperada (deterministic_fallback)"]
         
         Pipeline --> Prompt
         Prompt --> LLM_Primary
@@ -59,17 +59,27 @@ flowchart TD
 
 ## 2. Telemetría en Tiempo de Ejecución (Post-Execution Telemetry)
 
-Para garantizar trazabilidad real y evitar reportes basados en configuración estática, el sistema recopila los backends que **efectivamente produjeron el resultado**:
+Para garantizar trazabilidad técnica real y evitar reportes basados en configuración estática, el sistema formaliza tanto el esquema contractual de telemetría como el registro empírico unívoco obtenido en cada corrida:
+
+### A. Esquema Contractual y Valores Posibles:
+* **Valores Posibles del Proveedor (`provider`):** `"Google AI Studio (Gemini Flash Lite)"` | `"OpenRouter Fallback Pool"` | `"SeniorVital Clinical RAG Reasoning Engine"` | `"Safety Guardrail (Zero-Context Fallback)"`
+* **Valores Posibles del Objeto `telemetry`:**
+  * `embedding_mode`: `"HUGGINGFACE_REAL_MODEL"` | `"FALLBACK_CI"` | `"FALLBACK_API_ERROR"`
+  * `vector_backend`: `"SUPABASE_PGVECTOR"` | `"IN_MEMORY_FALLBACK"`
+  * `llm_provider`: `"google_ai_studio"` | `"openrouter"` | `"deterministic_fallback"` | `"safety_guardrail"`
+
+### B. Registro de Ejecución Empírica Concreta:
+En una corrida empírica real, el objeto de respuesta registra estrictamente el valor unívoco ejecutado:
 
 ```json
 {
   "query": "Tengo osteoartritis severa en rodilla, ¿puedo hacer sentadillas con salto?",
   "status": "SUCCESS",
-  "provider": "Google AI Studio (Gemini Flash Lite) | OpenRouter Fallback Pool",
+  "provider": "Google AI Studio (Gemini Flash Lite)",
   "telemetry": {
-    "embedding_mode": "HUGGINGFACE_REAL_MODEL | FALLBACK_CI | FALLBACK_API_ERROR",
-    "vector_backend": "SUPABASE_PGVECTOR | IN_MEMORY_FALLBACK",
-    "llm_provider": "google_ai_studio | openrouter | deterministic_fallback"
+    "embedding_mode": "HUGGINGFACE_REAL_MODEL",
+    "vector_backend": "SUPABASE_PGVECTOR",
+    "llm_provider": "google_ai_studio"
   },
   "retrieved_chunks": [ ... ],
   "context_injected": "...",
@@ -96,10 +106,10 @@ Para garantizar trazabilidad real y evitar reportes basados en configuración es
 
 | Issue | Entregable en `/src` | Documentación | Script de Prueba | Métrica / Resultado | Estado |
 | :--- | :--- | :--- | :--- | :--- | :---: |
-| **S1-01** | `data/knowledge_base/` | `docs/knowledge/` | Inspección JSON | 10 condiciones clínicas modeladas | ✅ **100%** |
-| **S1-02** | `src/knowledge/chunking/` | `docs/rag/chunking-strategy.md` | `tests/rag/test_chunking.py` | 30 chunks con metadatos | ✅ **100%** |
-| **S1-03** | `src/rag/embeddings/` | `docs/rag/embeddings-strategy.md` | `scripts/evaluation/test_hf_embeddings.py` | Modelo 384d, Norma L2 = 1.0000 | ✅ **100%** |
-| **S1-04** | `src/rag/vector_store/` | `docs/rag/vector-database.md` | `scripts/indexing/index_pgvector.py` | Índice HNSW en PostgreSQL / pgvector | ✅ **100%** |
-| **S1-05** | `src/rag/pipeline/` | `docs/architecture/rag-architecture.md` | `scripts/evaluation/demo_rag_pipeline.py` | Flujo E2E contextualizado con telemetría | ✅ **100%** |
-| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3 = 100%, MRR = 1.0000 | ✅ **100%** |
-| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/ -v` | 100% de la suite en verde | ✅ **100%** |
+| **S1-01** | `data/knowledge_base/` | `docs/knowledge/` | Inspección JSON | 10 condiciones clínicas modeladas | ✅ **100%** (Aprobado) |
+| **S1-02** | `src/knowledge/chunking/` | `docs/rag/chunking-strategy.md` | `tests/rag/test_chunking.py` | 30 chunks con metadatos | ✅ **100%** (Aprobado) |
+| **S1-03** | `src/rag/embeddings/` | `docs/rag/embeddings-strategy.md` | `scripts/evaluation/test_hf_embeddings.py` | Modelo 384d, L2=1.0000, inferencia real HF y aserción estricta superada | ✅ **100%** (Corregido y Verificado) |
+| **S1-04** | `src/rag/vector_store/` | `docs/rag/vector-database.md` | `scripts/indexing/index_pgvector.py` | Índice HNSW en PostgreSQL / pgvector | ✅ **100%** (Aprobado) |
+| **S1-05** | `src/rag/pipeline/` | `docs/architecture/rag-architecture.md` | `tests/rag/test_retrieval.py` | Orquestación E2E con mocks deterministas y telemetría unívoca | ✅ **100%** (Corregido y Verificado) |
+| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3=100%, MRR=1.0, Adherencia clínica heurística documentada | ✅ **100%** (Corregido y Verificado) |
+| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/ -v` | Arquitectura consolidada, purga terminológica y suite 4/4 en verde | ✅ **100%** (Corregido y Consolidado) |

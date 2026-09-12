@@ -22,14 +22,14 @@ Para responder de forma rigurosa a las observaciones de trazabilidad y reproduci
 * **Capa de Generación Aumentada (LLM):** Cascada de tolerancia a fallos con 3 niveles:
   1. *Primario:* Google AI Studio (`gemini-flash-lite-latest`, `gemini-2.5-flash-lite`).
   2. *Secundario:* Pool gratuito en OpenRouter (`liquid/lfm-2.5-2.6b:free`, `nvidia/nemotron-3.5-lightning:free`, `meta-llama/llama-3.2-3b-instruct:free`).
-  3. *Terciario (Offline/Zero-Hallucination):* Motor de Razonamiento Clínico Determinista SeniorVital basado en guías OARSI, EWGSOP2 y Vivifrail.
+  3. *Terciario (Offline / deterministic_fallback):* Motor de Razonamiento Clínico Determinista SeniorVital basado en evidencia recuperada de guías OARSI, EWGSOP2 y Vivifrail.
 * **Guardrails de Seguridad:** Mecanismo Zero-Context Fallback que rechaza consultas fuera de dominio médico o con similitud $< 0.40$.
 
-### B. Arquitectura Efectivamente Ejecutada (Telemetría de Pruebas Locales)
+### B. Arquitectura Efectivamente Ejecutada (Telemetría de Pruebas Locales y CI)
 En el entorno local y de integración continua (CI), el sistema registra con exactitud el mecanismo que produjo los resultados:
-* **Modo de Embeddings:** `FALLBACK_API_ERROR` / `FALLBACK_CI` (vectorización determinista de 384d normalizada L2 ante aislamiento o error de red).
+* **Modo de Embeddings:** `HUGGINGFACE_REAL_MODEL` (en validación empírica S1-03 con API real de Hugging Face) y `FALLBACK_CI` (en entornos aislados de CI).
 * **Backend Vectorial:** `IN_MEMORY_FALLBACK` (búsqueda por similitud de coseno sobre los 30 chunks clínicos en memoria ante ausencia de sesión SQL remota).
-* **Proveedor LLM:** `deterministic_fallback` (respuestas deterministas basadas estrictamente en la evidencia recuperada sin alucinaciones).
+* **Proveedor LLM:** `deterministic_fallback` (respuestas deterministas basadas estrictamente en la evidencia clínica recuperada).
 
 ---
 
@@ -37,30 +37,33 @@ En el entorno local y de integración continua (CI), el sistema registra con exa
 
 | Issue | Entregable en `/src` | Documentación en `/docs` | Script / Prueba Automatizada | Métrica / Resultado Real | Estado |
 | :--- | :--- | :--- | :--- | :--- | :---: |
-| **S1-01** | `data/knowledge_base/` | `docs/knowledge/` | `clinical_knowledge_base.json` | 10 condiciones clínicas modeladas con asesoría de Ing. Julio Matute | ✅ **100%** |
-| **S1-02** | `src/knowledge/chunking/` | `docs/rag/chunking-strategy.md` | `tests/rag/test_chunking.py` | 30 chunks estructurados (`_DESC`, `_REC`, `_CONTRA`) | ✅ **100%** |
-| **S1-03** | `src/rag/embeddings/` | `docs/rag/embeddings-strategy.md` | `scripts/evaluation/test_hf_embeddings.py` | Vector 384d, Norma L2 = 1.0000, Telemetría post-ejecución | ✅ **100%** |
-| **S1-04** | `src/rag/vector_store/` | `docs/rag/vector-database.md` | `scripts/indexing/index_pgvector.py` | Reporte explícito de `backend_used` (pgvector / in-memory) | ✅ **100%** |
-| **S1-05** | `src/rag/pipeline/` | `docs/architecture/rag-architecture.md` | `scripts/evaluation/demo_rag_pipeline.py` | Objeto `telemetry` estructurado devuelto en cada consulta | ✅ **100%** |
-| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3 = 100%, MRR = 1.0000, Adherencia Clínica = 100% | ✅ **100%** |
-| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/ -v` | 100% tests pasados en local y CI | ✅ **100%** |
+| **S1-01** | `data/knowledge_base/` | `docs/knowledge/` | `clinical_knowledge_base.json` | 10 condiciones clínicas modeladas con asesoría de Ing. Julio Matute | ✅ **100%** (Aprobado) |
+| **S1-02** | `src/knowledge/chunking/` | `docs/rag/chunking-strategy.md` | `tests/rag/test_chunking.py` | 30 chunks estructurados (`_DESC`, `_REC`, `_CONTRA`) | ✅ **100%** (Aprobado) |
+| **S1-03** | `src/rag/embeddings/` | `docs/rag/embeddings-strategy.md` | `scripts/evaluation/test_hf_embeddings.py` | Vector 384d, Norma L2 = 1.0000, inferencia real `HUGGINGFACE_REAL_MODEL` y aserción estricta superada | ✅ **100%** (Corregido y Verificado) |
+| **S1-04** | `src/rag/vector_store/` | `docs/rag/vector-database.md` | `scripts/indexing/index_pgvector.py` | Reporte explícito de `backend_used` (pgvector / in-memory) | ✅ **100%** (Aprobado) |
+| **S1-05** | `src/rag/pipeline/` | `docs/architecture/rag-architecture.md` | `tests/rag/test_retrieval.py` | Pipeline E2E con telemetría unívoca y test automatizado con mocks deterministas | ✅ **100%** (Corregido y Verificado) |
+| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3 = 100%, MRR = 1.0000, Adherencia clínica heurística documentada | ✅ **100%** (Corregido y Verificado) |
+| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/ -v` | Consolidación arquitectónica, purga terminológica y 4/4 tests en verde | ✅ **100%** (Corregido y Consolidado) |
 
 ---
 
 ## 🔬 4. Métricas Empíricas de Evaluación RAG (Dataset de 10 Consultas)
+
+Las métricas reflejan la combinación tecnológica concreta de la corrida de evaluación empírica (`evaluate_rag.py`):
 
 ### Bloque A: Calidad de Recuperación (Retrieval Quality)
 * **Hit Rate @ 3:** **100.00%** (Meta: $\ge 85.0\%$) $\rightarrow$ **SUPERADA**
 * **Mean Reciprocal Rank (MRR):** **1.0000** (Meta: $\ge 0.80$) $\rightarrow$ **SUPERADA**
 * **Precision @ 3:** **1.0000** (Meta: $\ge 0.70$) $\rightarrow$ **SUPERADA**
 * **Latencia Promedio:** **785.96 ms** (incluye timeout preventivo de red)
-* **Modo Embeddings Registrado:** `FALLBACK_API_ERROR` / `HUGGINGFACE_REAL_MODEL`
-* **Backend Vectorial Registrado:** `IN_MEMORY_FALLBACK` / `SUPABASE_PGVECTOR`
+* **Combinación Tecnológica Efectiva:**
+  * **Modo de Embeddings:** `FALLBACK_API_ERROR` (en evaluación offline; validado como `HUGGINGFACE_REAL_MODEL` en prueba dedicada S1-03).
+  * **Backend Vectorial:** `IN_MEMORY_FALLBACK`
 
 ### Bloque B: Evaluación de Generación (Response Evaluation)
-* **Tasa de Adherencia Clínica:** **100.00%** (Meta: $\ge 90.0\%$) $\rightarrow$ **SUPERADA**
-* **Proveedor LLM Efectivo:** `deterministic_fallback` / `google_ai_studio`
-* **Consultas Evaluadas:** 10 de 10 casos clínicos cumplidos sin alucinaciones.
+* **Tasa de Adherencia Clínica:** **100.00%** (Meta: $\ge 90.0\%$) $\rightarrow$ **SUPERADA** (Métrica heurística basada en reglas y coincidencia de palabras clave clínicas).
+* **Proveedor LLM Efectivo:** `deterministic_fallback`
+* **Consultas Evaluadas:** 10 de 10 casos cumplieron los criterios de adherencia clínica definidos en la evaluación (presencia de directrices de seguridad y dosificación sin extrapolaciones no fundamentadas).
 
 ---
 
