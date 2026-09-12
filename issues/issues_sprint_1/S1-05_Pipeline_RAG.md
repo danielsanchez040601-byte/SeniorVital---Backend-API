@@ -49,12 +49,18 @@ flowchart TD
     end
 ```
 
-### Estructura del Objeto de Respuesta con Telemetría:
+### Definición de Esquema y Contrato de Respuesta con Telemetría:
+* **Valores Posibles del Esquema (`provider`):** `"Google AI Studio (Gemini Flash Lite)"` | `"OpenRouter Fallback Pool"` | `"SeniorVital Clinical RAG Reasoning Engine"` | `"Safety Guardrail (Zero-Context Fallback)"`
+* **Valores Posibles en Telemetría (`telemetry`):**
+  * `embedding_mode`: `"HUGGINGFACE_REAL_MODEL"` | `"FALLBACK_CI"` | `"FALLBACK_API_ERROR"`
+  * `vector_backend`: `"SUPABASE_PGVECTOR"` | `"IN_MEMORY_FALLBACK"`
+  * `llm_provider`: `"google_ai_studio"` | `"openrouter"` | `"deterministic_fallback"` | `"safety_guardrail"`
+
 ```json
 {
   "query": "Tengo osteoartritis severa en rodilla, ¿puedo hacer sentadillas con salto?",
   "status": "SUCCESS",
-  "provider": "Google AI Studio (Gemini Flash Lite) | OpenRouter Fallback Pool",
+  "provider": "Google AI Studio (Gemini Flash Lite)",
   "telemetry": {
     "embedding_mode": "HUGGINGFACE_REAL_MODEL",
     "vector_backend": "SUPABASE_PGVECTOR",
@@ -83,7 +89,7 @@ SENIORVITAL 2.0 - DEMOSTRACION Y EVALUACION DEL PIPELINE RAG END-TO-END
 [Esperado]: Advertencia médica y prohibición estricta de saltos/pliometría.
 -------------------------------------------------------------------------------------
 [Estado]: SUCCESS
-[Proveedor]: Google AI Studio (Gemini Flash Lite) (o OpenRouter Fallback Pool)
+[Proveedor]: Google AI Studio (Gemini Flash Lite)
 [Telemetría Post-Ejecución]: {
   "embedding_mode": "HUGGINGFACE_REAL_MODEL",
   "vector_backend": "SUPABASE_PGVECTOR",
@@ -117,7 +123,7 @@ Alternativas Seguras Recomendadas:
 [Esperado]: Calistenia adaptada, bandas elásticas y progresión Borg 3-4.
 -------------------------------------------------------------------------------------
 [Estado]: SUCCESS
-[Proveedor]: Google AI Studio (Gemini Flash Lite) (o OpenRouter Fallback Pool)
+[Proveedor]: Google AI Studio (Gemini Flash Lite)
 [Telemetría Post-Ejecución]: {
   "embedding_mode": "HUGGINGFACE_REAL_MODEL",
   "vector_backend": "SUPABASE_PGVECTOR",
@@ -171,4 +177,4 @@ Plan de Ejercicios de Fuerza para Sarcopenia Leve (SAR-02):
 ```bash
 pytest tests/rag/test_retrieval.py -v
 ```
-**Resultado:** `1 passed in 0.05s` (Validación de estructura del prompt aumentado y contexto inyectado superada).
+**Resultado:** `2 passed in 0.08s` (Validación de estructura del prompt aumentado y orquestación integral del pipeline con mocks deterministas superada).
