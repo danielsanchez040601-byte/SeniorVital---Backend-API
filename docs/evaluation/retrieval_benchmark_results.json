@@ -1,15 +1,19 @@
 {
   "telemetry": {
-    "embedding_mode": "FALLBACK_API_ERROR",
+    "embedding_mode": "HUGGINGFACE_REAL_MODEL",
     "vector_backend": "IN_MEMORY_FALLBACK",
     "llm_provider": "deterministic_fallback"
   },
   "retrieval_metrics": {
     "hit_rate_at_3": 100.0,
-    "mrr": 1.0,
-    "precision_at_3": 1.0,
-    "avg_latency_ms": 785.96,
-    "p95_latency_ms": 1918.21,
+    "mrr": 0.9,
+    "precision_at_3": 0.6333,
+    "avg_vector_store_latency_ms": 3.18,
+    "p95_vector_store_latency_ms": 4.11,
+    "avg_total_latency_ms": 421.2,
+    "p95_total_latency_ms": 559.93,
+    "avg_latency_ms": 421.2,
+    "p95_latency_ms": 559.93,
     "total_queries": 10
   },
   "generation_evaluation": {
@@ -27,13 +31,15 @@
       ],
       "retrieved_chunk_ids": [
         "OA-01_CONTRA",
-        "OA-01_REC",
-        "OA-01_DESC"
+        "OA-01_DESC",
+        "OA-01_REC"
       ],
       "hit": true,
       "reciprocal_rank": 1.0,
-      "precision_at_k": 1.0,
-      "latency_ms": 392.71
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 2.87,
+      "total_retrieval_latency_ms": 207.5,
+      "latency_ms": 207.5
     },
     {
       "id": "Q02",
@@ -49,8 +55,10 @@
       ],
       "hit": true,
       "reciprocal_rank": 1.0,
-      "precision_at_k": 1.0,
-      "latency_ms": 639.18
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 3.72,
+      "total_retrieval_latency_ms": 273.3,
+      "latency_ms": 273.3
     },
     {
       "id": "Q03",
@@ -61,13 +69,15 @@
       ],
       "retrieved_chunk_ids": [
         "OST-03_REC",
-        "OST-03_DESC",
-        "OST-03_CONTRA"
+        "OST-03_CONTRA",
+        "OST-03_DESC"
       ],
       "hit": true,
       "reciprocal_rank": 1.0,
-      "precision_at_k": 1.0,
-      "latency_ms": 644.54
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 2.54,
+      "total_retrieval_latency_ms": 326.65,
+      "latency_ms": 326.65
     },
     {
       "id": "Q04",
@@ -78,13 +88,15 @@
       ],
       "retrieved_chunk_ids": [
         "ICC-04_CONTRA",
-        "ICC-04_DESC",
-        "ICC-04_REC"
+        "ICC-04_REC",
+        "ICC-04_DESC"
       ],
       "hit": true,
       "reciprocal_rank": 1.0,
-      "precision_at_k": 1.0,
-      "latency_ms": 614.84
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 3.35,
+      "total_retrieval_latency_ms": 417.61,
+      "latency_ms": 417.61
     },
     {
       "id": "Q05",
@@ -94,14 +106,16 @@
         "DMT2-05_REC"
       ],
       "retrieved_chunk_ids": [
-        "DMT2-05_DESC",
         "DMT2-05_CONTRA",
-        "DMT2-05_REC"
+        "DMT2-05_REC",
+        "DMT2-05_DESC"
       ],
       "hit": true,
       "reciprocal_rank": 1.0,
-      "precision_at_k": 1.0,
-      "latency_ms": 666.55
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 3.35,
+      "total_retrieval_latency_ms": 424.81,
+      "latency_ms": 424.81
     },
     {
       "id": "Q06",
@@ -113,12 +127,14 @@
       "retrieved_chunk_ids": [
         "EPOC-06_DESC",
         "EPOC-06_REC",
-        "EPOC-06_CONTRA"
+        "ICC-04_REC"
       ],
       "hit": true,
-      "reciprocal_rank": 1.0,
-      "precision_at_k": 1.0,
-      "latency_ms": 1000.69
+      "reciprocal_rank": 0.5,
+      "precision_at_k": 0.3333,
+      "vector_store_latency_ms": 2.9,
+      "total_retrieval_latency_ms": 559.93,
+      "latency_ms": 559.93
     },
     {
       "id": "Q07",
@@ -128,14 +144,16 @@
         "PARK-07_DESC"
       ],
       "retrieved_chunk_ids": [
-        "PARK-07_REC",
+        "PARK-07_CONTRA",
         "PARK-07_DESC",
-        "PARK-07_CONTRA"
+        "PARK-07_REC"
       ],
       "hit": true,
-      "reciprocal_rank": 1.0,
-      "precision_at_k": 1.0,
-      "latency_ms": 615.25
+      "reciprocal_rank": 0.5,
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 1.94,
+      "total_retrieval_latency_ms": 470.86,
+      "latency_ms": 470.86
     },
     {
       "id": "Q08",
@@ -145,14 +163,16 @@
         "ACV-08_CONTRA"
       ],
       "retrieved_chunk_ids": [
-        "ACV-08_CONTRA",
         "ACV-08_REC",
+        "ACV-08_CONTRA",
         "ACV-08_DESC"
       ],
       "hit": true,
       "reciprocal_rank": 1.0,
-      "precision_at_k": 1.0,
-      "latency_ms": 614.97
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 3.0,
+      "total_retrieval_latency_ms": 519.14,
+      "latency_ms": 519.14
     },
     {
       "id": "Q09",
@@ -168,8 +188,10 @@
       ],
       "hit": true,
       "reciprocal_rank": 1.0,
-      "precision_at_k": 1.0,
-      "latency_ms": 752.65
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 4.11,
+      "total_retrieval_latency_ms": 524.06,
+      "latency_ms": 524.06
     },
     {
       "id": "Q10",
@@ -179,14 +201,16 @@
         "FRAG-10_DESC"
       ],
       "retrieved_chunk_ids": [
-        "FRAG-10_DESC",
         "FRAG-10_REC",
-        "FRAG-10_CONTRA"
+        "FRAG-10_CONTRA",
+        "FRAG-10_DESC"
       ],
       "hit": true,
       "reciprocal_rank": 1.0,
-      "precision_at_k": 1.0,
-      "latency_ms": 1918.21
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 4.02,
+      "total_retrieval_latency_ms": 488.12,
+      "latency_ms": 488.12
     }
   ],
   "generation_details": [
@@ -218,7 +242,7 @@
       "id": "Q05",
       "llm_provider": "deterministic_fallback",
       "clinical_adherence": true,
-      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- PATOLOGA: Diabetes Mellitus Tipo 2 (DMT2) (Cdigo: DMT2-05, Categ..."
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Diabetes Mellitu..."
     },
     {
       "id": "Q06",
@@ -230,13 +254,13 @@
       "id": "Q07",
       "llm_provider": "deterministic_fallback",
       "clinical_adherence": true,
-      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- PRESCRIPCIN DE EJERCICIO PARA Enfermedad de Parkinson:\nMODALIDADE..."
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Enfermedad de Pa..."
     },
     {
       "id": "Q08",
       "llm_provider": "deterministic_fallback",
       "clinical_adherence": true,
-      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Secuelas de Acci..."
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- PRESCRIPCIN DE EJERCICIO PARA Secuelas de Accidente Cerebrovascul..."
     },
     {
       "id": "Q09",
@@ -248,7 +272,7 @@
       "id": "Q10",
       "llm_provider": "deterministic_fallback",
       "clinical_adherence": true,
-      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- PATOLOGA: Sndrome de Fragilidad Geritrica (Cdigo: FRAG-10, Cat..."
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- PRESCRIPCIN DE EJERCICIO PARA Sndrome de Fragilidad Geritrica:\n..."
     }
   ]
 }
