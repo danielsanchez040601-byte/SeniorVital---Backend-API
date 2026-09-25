@@ -41,7 +41,8 @@ async def main():
     hits = 0
     reciprocal_ranks = []
     precision_scores = []
-    latencies = []
+    vector_latencies = []
+    total_latencies = []
     retrieval_details = []
     generation_details = []
     adherent_count = 0
@@ -51,20 +52,23 @@ async def main():
     llm_providers = set()
 
     print(f"[Dataset]: {len(queries)} consultas clinicas anotadas para benchmarking (Top-K = {k}).\n")
-    print(f"{'ID':<5} | {'Condicion':<10} | {'Hit@3':<7} | {'MRR':<6} | {'P@3':<6} | {'Latencia':<10} | {'Top-1 Chunk'}")
-    print("-" * 85)
+    print(f"{'ID':<5} | {'Condicion':<10} | {'Hit@3':<7} | {'MRR':<6} | {'P@3':<6} | {'Lat. Vec':<10} | {'Lat. Total':<11} | {'Top-1 Chunk'}")
+    print("-" * 92)
 
     for item in queries:
         qid = item["id"]
         qtext = item["query"]
-        expected = item["expected_chunk_ids"]
+        expected_chunk_ids = item["expected_chunk_ids"]
         cond = item["condition_id"]
 
         # Medición de Recuperación (Bloque A)
         start_time = time.perf_counter()
         retrieved, ret_telemetry = await retriever.retrieve_with_telemetry(query=qtext, top_k=k)
-        elapsed_ms = (time.perf_counter() - start_time) * 1000
-        latencies.append(elapsed_ms)
+        total_elapsed_ms = (time.perf_counter() - start_time) * 1000
+        vec_elapsed_ms = float(ret_telemetry.get("vector_store_latency_ms", 0.0))
+
+        total_latencies.append(total_elapsed_ms)
+        vector_latencies.append(vec_elapsed_ms)
 
         cur_emb_mode = ret_telemetry.get("embedding_mode", "UNKNOWN")
         cur_vec_backend = ret_telemetry.get("vector_backend", "UNKNOWN")
@@ -74,36 +78,38 @@ async def main():
         retrieved_ids = [r["chunk_id"] for r in retrieved]
         top1_id = retrieved_ids[0] if retrieved_ids else "NONE"
 
-        # 1. Hit Rate @ K
-        is_hit = any(cid in expected or cid.startswith(cond) for cid in retrieved_ids)
+        # 1. Hit Rate @ K (evaluado exclusivamente contra verdad fundamental anotada)
+        is_hit = any(cid in expected_chunk_ids for cid in retrieved_ids)
         if is_hit:
             hits += 1
 
-        # 2. Reciprocal Rank
+        # 2. Reciprocal Rank (evaluado exclusivamente contra verdad fundamental anotada)
         rr = 0.0
         for rank, cid in enumerate(retrieved_ids, 1):
-            if cid in expected or cid.startswith(cond):
+            if cid in expected_chunk_ids:
                 rr = 1.0 / rank
                 break
         reciprocal_ranks.append(rr)
 
-        # 3. Precision @ K
-        relevant_in_top_k = sum(1 for cid in retrieved_ids if cid in expected or cid.startswith(cond))
+        # 3. Precision @ K (evaluado exclusivamente contra verdad fundamental anotada)
+        relevant_in_top_k = sum(1 for cid in retrieved_ids if cid in expected_chunk_ids)
         p_at_k = relevant_in_top_k / k
         precision_scores.append(p_at_k)
 
         retrieval_details.append({
             "id": qid,
             "query": qtext,
-            "expected_chunk_ids": expected,
+            "expected_chunk_ids": expected_chunk_ids,
             "retrieved_chunk_ids": retrieved_ids,
             "hit": is_hit,
             "reciprocal_rank": round(rr, 4),
             "precision_at_k": round(p_at_k, 4),
-            "latency_ms": round(elapsed_ms, 2)
+            "vector_store_latency_ms": round(vec_elapsed_ms, 2),
+            "total_retrieval_latency_ms": round(total_elapsed_ms, 2),
+            "latency_ms": round(total_elapsed_ms, 2)
         })
 
-        print(f"{qid:<5} | {cond:<10} | {('SI' if is_hit else 'NO'):<7} | {rr:<6.2f} | {p_at_k:<6.2f} | {elapsed_ms:<8.2f} ms | {top1_id}")
+        print(f"{qid:<5} | {cond:<10} | {('SI' if is_hit else 'NO'):<7} | {rr:<6.2f} | {p_at_k:<6.2f} | {vec_elapsed_ms:<8.2f} ms | {total_elapsed_ms:<8.2f} ms | {top1_id}")
 
         # Evaluación de Generación (Bloque B)
         pipe_res = await pipeline.run_pipeline(qtext)
@@ -132,8 +138,10 @@ async def main():
     hit_rate = (hits / total) * 100.0
     mrr = sum(reciprocal_ranks) / total
     mean_precision = sum(precision_scores) / total
-    avg_latency = sum(latencies) / total
-    p95_latency = sorted(latencies)[int(0.95 * total)]
+    avg_vec_latency = sum(vector_latencies) / total
+    p95_vec_latency = sorted(vector_latencies)[int(0.95 * total)]
+    avg_total_latency = sum(total_latencies) / total
+    p95_total_latency = sorted(total_latencies)[int(0.95 * total)]
     adherence_rate = (adherent_count / total) * 100.0
 
     emb_mode_final = list(embedding_modes)[0] if len(embedding_modes) == 1 else list(embedding_modes)
@@ -143,13 +151,15 @@ async def main():
     print("\n" + "=" * 85)
     print("BLOQUE A: METRICAS DE RECUPERACION (RETRIEVAL QUALITY)")
     print("=" * 85)
-    print(f" * Hit Rate @ 3:               {hit_rate:.2f}%  (Meta: >= 85.0%)  -> {'SUPERADA' if hit_rate >= 85 else 'NO ALCANZADA'}")
-    print(f" * Mean Reciprocal Rank (MRR): {mrr:.4f}  (Meta: >= 0.80)   -> {'SUPERADA' if mrr >= 0.80 else 'NO ALCANZADA'}")
-    print(f" * Precision @ 3:              {mean_precision:.4f}  (Meta: >= 0.70)   -> {'SUPERADA' if mean_precision >= 0.70 else 'NO ALCANZADA'}")
-    print(f" * Latencia Promedio:          {avg_latency:.2f} ms")
-    print(f" * Latencia P95:               {p95_latency:.2f} ms")
-    print(f" * Modo Embeddings:            {emb_mode_final}")
-    print(f" * Backend Vectorial:          {vec_backend_final}")
+    print(f" * Hit Rate @ 3:                      {hit_rate:.2f}%  (Meta: >= 85.0%)  -> {'SUPERADA' if hit_rate >= 85 else 'NO ALCANZADA'}")
+    print(f" * Mean Reciprocal Rank (MRR):        {mrr:.4f}  (Meta: >= 0.80)   -> {'SUPERADA' if mrr >= 0.80 else 'NO ALCANZADA'}")
+    print(f" * Precision @ 3:                     {mean_precision:.4f}  (Meta: >= 0.70)   -> {'SUPERADA' if mean_precision >= 0.70 else 'NO ALCANZADA'}")
+    print(f" * Latencia Vector Store Promedio:    {avg_vec_latency:.2f} ms")
+    print(f" * Latencia Vector Store P95:         {p95_vec_latency:.2f} ms")
+    print(f" * Latencia Total Recuperación Prom.: {avg_total_latency:.2f} ms")
+    print(f" * Latencia Total Recuperación P95:  {p95_total_latency:.2f} ms")
+    print(f" * Modo Embeddings:                   {emb_mode_final}")
+    print(f" * Backend Vectorial:                 {vec_backend_final}")
 
     print("\n" + "=" * 85)
     print("BLOQUE B: ANALISIS DE GENERACION (RESPONSE EVALUATION)")
@@ -169,8 +179,12 @@ async def main():
             "hit_rate_at_3": round(hit_rate, 2),
             "mrr": round(mrr, 4),
             "precision_at_3": round(mean_precision, 4),
-            "avg_latency_ms": round(avg_latency, 2),
-            "p95_latency_ms": round(p95_latency, 2),
+            "avg_vector_store_latency_ms": round(avg_vec_latency, 2),
+            "p95_vector_store_latency_ms": round(p95_vec_latency, 2),
+            "avg_total_latency_ms": round(avg_total_latency, 2),
+            "p95_total_latency_ms": round(p95_total_latency, 2),
+            "avg_latency_ms": round(avg_total_latency, 2),
+            "p95_latency_ms": round(p95_total_latency, 2),
             "total_queries": total
         },
         "generation_evaluation": {

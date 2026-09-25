@@ -5,6 +5,7 @@ Integra generación de embeddings, consulta a base vectorial y auto-ingesta bajo
 from typing import List, Dict, Any, Optional, Tuple
 import os
 import json
+import time
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..embeddings.hf_embeddings import HuggingFaceEmbeddingsGenerator
@@ -74,15 +75,18 @@ class ClinicalRetriever:
     ) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
         """Recupera fragmentos relevantes y retorna además la telemetría post-ejecución."""
         query_vec, embedding_mode = self.embeddings_gen.embed_query_with_telemetry(query)
+        vec_start = time.perf_counter()
         results = await self.vector_store.similarity_search(
             query_embedding=query_vec,
             top_k=top_k,
             condition_filter=condition_filter,
             session=session
         )
+        vec_elapsed_ms = (time.perf_counter() - vec_start) * 1000
         filtered = [r for r in results if r["similarity"] >= min_similarity]
         telemetry = {
             "embedding_mode": embedding_mode,
-            "vector_backend": self.vector_store.last_backend_used
+            "vector_backend": self.vector_store.last_backend_used,
+            "vector_store_latency_ms": round(vec_elapsed_ms, 2)
         }
         return filtered, telemetry
