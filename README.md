@@ -285,7 +285,7 @@ npm run dev
 * 🗺️ **Mapa de Dominio:** [`docs/knowledge/domain-map.md`](docs/knowledge/domain-map.md)
 * 🧬 **Ontología Médica:** [`docs/knowledge/ontology.md`](docs/knowledge/ontology.md)
 * 📊 **Taxonomía de Ejercicios:** [`docs/knowledge/taxonomy.md`](docs/knowledge/taxonomy.md)
-* 📚 **Fuentes Bibliográficas & Asesoría Clínica:** [`docs/knowledge/knowledge-sources.md`](docs/knowledge/knowledge-sources.md)
+* 📚 **Fuentes Bibliográficas & Asesoría Clínica:** [`docs/rag/knowledge-sources.md`](docs/rag/knowledge-sources.md)
 * ✂️ **Estrategia de Chunking:** [`docs/rag/chunking-strategy.md`](docs/rag/chunking-strategy.md)
 * 🧬 **Estrategia de Embeddings:** [`docs/rag/embeddings-strategy.md`](docs/rag/embeddings-strategy.md)
 * 🗄️ **Base de Datos Vectorial (pgvector):** [`docs/rag/vector-database.md`](docs/rag/vector-database.md)
