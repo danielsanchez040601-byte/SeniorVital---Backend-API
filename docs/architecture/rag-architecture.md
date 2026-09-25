@@ -82,9 +82,9 @@ Para evitar ambigüedades técnicas y asegurar la reproducibilidad de los result
 
 ### B. Arquitectura Efectivamente Ejecutada (Evidencia Empírica de Pruebas)
 En las validaciones locales y runners de CI/CD:
-* **Embeddings:** `HUGGINGFACE_REAL_MODEL` (en validación empírica S1-03 con modelo real) / `FALLBACK_CI` (en CI aislado sin secretos).
+* **Embeddings:** `HUGGINGFACE_REAL_MODEL` (en validación empírica S1-03 y evaluación de benchmark con modelo real) / `FALLBACK_CI` (en CI aislado sin secretos).
 * **Base Vectorial:** `IN_MEMORY_FALLBACK` (indexación y búsqueda vectorial en memoria de los 30 chunks clínicos).
-* **Proveedor LLM:** `deterministic_fallback` (generación segura basada en evidencia de guías clínicas recuperadas).
+* **Proveedor LLM:** `deterministic_fallback` (generación segura condicionada por la evidencia de guías clínicas recuperadas).
 
 ---
 
@@ -98,6 +98,7 @@ La asignación de estados se realiza exclusivamente tras la ejecución efectiva 
   * `embedding_mode`: `"HUGGINGFACE_REAL_MODEL"` | `"FALLBACK_CI"` | `"FALLBACK_API_ERROR"`
   * `vector_backend`: `"SUPABASE_PGVECTOR"` | `"IN_MEMORY_FALLBACK"`
   * `llm_provider`: `"google_ai_studio"` | `"openrouter"` | `"deterministic_fallback"` | `"safety_guardrail"`
+  * `vector_store_latency_ms`: Float con el tiempo exclusivo de búsqueda vectorial en milisegundos.
 
 ### B. Registro de Ejecución Empírica Concreta:
 ```json
@@ -106,9 +107,10 @@ La asignación de estados se realiza exclusivamente tras la ejecución efectiva 
   "status": "SUCCESS",
   "provider": "SeniorVital Clinical RAG Reasoning Engine",
   "telemetry": {
-    "embedding_mode": "FALLBACK_API_ERROR",
+    "embedding_mode": "HUGGINGFACE_REAL_MODEL",
     "vector_backend": "IN_MEMORY_FALLBACK",
-    "llm_provider": "deterministic_fallback"
+    "llm_provider": "deterministic_fallback",
+    "vector_store_latency_ms": 3.18
   },
   "retrieved_chunks": [ ... ],
   "context_injected": "...",
@@ -126,7 +128,7 @@ La asignación de estados se realiza exclusivamente tras la ejecución efectiva 
 | **Chunker** | `src/knowledge/chunking/` | Divide cada patología en fragmentos (`_DESC`, `_REC`, `_CONTRA`). | Evita contaminación entre prescripciones y contraindicaciones. |
 | **Embeddings** | `src/rag/embeddings/` | Genera vectores de 384 dimensiones (`all-MiniLM-L6-v2`). | Telemetría post-ejecución (`HUGGINGFACE_REAL_MODEL` vs fallback). |
 | **Vector Store** | `src/rag/vector_store/` | Persistencia en PostgreSQL + `pgvector` con índice `HNSW`. | Registro de backend (`SUPABASE_PGVECTOR` vs `IN_MEMORY_FALLBACK`). |
-| **Retriever** | `src/rag/retriever/` | Recuperación semántica Top-K con filtrado por metadatos. | Búsqueda coseno de alta velocidad. |
+| **Retriever** | `src/rag/retriever/` | Recuperación semántica Top-K con filtrado por metadatos. | Búsqueda coseno con medición aislada de latencia ($3.18\text{ ms}$). |
 | **Pipeline E2E** | `src/rag/pipeline/` | Enrutamiento, guardrails de seguridad y generación LLM. | Guardrail para consultas fuera de dominio (Zero-Context Fallback). |
 
 ---
@@ -140,5 +142,5 @@ La asignación de estados se realiza exclusivamente tras la ejecución efectiva 
 | **S1-03** | `src/rag/embeddings/` | `docs/rag/embeddings-strategy.md` | `scripts/evaluation/test_hf_embeddings.py` | Modelo 384d, L2=1.0000, inferencia real HF y aserción estricta superada | ✅ **100%** (Corregido y Verificado) |
 | **S1-04** | `src/rag/vector_store/` | `docs/rag/vector-database.md` | `scripts/indexing/index_pgvector.py` | Índice HNSW en PostgreSQL / pgvector | ✅ **100%** (Aprobado) |
 | **S1-05** | `src/rag/pipeline/` | `docs/architecture/rag-architecture.md` | `tests/rag/test_retrieval.py` | Orquestación E2E con mocks deterministas y telemetría unívoca | ✅ **100%** (Corregido y Verificado) |
-| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3=100%, MRR=1.0, Adherencia clínica heurística documentada | ✅ **100%** (Corregido y Verificado) |
-| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/ -v` | Arquitectura consolidada, purga terminológica y suite 4/4 en verde | ✅ **100%** (Corregido y Consolidado) |
+| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3=100%, MRR=0.9000, P@3=0.6333 (techo 0.6667), lat. vec=3.18 ms | ✅ **100%** (Corregido y Verificado) |
+| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/ -v` | Arquitectura consolidada, purga terminológica, rutas canónicas y suite 4/4 en verde | ✅ **100%** (Corregido y Consolidado) |

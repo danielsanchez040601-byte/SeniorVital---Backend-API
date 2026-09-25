@@ -4,6 +4,7 @@
 > **Autores:** Daniel Alejandro Sánchez Ávila & Abdénago Nahmens (Team 5)  
 > **Asesoría Clínica:** Ing. Julio Matute  
 > **Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
+> **Estado:** Corregido y Consolidado con Benchmark Recalculado  
 
 ---
 
@@ -67,6 +68,7 @@ Para garantizar trazabilidad técnica real y evitar reportes basados en configur
   * `embedding_mode`: `"HUGGINGFACE_REAL_MODEL"` | `"FALLBACK_CI"` | `"FALLBACK_API_ERROR"`
   * `vector_backend`: `"SUPABASE_PGVECTOR"` | `"IN_MEMORY_FALLBACK"`
   * `llm_provider`: `"google_ai_studio"` | `"openrouter"` | `"deterministic_fallback"` | `"safety_guardrail"`
+  * `vector_store_latency_ms`: Float con el tiempo de búsqueda vectorial en milisegundos.
 
 ### B. Registro de Ejecución Empírica Concreta:
 En una corrida empírica real, el objeto de respuesta registra estrictamente el valor unívoco ejecutado:
@@ -75,11 +77,12 @@ En una corrida empírica real, el objeto de respuesta registra estrictamente el 
 {
   "query": "Tengo osteoartritis severa en rodilla, ¿puedo hacer sentadillas con salto?",
   "status": "SUCCESS",
-  "provider": "Google AI Studio (Gemini Flash Lite)",
+  "provider": "SeniorVital Clinical RAG Reasoning Engine",
   "telemetry": {
     "embedding_mode": "HUGGINGFACE_REAL_MODEL",
-    "vector_backend": "SUPABASE_PGVECTOR",
-    "llm_provider": "google_ai_studio"
+    "vector_backend": "IN_MEMORY_FALLBACK",
+    "llm_provider": "deterministic_fallback",
+    "vector_store_latency_ms": 3.18
   },
   "retrieved_chunks": [ ... ],
   "context_injected": "...",
@@ -97,12 +100,23 @@ En una corrida empírica real, el objeto de respuesta registra estrictamente el 
 | **Chunker** | `src/knowledge/chunking/` | Divide cada patología en fragmentos (`_DESC`, `_REC`, `_CONTRA`). | Evita contaminación entre prescripciones y contraindicaciones. |
 | **Embeddings** | `src/rag/embeddings/` | Genera vectores de 384 dimensiones (`all-MiniLM-L6-v2`). | Telemetría post-ejecución (`HUGGINGFACE_REAL_MODEL` vs fallback). |
 | **Vector Store** | `src/rag/vector_store/` | Persistencia en PostgreSQL + `pgvector` con índice `HNSW`. | Registro de backend (`SUPABASE_PGVECTOR` vs `IN_MEMORY_FALLBACK`). |
-| **Retriever** | `src/rag/retriever/` | Recuperación semántica Top-K con filtrado por metadatos. | Búsqueda coseno de alta velocidad ($< 5\text{ ms}$). |
+| **Retriever** | `src/rag/retriever/` | Recuperación semántica Top-K con filtrado por metadatos. | Búsqueda coseno con medición aislada de latencia ($3.18\text{ ms}$). |
 | **Pipeline E2E** | `src/rag/pipeline/` | Enrutamiento, guardrails de seguridad y generación LLM. | Guardrail para consultas fuera de dominio (Zero-Context Fallback). |
 
 ---
 
-## 4. Matriz de Trazabilidad S1-01 $\rightarrow$ S1-07
+## 4. Sincronización Final y Corrección Algorítmica (S1-06 $\leftrightarrow$ S1-07)
+
+En atención a las observaciones técnicas emitidas en la revisión final del Sprint 1, se consolidaron las siguientes acciones transversales:
+
+1. **Eliminación del Sesgo de Prefijo:** Se purgó la condición `cid.startswith(cond)` en `scripts/evaluation/evaluate_rag.py`. La relevancia se evalúa exclusivamente contra `expected_chunk_ids`.
+2. **Desagregación de Latencias:** Se instrumentó la medición diferenciada entre la latencia exclusiva del motor vectorial ($3.18\text{ ms}$ promedio) y la latencia global del ciclo `retrieve_with_telemetry` ($421.20\text{ ms}$ promedio, dominada por la inferencia en Hugging Face).
+3. **Auditoría de Enlaces Canónicos:** Se verificó que el documento canónico de arquitectura reside en `docs/architecture/rag-architecture.md`, corrigiendo referencias residuales a la ruta inexistente `docs/rag/rag-architecture.md` en el `README.md`.
+4. **Purga de Reclamos Absolutos:** Se eliminó cualquier aseveración absolutista del tipo "recomendaciones 100% seguras", adoptando la formulación rigurosa "recomendaciones condicionadas por reglas clínicas, guardrails y evidencia recuperada del dominio".
+
+---
+
+## 5. Matriz de Trazabilidad S1-01 $\rightarrow$ S1-07
 
 | Issue | Entregable en `/src` | Documentación | Script de Prueba | Métrica / Resultado | Estado |
 | :--- | :--- | :--- | :--- | :--- | :---: |
@@ -111,5 +125,5 @@ En una corrida empírica real, el objeto de respuesta registra estrictamente el 
 | **S1-03** | `src/rag/embeddings/` | `docs/rag/embeddings-strategy.md` | `scripts/evaluation/test_hf_embeddings.py` | Modelo 384d, L2=1.0000, inferencia real HF y aserción estricta superada | ✅ **100%** (Corregido y Verificado) |
 | **S1-04** | `src/rag/vector_store/` | `docs/rag/vector-database.md` | `scripts/indexing/index_pgvector.py` | Índice HNSW en PostgreSQL / pgvector | ✅ **100%** (Aprobado) |
 | **S1-05** | `src/rag/pipeline/` | `docs/architecture/rag-architecture.md` | `tests/rag/test_retrieval.py` | Orquestación E2E con mocks deterministas y telemetría unívoca | ✅ **100%** (Corregido y Verificado) |
-| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3=100%, MRR=1.0, Adherencia clínica heurística documentada | ✅ **100%** (Corregido y Verificado) |
-| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/ -v` | Arquitectura consolidada, purga terminológica y suite 4/4 en verde | ✅ **100%** (Corregido y Consolidado) |
+| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3=100%, MRR=0.9000, P@3=0.6333 (techo 0.6667), lat. vec=3.18 ms | ✅ **100%** (Corregido y Verificado) |
+| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/ -v` | Arquitectura consolidada, purga terminológica, rutas canónicas y suite 4/4 en verde | ✅ **100%** (Corregido y Consolidado) |
