@@ -5,19 +5,9 @@ from contextlib import asynccontextmanager
 import asyncio
 from sqlalchemy import text
 
-try:
-    from src.api.config import settings
-    from src.database.database import engine, Base
-    from src.api import auth, chat, exercises, routines, tracking, dashboard, notify
-except ImportError:
-    try:
-        from .config import settings
-        from ..database.database import engine, Base
-        from . import auth, chat, exercises, routines, tracking, dashboard, notify
-    except ImportError:
-        from config import settings
-        from database import engine, Base
-        import auth, chat, exercises, routines, tracking, dashboard, notify
+from src.api.config import settings
+from src.database.database import engine, Base
+from src.api import auth, chat, exercises, routines, tracking, dashboard, notify
 
 
 async def init_db_background():

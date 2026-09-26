@@ -1,16 +1,14 @@
 """SQLAlchemy ORM models — maps existing PostgreSQL tables.
 
-These models map the EXISTING schema (14 tables). Only the 3 tables
-needed for S2-01 are defined here. Add others as needed.
+These models map the EXISTING schema (14 tables). Only the models
+needed for FastAPI endpoints, tracking, routines, and auth are defined here.
 """
 
 from datetime import date, datetime
-
-from sqlalchemy import JSON, Boolean, Date, DateTime, Integer, Text, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
-
 from enum import Enum
+
+from sqlalchemy import JSON, Boolean, Date, DateTime, Float, Integer, Text, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class RoleEnum(str, Enum):
@@ -37,8 +35,10 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(unique=True)
-    password: Mapped[str]
-    role: Mapped[str]  # CHECK: senior | caregiver | admin
+    password: Mapped[str | None] = mapped_column(Text, nullable=True, default="")
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True, default="")
+    full_name: Mapped[str | None] = mapped_column(Text, nullable=True, default="")
+    role: Mapped[str] = mapped_column(default=RoleEnum.SENIOR.value)  # CHECK: senior | caregiver | admin
     profile: Mapped[dict] = mapped_column(JSON, default={})
     health_profile: Mapped[dict] = mapped_column(JSON, default={})
     preferences: Mapped[dict] = mapped_column(JSON, default={})
@@ -88,3 +88,112 @@ class Routine(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class SeniorProfile(Base):
+    """Mapping de la tabla senior_profiles (perfil clínico del usuario senior)."""
+
+    __tablename__ = "senior_profiles"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
+    birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    age: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    weight_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
+    height_cm: Mapped[float | None] = mapped_column(Float, nullable=True)
+    medical_conditions: Mapped[list] = mapped_column(JSON, default=list)
+    fitness_level: Mapped[int] = mapped_column(Integer, default=1)
+    rpe_baseline: Mapped[int] = mapped_column(Integer, default=4)
+    equipment_available: Mapped[list] = mapped_column(JSON, default=list)
+    objectives: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class CaregiverLink(Base):
+    """Mapping de la tabla caregiver_links (vínculos cuidador-senior)."""
+
+    __tablename__ = "caregiver_links"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    caregiver_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    senior_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class DailyRoutine(Base):
+    """Mapping de la tabla daily_routines (rutinas diarias adaptadas)."""
+
+    __tablename__ = "daily_routines"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    senior_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    assigned_date: Mapped[date] = mapped_column(Date, nullable=False)
+    status: Mapped[str] = mapped_column(Text, default=RoutineStatusEnum.PENDING.value)
+    exercises_data: Mapped[list] = mapped_column(JSON, default=list)
+    warmup_data: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class ExerciseRecord(Base):
+    """Mapping de la tabla exercise_records (tracking de ejecución y RPE)."""
+
+    __tablename__ = "exercise_records"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    senior_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    exercise_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sets_completed: Mapped[int] = mapped_column(Integer, default=1)
+    reps_completed: Mapped[int] = mapped_column(Integer, default=0)
+    rpe_score: Mapped[int] = mapped_column(Integer, default=5)
+    reported_pain: Mapped[str | None] = mapped_column(Text, nullable=True)
+    completed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class DailyHabit(Base):
+    """Mapping de la tabla daily_habits (registro de hidratación y descanso)."""
+
+    __tablename__ = "daily_habits"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    senior_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    date: Mapped[date] = mapped_column(Date, nullable=False)
+    water_glasses: Mapped[int] = mapped_column(Integer, default=0)
+    sleep_hours: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class HealthEvent(Base):
+    """Mapping de la tabla health_events (alertas de fatiga y dolor)."""
+
+    __tablename__ = "health_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_type: Mapped[str] = mapped_column(Text, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+__all__ = [
+    "Base",
+    "RoleEnum",
+    "RoutineStatusEnum",
+    "User",
+    "SeniorProfile",
+    "CaregiverLink",
+    "Exercise",
+    "Routine",
+    "DailyRoutine",
+    "ExerciseRecord",
+    "DailyHabit",
+    "HealthEvent",
+]

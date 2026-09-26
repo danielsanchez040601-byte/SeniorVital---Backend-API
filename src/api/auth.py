@@ -5,22 +5,17 @@ from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
 
-try:
-    from src.database.database import get_db
-    from src.database.models import User, SeniorProfile, RoleEnum, CaregiverLink
-    from src.database.schemas import UserCreate, UserResponse, LoginRequest, TokenResponse, SeniorProfileCreate, SeniorProfileResponse
-    from src.api.config import settings
-except ImportError:
-    try:
-        from ..database.database import get_db
-        from ..database.models import User, SeniorProfile, RoleEnum, CaregiverLink
-        from ..database.schemas import UserCreate, UserResponse, LoginRequest, TokenResponse, SeniorProfileCreate, SeniorProfileResponse
-        from .config import settings
-    except ImportError:
-        from database import get_db
-        from models import User, SeniorProfile, RoleEnum, CaregiverLink
-        from schemas import UserCreate, UserResponse, LoginRequest, TokenResponse, SeniorProfileCreate, SeniorProfileResponse
-        from config import settings
+from src.database.database import get_db
+from src.database.models import User, SeniorProfile, RoleEnum, CaregiverLink
+from src.database.schemas import (
+    UserCreate,
+    UserResponse,
+    LoginRequest,
+    TokenResponse,
+    SeniorProfileCreate,
+    SeniorProfileResponse,
+)
+from src.api.config import settings
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 import bcrypt
