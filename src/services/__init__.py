@@ -1,1 +1,1 @@
-# SeniorVital Business Services
+"""Application services — business logic layer."""

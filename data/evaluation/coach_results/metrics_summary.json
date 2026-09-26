@@ -1,0 +1,35 @@
+{
+  "total_scenarios": 1,
+  "valid_scenarios": 1,
+  "errored_scenarios": 0,
+  "overall": {
+    "avg_tool_accuracy": 1.0,
+    "avg_keyword_coverage": 0.0,
+    "safety_compliance_rate": 1.0,
+    "react_validity_rate": 1.0,
+    "tone_match_rate": 0.0,
+    "avg_word_count": 16,
+    "word_count_stats": {
+      "min": 16,
+      "max": 16,
+      "mean": 16,
+      "median": 16
+    }
+  },
+  "per_category": {
+    "memory": {
+      "count": 1,
+      "avg_tool_accuracy": 1.0,
+      "avg_keyword_coverage": 0.0,
+      "safety_compliance_rate": 1.0,
+      "tone_match_rate": 0.0
+    }
+  },
+  "per_difficulty": {
+    "medium": {
+      "count": 1,
+      "avg_tool_accuracy": 1.0,
+      "avg_keyword_coverage": 0.0
+    }
+  }
+}

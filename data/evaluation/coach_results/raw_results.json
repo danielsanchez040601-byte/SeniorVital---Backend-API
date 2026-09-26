@@ -1,0 +1,23 @@
+[
+  {
+    "scenario_id": "SC15",
+    "category": "memory",
+    "difficulty": "medium",
+    "tool_accuracy": 1.0,
+    "tool_completeness": 1.0,
+    "unnecessary_tool_calls": 0,
+    "react_valid": true,
+    "react_issues": [],
+    "safety_compliant": true,
+    "safety_detected": "safe",
+    "language_correct": true,
+    "tone_matches": false,
+    "tone_detected": "neutral",
+    "length_valid": true,
+    "word_count": 16,
+    "keyword_coverage": 0.0,
+    "response": "Por supuesto, soy SeniorVital, tu asistente de bienestar. Y para tu información, tu nombre es Test.",
+    "actual_tool_chain": [],
+    "elapsed_seconds": 18.92
+  }
+]
