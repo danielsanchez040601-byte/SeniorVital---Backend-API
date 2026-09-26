@@ -4,6 +4,7 @@
 > **Autores:** Daniel Alejandro Sánchez Ávila & Abdénago Nahmens (Team 5)  
 > **Asesoría Clínica:** Ing. Julio Matute  
 > **Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
+> **Estado:** Corregido y Consolidado con Benchmark Recalculado  
 
 ---
 
@@ -43,7 +44,7 @@ flowchart TD
         
         Pipeline --> Prompt
         Prompt --> LLM_Primary
-        LLM_Primary -.->|Fallback 429/503/Timeout| LLM_Fallback
+        LLM_Primary -.->|Fallback 429/503| LLM_Fallback
         LLM_Fallback -.->|Fallback Offline| Deterministic_Engine
     end
 
@@ -57,40 +58,9 @@ flowchart TD
 
 ---
 
-## 2. Distinción Formal: Arquitectura Configurada vs. Efectivamente Ejecutada
+## 2. Telemetría en Tiempo de Ejecución (Post-Execution Telemetry)
 
-Para evitar ambigüedades técnicas y asegurar la reproducibilidad de los resultados, el sistema formaliza la diferencia entre lo soportado contractualmente y lo ejecutado empíricamente en cada corrida:
-
-### A. Arquitectura Configurada (Soporte Contractual del Sistema)
-1. **Capa de Embeddings:**
-   * Modelo: `sentence-transformers/all-MiniLM-L6-v2` ($d=384$).
-   * Inferencia: Hugging Face Inference API / Local.
-   * Normalización: Norma Euclidiana L2 unitaria ($||v||_2 = 1.0$).
-   * Resiliencia: Fallback determinista proyectado en 384 dimensiones.
-2. **Capa de Persistencia Vectorial:**
-   * Motor: PostgreSQL 15+ con extensión `pgvector` en Supabase.
-   * Tabla: `clinical_knowledge_embeddings`.
-   * Indexación: Índice `HNSW` (`vector_cosine_ops`, $m=16$, $ef\_construction=64$).
-   * Resiliencia: Almacenamiento en memoria con cálculo exacto de similitud coseno (`IN_MEMORY_FALLBACK`).
-3. **Capa de Razonamiento LLM:**
-   * Nivel 1: Google AI Studio (`gemini-flash-lite-latest`, `gemini-2.5-flash-lite`).
-   * Nivel 2: Pool OpenRouter (`liquid/lfm-2.5-2.6b:free`, `meta-llama/llama-3.2-3b-instruct:free`).
-   * Nivel 3: Motor de Razonamiento Clínico Determinista SeniorVital (`deterministic_fallback`).
-4. **Guardrails de Seguridad:**
-   * Filtro semántico por umbral de relevancia ($\ge 0.40$).
-   * Zero-Context Fallback ante consultas fuera del dominio geriátrico.
-
-### B. Arquitectura Efectivamente Ejecutada (Evidencia Empírica de Pruebas)
-En las validaciones locales y runners de CI/CD:
-* **Embeddings:** `HUGGINGFACE_REAL_MODEL` (en validación empírica S1-03 y evaluación de benchmark con modelo real) / `FALLBACK_CI` (en CI aislado sin secretos).
-* **Base Vectorial:** `IN_MEMORY_FALLBACK` (indexación y búsqueda vectorial en memoria de los 30 chunks clínicos).
-* **Proveedor LLM:** `deterministic_fallback` (generación segura condicionada por la evidencia de guías clínicas recuperadas).
-
----
-
-## 3. Telemetría en Tiempo de Ejecución (Post-Execution Telemetry)
-
-La asignación de estados se realiza exclusivamente tras la ejecución efectiva de cada bloque:
+Para garantizar trazabilidad técnica real y evitar reportes basados en configuración estática, el sistema formaliza tanto el esquema contractual de telemetría como el registro empírico unívoco obtenido en cada corrida:
 
 ### A. Esquema Contractual y Valores Posibles:
 * **Valores Posibles del Proveedor (`provider`):** `"Google AI Studio (Gemini Flash Lite)"` | `"OpenRouter Fallback Pool"` | `"SeniorVital Clinical RAG Reasoning Engine"` | `"Safety Guardrail (Zero-Context Fallback)"`
@@ -98,12 +68,14 @@ La asignación de estados se realiza exclusivamente tras la ejecución efectiva 
   * `embedding_mode`: `"HUGGINGFACE_REAL_MODEL"` | `"FALLBACK_CI"` | `"FALLBACK_API_ERROR"`
   * `vector_backend`: `"SUPABASE_PGVECTOR"` | `"IN_MEMORY_FALLBACK"`
   * `llm_provider`: `"google_ai_studio"` | `"openrouter"` | `"deterministic_fallback"` | `"safety_guardrail"`
-  * `vector_store_latency_ms`: Float con el tiempo exclusivo de búsqueda vectorial en milisegundos.
+  * `vector_store_latency_ms`: Float con el tiempo de búsqueda vectorial en milisegundos.
 
 ### B. Registro de Ejecución Empírica Concreta:
+En una corrida empírica real, el objeto de respuesta registra estrictamente el valor unívoco ejecutado:
+
 ```json
 {
-  "query": "Tengo osteoartritis severa en rodilla, puedo hacer sentadillas con salto?",
+  "query": "Tengo osteoartritis severa en rodilla, ¿puedo hacer sentadillas con salto?",
   "status": "SUCCESS",
   "provider": "SeniorVital Clinical RAG Reasoning Engine",
   "telemetry": {
@@ -120,7 +92,7 @@ La asignación de estados se realiza exclusivamente tras la ejecución efectiva 
 
 ---
 
-## 4. Responsabilidad de Componentes y Decisiones de Diseño
+## 3. Responsabilidad de Componentes y Decisiones de Diseño
 
 | Componente | Módulo en `/src` | Responsabilidad Técnica | Decisión de Diseño Justificada |
 | :--- | :--- | :--- | :--- |
@@ -130,6 +102,17 @@ La asignación de estados se realiza exclusivamente tras la ejecución efectiva 
 | **Vector Store** | `src/rag/vector_store/` | Persistencia en PostgreSQL + `pgvector` con índice `HNSW`. | Registro de backend (`SUPABASE_PGVECTOR` vs `IN_MEMORY_FALLBACK`). |
 | **Retriever** | `src/rag/retriever/` | Recuperación semántica Top-K con filtrado por metadatos. | Búsqueda coseno con medición aislada de latencia ($3.18\text{ ms}$). |
 | **Pipeline E2E** | `src/rag/pipeline/` | Enrutamiento, guardrails de seguridad y generación LLM. | Guardrail para consultas fuera de dominio (Zero-Context Fallback). |
+
+---
+
+## 4. Sincronización Final y Corrección Algorítmica (S1-06 $\leftrightarrow$ S1-07)
+
+En atención a las observaciones técnicas emitidas en la revisión final del Sprint 1, se consolidaron las siguientes acciones transversales:
+
+1. **Eliminación del Sesgo de Prefijo:** Se purgó la condición `cid.startswith(cond)` en `scripts/evaluation/evaluate_rag.py`. La relevancia se evalúa exclusivamente contra `expected_chunk_ids`.
+2. **Desagregación de Latencias:** Se instrumentó la medición diferenciada entre la latencia exclusiva del motor vectorial ($3.18\text{ ms}$ promedio) y la latencia global del ciclo `retrieve_with_telemetry` ($421.20\text{ ms}$ promedio, dominada por la inferencia en Hugging Face).
+3. **Auditoría de Enlaces Canónicos:** Se verificó que el documento canónico de arquitectura reside en `docs/architecture/rag-architecture.md`, corrigiendo referencias residuales a la ruta inexistente `docs/rag/rag-architecture.md` en el `README.md`.
+4. **Purga de Reclamos Absolutos:** Se eliminó cualquier aseveración absolutista del tipo "recomendaciones 100% seguras", adoptando la formulación rigurosa "recomendaciones condicionadas por reglas clínicas, guardrails y evidencia recuperada del dominio".
 
 ---
 

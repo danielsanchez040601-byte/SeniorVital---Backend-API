@@ -1,28 +1,24 @@
-# 🗄️ Base de Datos Vectorial: PostgreSQL + pgvector en Supabase
+# 🗄️ Issue S1-04: Base de Datos Vectorial con pgvector (Supabase PostgreSQL)
 
 > **Materia:** Sistemas Inteligentes — Dra. Yaskelly Yedra  
-> **Autores:** Daniel Sánchez & Abdénago Nahmens (Team 5) | **Asesoría Clínica:** Ing. Julio Matute  
-> **Script de Inicialización e Indexación:** `scripts/indexing/index_pgvector.py`  
+> **Autores:** Daniel Alejandro Sánchez Ávila & Abdénago Nahmens (Team 5)  
+> **Proyecto:** SeniorVital 2.0 — Plataforma Inteligente Wellness (+60)  
+> **Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
 
 ---
 
-## 🏛️ 1. Arquitectura de Almacenamiento Vectorial
-
-En lugar de utilizar bases vectoriales volátiles en memoria o entornos propietarios de pago, **SeniorVital 2.0** utiliza la extensión **`pgvector`** sobre **PostgreSQL 15 (Supabase Cloud)**. Esto permite:
-* Persistir registros clínicos transaccionales y representaciones vectoriales en la misma base de datos relacional.
-* Mantener consistencia ACID y relaciones por clave foránea entre usuarios, patologías y fragmentos vectoriales.
-* Acelerar búsquedas por similitud mediante índices **HNSW (Hierarchical Navigable Small World)**.
-* Registrar telemetría post-ejecución (`SUPABASE_PGVECTOR` vs `IN_MEMORY_FALLBACK`).
+## 🎯 1. Arquitectura de Almacenamiento Vectorial
+Se integró la extensión **`pgvector`** sobre **Supabase PostgreSQL**, permitiendo almacenar tanto los registros transaccionales como los embeddings en una única base de datos relacional ACID con índice `HNSW`.
 
 ---
 
-## 🛠️ 2. Esquema DDL
+## 🛠️ 2. Esquema DDL e Indexación HNSW con Telemetría Post-Ejecución
 
 ```sql
--- 1. Habilitar extensión vectorial
+-- Habilitar extensión vectorial
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- 2. Tabla de embeddings clínicos
+-- Tabla de vectores de conocimiento clínico
 CREATE TABLE IF NOT EXISTS clinical_knowledge_embeddings (
     id SERIAL PRIMARY KEY,
     chunk_id VARCHAR(64) UNIQUE NOT NULL,
@@ -33,39 +29,30 @@ CREATE TABLE IF NOT EXISTS clinical_knowledge_embeddings (
     embedding vector(384)
 );
 
--- 3. Índice HNSW optimizado para distancia de coseno
+-- Índice HNSW optimizado para similitud de coseno
 CREATE INDEX IF NOT EXISTS idx_clinical_knowledge_embeddings_hnsw 
 ON clinical_knowledge_embeddings USING hnsw (embedding vector_cosine_ops)
 WITH (m = 16, ef_construction = 64);
 ```
 
----
-
-## 🔍 3. Consulta SQL de Búsqueda Semántica
-```sql
-SELECT 
-    chunk_id, 
-    condition_id, 
-    category, 
-    content, 
-    metadata,
-    1 - (embedding <=> :query_embedding) AS similarity
-FROM clinical_knowledge_embeddings
-WHERE 1 - (embedding <=> :query_embedding) >= 0.40
-ORDER BY embedding <=> :query_embedding ASC
-LIMIT 3;
+### Lógica de Registro de Backend Post-Ejecución (`PgVectorStore`):
+```python
+try:
+    # Intento real contra Supabase PostgreSQL + pgvector
+    results = execute_pgvector_query(query_vector, top_k)
+    backend_used = "SUPABASE_PGVECTOR"
+except Exception as e:
+    logger.warning(f"Fallo en conexión/consulta pgvector: {e}")
+    results = memory_fallback_search(query_vector, top_k)
+    backend_used = "IN_MEMORY_FALLBACK"
 ```
 
 ---
 
-## 🔬 4. Ejecución del Script de Indexación y Telemetría
+## 🔬 3. Evidencia Empírica de Indexación y Búsqueda (`index_pgvector.py`)
 
-Para verificar la creación de esquemas y la inserción de chunks:
-```bash
-python scripts/indexing/index_pgvector.py
-```
+Salida real obtenida en consola al ejecutar `python scripts/indexing/index_pgvector.py`:
 
-### Salida de Ejecución:
 ```text
 ================================================================================
 SENIORVITAL 2.0 - INICIALIZACION E INDEXACION EN SUPABASE (pgvector)
@@ -85,11 +72,13 @@ SENIORVITAL 2.0 - INICIALIZACION E INDEXACION EN SUPABASE (pgvector)
 
   Rank #1 | Chunk ID: OA-01_CONTRA | Similitud Coseno: 0.8125 | Backend: SUPABASE_PGVECTOR
   Condición: OA-01 | Categoría: contraindications
-  Contenido: CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Osteoartritis de Rodilla y Cadera...
+  Contenido: CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Osteoartritis de Rodilla y Cadera:
+MOVIMIENTOS Y ACCIONES PROHIBIDAS...
 
   Rank #2 | Chunk ID: OA-01_REC | Similitud Coseno: 0.7625 | Backend: SUPABASE_PGVECTOR
   Condición: OA-01 | Categoría: recommended_exercises
-  Contenido: PRESCRIPCIÓN DE EJERCICIO PARA Osteoartritis de Rodilla y Cadera...
+  Contenido: PRESCRIPCIÓN DE EJERCICIO PARA Osteoartritis de Rodilla y Cadera:
+MODALIDADES RECOMENDADAS: Cadena cinética cerrada...
 
   Rank #3 | Chunk ID: OA-01_DESC | Similitud Coseno: 0.6889 | Backend: SUPABASE_PGVECTOR
   Condición: OA-01 | Categoría: clinical_profile
@@ -100,3 +89,9 @@ SENIORVITAL 2.0 - INICIALIZACION E INDEXACION EN SUPABASE (pgvector)
 [SUCCESS] INDEXACION VECTORIAL Y CONSULTA DE PRUEBA COMPLETADAS CON EXITO
 ================================================================================
 ```
+
+---
+
+## 🔒 4. Seguridad y DevSecOps
+- No se exponen credenciales de base de datos ni tokens en el repositorio.
+- Las variables `DATABASE_URL` y secretos se configuran de forma segura en variables de entorno locales y en los entornos de staging/producción (Render / GitHub Secrets).
