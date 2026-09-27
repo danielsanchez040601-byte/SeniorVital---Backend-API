@@ -1,6 +1,7 @@
-"""Exercise repository — queries del catálogo de ejercicios."""
+from __future__ import annotations
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import Exercise
 

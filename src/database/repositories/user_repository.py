@@ -1,6 +1,7 @@
-"""User repository — queries específicas de dominio para usuarios."""
+from __future__ import annotations
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import Exercise, User
 
