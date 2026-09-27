@@ -32,3 +32,12 @@ fisioterapia geriátrica y prescripción de ejercicio adaptado para adultos mayo
 3. Observación (Observation): Integra datos y filtra contraindicaciones estrictas.
 4. Respuesta Final (Final Answer): Redacta la respuesta final adaptada en lenguaje claro.
 ```
+
+---
+
+## 🔍 3. Nota de Auditoría Técnica y Unificación Arquitectónica
+
+* **Herencia Formal de Clases:** `WellnessCoachAgent` en `src/agents/wellness/coach.py` hereda formalmente de la clase base `WellnessAgent` (`src/agents/wellness/agent.py`), unificando la jerarquía de agentes del sistema.
+* **Depuración de Rutas Legacy:** Se redirigió cualquier llamada residual desde `app/agents/` hacia la implementación canónica en `src/agents/wellness/coach.py`, estableciendo `src/` como única fuente de verdad técnica.
+* **Estado Final:** ✅ **Completado, unificado y validado con tests unitarios e integrados.**
+
