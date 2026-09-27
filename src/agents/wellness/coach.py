@@ -12,8 +12,10 @@ from datetime import date
 
 from src.agents.wellness.agent import WellnessAgent
 from src.agents.wellness.config import WellnessConfig
+from src.agents.wellness.prompts.routine_builder import RoutinePromptBuilder
 from src.agents.wellness.prompts.wellness_coach import WellnessCoachPromptBuilder
-from src.agents.wellness.reasoning import ReActEngine
+from src.agents.wellness.reasoning import ReActEngine, ReActTrace
+from src.database.repositories.routine_repository import RoutineRepository
 from src.memory import MemoryStore, Message
 from src.services.llm import LLMService
 from src.services.user_data import UserDataService
@@ -22,20 +24,21 @@ from src.tools import Tool, ToolResult
 logger = logging.getLogger(__name__)
 
 
-class WellnessCoachAgent:
+class WellnessCoachAgent(WellnessAgent):
     """Agente conversacional cognitivo con tool calling y ReAct.
 
+    Hereda formalmente de la clase base WellnessAgent como fuente canónica.
     Precondiciones:
-        - LLMService con conexión a Ollama activa.
+        - LLMService con conexión o fallback activo.
         - Herramientas inyectadas y funcionales.
         - MemoryStore implementado (puede ser None para modo sin memoria).
 
     Postcondiciones:
-        - Retorna respuesta personalizada basada en razonamiento.
-        - Historial conversacional actualizado (si memory_store != None).
+        - Retorna respuesta personalizada basada en razonamiento ReAct.
+        - Historial conversacional actualizado en MemoryStore (si está configurado).
 
     Efectos secundarios:
-        - Ejecuta herramientas que pueden modificar BD (log_habit, generate_routine).
+        - Ejecuta herramientas que pueden consultar o modificar BD.
         - Persiste mensajes en memory_store.
     """
 
@@ -46,12 +49,18 @@ class WellnessCoachAgent:
         tools: list[Tool],
         memory_store: MemoryStore | None = None,
         config: WellnessConfig | None = None,
+        routine_repo: RoutineRepository | None = None,
+        prompt_builder: RoutinePromptBuilder | None = None,
     ) -> None:
-        self._llm = llm
-        self._user_data = user_data
+        super().__init__(
+            llm=llm,
+            user_data=user_data,
+            routine_repo=routine_repo,
+            prompt_builder=prompt_builder,
+            config=config,
+        )
         self._tools = tools
         self._memory = memory_store
-        self._config = config or WellnessConfig()
         self._prompt_builder = WellnessCoachPromptBuilder()
         self._react_engine = ReActEngine(
             llm=llm,
@@ -60,24 +69,36 @@ class WellnessCoachAgent:
             tool_failure_threshold=self._config.tool_failure_threshold,
         )
 
-    async def chat(self, user_id: int, message: str) -> str:
-        """Procesa un mensaje del usuario y retorna una respuesta.
-
-        Flujo:
-            1. Obtener historial conversacional.
-            2. Construir prompt con perfil + historial.
-            3. Ejecutar ciclo ReAct (observe→think→act).
-            4. Guardar mensajes en memoria.
-            5. Retornar respuesta.
+    async def chat(self, user_id: int | str, message: str) -> str:
+        """Procesa un mensaje del usuario y retorna una respuesta en texto plano.
 
         Args:
-            user_id: ID del usuario.
+            user_id: ID del usuario (int o str).
             message: Mensaje del usuario.
 
         Returns:
             Respuesta del coach en texto plano.
         """
+        answer, _ = await self.chat_with_trace(user_id, message)
+        return answer
+
+    async def chat_with_trace(
+        self, user_id: int | str, message: str
+    ) -> tuple[str, ReActTrace]:
+        """Procesa un mensaje del usuario y retorna tanto la respuesta como la traza ReAct.
+
+        Flujo:
+            1. Obtener historial conversacional desde MemoryStore.
+            2. Construir prompt con perfil + historial.
+            3. Ejecutar ciclo ReAct iterativo (Thought → Action → Observation).
+            4. Persistir mensajes de usuario y asistente en memoria.
+            5. Retornar tupla (respuesta_final, traza_react).
+        """
         user_str_id = str(user_id)
+        try:
+            parsed_uid = int(str(user_id).split("-")[-1]) if "-" in str(user_id) else int(user_id)
+        except (ValueError, TypeError):
+            parsed_uid = 1
 
         # 1. Obtener historial
         history: list[Message] = []
@@ -90,7 +111,7 @@ class WellnessCoachAgent:
                 logger.warning(f"Failed to get history: {e}")
 
         # 2. Obtener perfil del usuario
-        user_profile = await self._get_user_profile(user_id)
+        user_profile = await self._get_user_profile(parsed_uid)
 
         # 3. Construir prompt
         system_prompt, user_prompt = self._prompt_builder.build(
@@ -139,7 +160,7 @@ class WellnessCoachAgent:
             except Exception as e:
                 logger.warning(f"Failed to save to memory: {e}")
 
-        return trace.final_answer
+        return trace.final_answer, trace
 
     async def _get_user_profile(self, user_id: int) -> dict:
         """Obtiene el perfil del usuario para el prompt.

@@ -152,4 +152,5 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response: str
-    is_safe: bool
+    is_safe: bool = True
+    telemetry: Optional[dict] = None
