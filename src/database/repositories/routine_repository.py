@@ -16,6 +16,9 @@ class RoutineRepository(BaseRepository[Routine]):
     Postcondiciones: Las queries retornan modelos ORM poblados.
     """
 
+    def __init__(self, session: AsyncSession, model: type[Routine] = Routine) -> None:
+        super().__init__(session, model)
+
     async def get_active_by_user_and_date(
         self, user_id: int, target_date: date
     ) -> Routine | None:

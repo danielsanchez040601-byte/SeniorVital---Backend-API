@@ -22,6 +22,9 @@ class UserRepository(BaseRepository[User]):
     Postcondiciones: Las queries retornan modelos ORM poblados.
     """
 
+    def __init__(self, session: AsyncSession, model: type[User] = User) -> None:
+        super().__init__(session, model)
+
     async def get_by_email(self, email: str) -> User | None:
         """Retorna usuario por email, o None si no existe."""
         stmt = select(User).where(User.email == email)

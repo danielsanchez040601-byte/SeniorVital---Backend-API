@@ -14,6 +14,9 @@ class ExerciseRepository(BaseRepository[Exercise]):
     Postcondiciones: Las queries retornan modelos ORM poblados.
     """
 
+    def __init__(self, session: AsyncSession, model: type[Exercise] = Exercise) -> None:
+        super().__init__(session, model)
+
     async def get_all(self) -> list[Exercise]:
         """Retorna todos los ejercicios del catálogo."""
         stmt = select(Exercise)

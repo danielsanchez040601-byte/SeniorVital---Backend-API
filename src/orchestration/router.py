@@ -37,7 +37,8 @@ DOMAIN_KEYWORDS: dict[str, list[str]] = {
         "proteína", "carbohidrato", "grasa", "fibra",
     ],
     "analytics": [
-        "ejercicio", "ejercicios", "rutina", "entrenamiento", "progreso",
+        "ejercicio", "ejercicios", "rutina", "rutinas", "entrenamiento", "progreso",
+        "sentadilla", "sentadillas", "caminar", "andar", "movilidad",
         "estadística", "estadísticas", "avance", "sesiones", "actividad",
         "semanal", "diario", "meta", "objetivo", "mejorar", "rendimiento",
         "fuerza", "resistencia", "flexibilidad", "cardio",
@@ -50,7 +51,9 @@ DOMAIN_KEYWORDS: dict[str, list[str]] = {
     ],
     "safety": [
         "peligro", "riesgo", "seguro", "segura", "caída", "caídas",
-        "dolor", "molestia", "lesión", "lesiones", "contraindicación",
+        "dolor", "dolores", "duele", "duelen", "molestia", "molestias",
+        "lesión", "lesiones", "contraindicación", "contraindicaciones",
+        "rodilla", "rodillas", "espalda", "cadera", "hombro", "articulación",
         "presión alta", "hipertensión", "diabetes", "cardíaco",
     ],
 }
@@ -142,14 +145,14 @@ Responde SOLO con este JSON:
             return None
 
         best_domain = max(scores, key=scores.get)
-        total_keywords = len(DOMAIN_KEYWORDS[best_domain])
-        confidence = min(scores[best_domain] / 3, 1.0)  # 3 keywords = max confidence
+        confidence = min(scores[best_domain] / 2.0, 1.0)  # 2 keywords = max confidence
 
         return IntentResult(
             domain=best_domain,
             confidence=round(confidence, 2),
             keywords=[kw for kw in DOMAIN_KEYWORDS[best_domain] if kw in message_lower],
         )
+
 
     def _parse_classify_response(self, response: str) -> dict | None:
         """Parsea la respuesta de clasificación del LLM."""
@@ -325,6 +328,7 @@ class OrchestratorAgent:
                 "safety_level": response.safety_level,
                 "tool_chain": response.tool_chain,
                 "agent": agent_name,
+                "metadata": getattr(response, "metadata", {}),
             },
             message_type="response",
             correlation_id=correlation_id,

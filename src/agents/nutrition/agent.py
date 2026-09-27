@@ -24,32 +24,60 @@ from src.tools import Tool
 logger = logging.getLogger(__name__)
 
 
+class _DefaultNutritionUserDataService:
+    """Servicio por defecto de datos de usuario para NutritionAgent sin BD activa."""
+
+    async def get_user_data(self, user_id: int):
+        from src.services.user_data import UserData
+
+        uid = int(user_id) if str(user_id).isdigit() else 1
+        return UserData(
+            user_id=uid,
+            profile={"name": "Adulto Mayor", "age": 70, "city": "Maracaibo"},
+            health_profile={"pathologies": ["hipertensión", "diabetes tipo 2"]},
+            preferences={"dietary_restrictions": ["bajo en sodio", "sin azúcar añadida"]},
+            safe_exercises=[],
+        )
+
+
 class NutritionAgent:
     """Agente especializado en nutrición con tool calling y ReAct.
 
     Precondiciones:
-        - LLMService con conexión a Ollama activa.
-        - Herramientas inyectadas (rag_search, safety_check).
+        - LLMService con conexión o fallback activo.
+        - Herramientas inyectadas (calculadora nutricional, chequeo clínico, rag).
         - MemoryStore implementado (puede ser None para modo sin memoria).
 
     Postcondiciones:
-        - Retorna respuesta personalizada sobre nutrición.
+        - Retorna respuesta personalizada sobre nutrición geriátrica.
         - Historial conversacional actualizado (si memory_store != None).
 
     Efectos secundarios:
-        - Ejecuta herramientas que pueden consultar la BD (rag_search).
+        - Ejecuta herramientas que pueden consultar la BD o bases de conocimiento.
     """
 
     def __init__(
         self,
-        llm: LLMService,
-        user_data: UserDataService,
-        tools: list[Tool],
+        llm: LLMService | None = None,
+        user_data: UserDataService | None = None,
+        tools: list[Tool] | None = None,
         memory_store: MemoryStore | None = None,
         config: WellnessConfig | None = None,
         firestore_client: Any | None = None,
         bigquery_client: Any | None = None,
     ) -> None:
+        if llm is None:
+            llm = LLMService()
+        if user_data is None:
+            user_data = _DefaultNutritionUserDataService()
+        if tools is None:
+            from src.agents.nutrition.tools import (
+                ClinicalDietaryCheckTool,
+                NutritionCalculatorTool,
+            )
+
+            tools = [NutritionCalculatorTool(), ClinicalDietaryCheckTool()]
+
         self._llm = llm
         self._user_data = user_data
         self._tools = tools
@@ -64,6 +92,7 @@ class NutritionAgent:
             max_iterations=self._config.max_react_iterations,
             tool_failure_threshold=self._config.tool_failure_threshold,
         )
+
 
     async def chat(self, user_id: int, message: str) -> str:
         """Procesa un mensaje del usuario y retorna una respuesta sobre nutrición.

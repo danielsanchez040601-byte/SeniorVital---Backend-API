@@ -58,17 +58,43 @@ class WellnessCoachAgentAdapter:
         )
 
         try:
-            response = await self._coach.chat(
-                user_id=request.user_id,
-                message=request.message,
-            )
+            tool_chain = []
+            metadata = {"agent": self.name, "domain": self.domain}
+            response = None
+
+            if hasattr(self._coach, "chat_with_trace"):
+                try:
+                    res = await self._coach.chat_with_trace(
+                        user_id=request.user_id,
+                        message=request.message,
+                    )
+                    if isinstance(res, tuple) and len(res) == 2:
+                        response, trace = res
+                        tool_chain = [
+                            s.action
+                            for s in getattr(trace, "steps", [])
+                            if getattr(s, "action", None) and s.action not in ("final_answer", "(direct)")
+                        ]
+                        metadata["iterations"] = getattr(trace, "iterations", 1)
+                        metadata["steps_count"] = len(getattr(trace, "steps", []))
+                    elif isinstance(res, str):
+                        response = res
+                except Exception as ex:
+                    logger.debug(f"chat_with_trace fallback to chat: {ex}")
+
+            if response is None:
+                response = await self._coach.chat(
+                    user_id=request.user_id,
+                    message=request.message,
+                )
 
             return AgentResponse(
                 text=response,
                 safety_level="safe",
-                tool_chain=[],
-                metadata={"agent": self.name, "domain": self.domain},
+                tool_chain=tool_chain,
+                metadata=metadata,
             )
+
 
         except Exception as e:
             logger.error(f"WellnessCoachAgent failed: {e}")
