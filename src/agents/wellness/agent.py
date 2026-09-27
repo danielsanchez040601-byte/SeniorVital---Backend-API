@@ -119,7 +119,7 @@ class WellnessAgent:
         self,
         llm: LLMService,
         user_data: UserDataService,
-        routine_repo: RoutineRepository,
+        routine_repo: RoutineRepository | None = None,
         prompt_builder: RoutinePromptBuilder | None = None,
         config: WellnessConfig | None = None,
     ) -> None:
