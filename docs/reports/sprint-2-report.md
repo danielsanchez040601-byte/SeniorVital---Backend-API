@@ -72,7 +72,7 @@ El Sprint 2 construyó el Wellness Coach Agent 2.0: un agente conversacional cog
 | Componentes | `src/agents/wellness/evaluation/`, CLI, 63 tests |
 | Tests | 63 (45 métricas + 18 escenarios) |
 
-**Resultado**: Framework de evaluación con 20 escenarios (6 categorías), 12 métricas heurísticas, runner mock/real. Resultados mock: tool_accuracy=1.0, safety=81%, react_validity=100%.
+**Resultado**: Framework de evaluación con 20 escenarios (6 categorías), 12 métricas heurísticas, runner mock/real. Resultados consolidados sobre los 20 escenarios: tool_accuracy=0.97, safety_compliance=100.0%, react_validity=100.0%.
 
 ### S2-07: Documentación
 
