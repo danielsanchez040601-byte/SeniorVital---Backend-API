@@ -301,7 +301,7 @@ def _get_dsn():
     """
     return os.getenv(
         "DATABASE_URL",
-        "postgresql://postgres:9739185@127.0.0.1:5432/seniorvital",
+        "postgresql://postgres:postgres@127.0.0.1:5432/wellness_db",
     )
 
 

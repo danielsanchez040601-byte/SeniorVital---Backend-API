@@ -214,7 +214,7 @@ async def run_real_evaluation(scenarios: list[dict]) -> list[dict]:
     from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
     from sqlalchemy.orm import sessionmaker
 
-    db_url = os.getenv("DATABASE_URL", "postgresql://postgres:9739185@127.0.0.1:5432/seniorvital")
+    db_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:5432/wellness_db")
     db_url_async = db_url.replace("postgresql://", "postgresql+asyncpg://")
     engine = create_async_engine(db_url_async)
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

@@ -13,6 +13,7 @@ from src.api.main import app
 from src.api.chat import get_wellness_coach_agent, get_memory_store
 from src.agents.wellness.coach import WellnessCoachAgent
 from src.agents.wellness.config import WellnessConfig
+from src.agents.nutrition.agent import NutritionAgent
 from src.memory import Message
 from src.tools import Tool, ToolResult
 
@@ -218,3 +219,43 @@ def test_chat_endpoint_guardrails_activation(mock_user_data):
 
     finally:
         app.dependency_overrides.clear()
+
+
+def test_chat_endpoint_delegation_to_nutrition_agent():
+    """Verifica que una consulta sobre dieta y nutrición sea delegada dinámicamente al NutritionAgent."""
+    mock_nutrition = AsyncMock(spec=NutritionAgent)
+    mock_nutrition.chat_with_trace = AsyncMock(
+        return_value=(
+            "Para adultos mayores con diabetes, recomendamos priorizar fibra soluble, verduras al vapor y proteínas magras en el almuerzo.",
+            MagicMock(iterations=1, steps=[MagicMock(action="clinical_dietary_check")]),
+        )
+    )
+    mock_nutrition.chat = AsyncMock(
+        return_value="Para adultos mayores con diabetes, recomendamos priorizar fibra soluble, verduras al vapor y proteínas magras en el almuerzo."
+    )
+
+    from src.api.chat import get_nutrition_agent
+    app.dependency_overrides[get_nutrition_agent] = lambda: mock_nutrition
+
+    try:
+        client = TestClient(app)
+        payload = {
+            "user_id": "10",
+            "query": "¿Qué dieta y alimentos son recomendados para mi almuerzo si tengo diabetes?",
+        }
+        response = client.post("/api/v1/chat", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "diabetes" in data["response"].lower()
+        assert data["is_safe"] is True
+
+        telemetry = data["telemetry"]
+        assert telemetry is not None
+        assert telemetry["agent_selected"] == "nutrition"
+        assert telemetry["correlation_id"] is not None
+        assert telemetry["mode"] == "supervisor_orchestration"
+
+    finally:
+        app.dependency_overrides.clear()
+

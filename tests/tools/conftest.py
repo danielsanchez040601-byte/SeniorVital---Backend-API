@@ -18,10 +18,16 @@ async def engine():
     """Create a SQLAlchemy async engine from the test DATABASE_URL."""
     db_url = os.getenv(
         "DATABASE_URL",
-        "postgresql://postgres:9739185@127.0.0.1:5432/seniorvital",
+        "postgresql://postgres:postgres@127.0.0.1:5432/wellness_db",
     )
     db_url_async = db_url.replace("postgresql://", "postgresql+asyncpg://")
     eng = create_async_engine(db_url_async, pool_size=2, max_overflow=2)
+    try:
+        async with eng.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception as e:
+        await eng.dispose()
+        pytest.skip(f"Live PostgreSQL instance not reachable: {e}")
     yield eng
     await eng.dispose()
 
