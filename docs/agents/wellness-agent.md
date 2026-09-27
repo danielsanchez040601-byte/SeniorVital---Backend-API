@@ -1,6 +1,6 @@
 # Wellness Coach Agent 2.0 — Arquitectura
 
-> **Issues del Sprint 2**: [#10](https://github.com/anomalyco/opencode/issues/10) Refactorización · [#11](https://github.com/anomalyco/opencode/issues/11) Coach Agent · [#12](https://github.com/anomalyco/opencode/issues/12) Memoria · [#13](https://github.com/anomalyco/opencode/issues/13) Tool Calling · [#14](https://github.com/anomalyco/opencode/issues/14) ReAct · [#15](https://github.com/anomalyco/opencode/issues/15) Evaluación · [#16](https://github.com/anomalyco/opencode/issues/16) Documentación
+> **Issues del Sprint 2**: [#10](https://github.com/YaskCode-laboratory/wellness-platform-team5/issues/10) Refactorización · [#11](https://github.com/YaskCode-laboratory/wellness-platform-team5/issues/11) Coach Agent · [#12](https://github.com/YaskCode-laboratory/wellness-platform-team5/issues/12) Memoria · [#13](https://github.com/YaskCode-laboratory/wellness-platform-team5/issues/13) Tool Calling · [#14](https://github.com/YaskCode-laboratory/wellness-platform-team5/issues/14) ReAct · [#15](https://github.com/YaskCode-laboratory/wellness-platform-team5/issues/15) Evaluación · [#16](https://github.com/YaskCode-laboratory/wellness-platform-team5/issues/16) Documentación
 
 ## Visión general
 
@@ -48,18 +48,20 @@ Metadatos de usuario              Acción ejecutada (tool call)
 
 ## Herramientas
 
-### Catálogo
+### Catálogo de Herramientas Especializadas
 
-| # | Nombre | Descripción | Fuente |
-|---|--------|-------------|--------|
-| T1 | `exercise_catalog` | Busca ejercicios por nivel, tipo o patología | `exercises` table |
-| T2 | `generate_routine` | Crea rutina personalizada para el día | LLM + catálogo |
-| T3 | `get_habits` | Obtiene registro de agua y sueño | `habits` table |
-| T4 | `log_habit` | Registra consumo de agua o horas de sueño | `habits` table |
-| T5 | `get_progress` | Obtiene insights y proyecciones | `projections` table |
-| T6 | `get_routine` | Obtiene la rutina activa del día | `routines` table |
-| T7 | `rag_search` | Consulta la base de conocimiento RAG | ChromaDB + LLM |
-| T8 | `safety_check` | Verifica contraindicaciones para una actividad | `exercises` + `users` |
+El agente prioriza 4 herramientas clínicas centrales para el ciclo ReAct junto a utilidades complementarias:
+
+| # | Nombre | Descripción | Fuente / Backend |
+|---|--------|-------------|------------------|
+| **T1** | `safety_check` | Validación de contraindicaciones y seguridad biomecánica | Tabla `exercises` + restricciones de usuario |
+| **T2** | `exercise_catalog` | Busca ejercicios por nivel funcional (1-4) o patología | Supabase PostgreSQL (`exercises`) |
+| **T3** | `rag_search` | Consulta la base de conocimiento gerontológico | Supabase `pgvector` (`clinical_knowledge_embeddings`) |
+| **T4** | `log_habit` | Registra consumo de agua o horas de sueño | Supabase PostgreSQL (`daily_habits` / `habits`) |
+| T5 | `get_habits` | Obtiene registro histórico de agua y descanso | Supabase PostgreSQL (`daily_habits`) |
+| T6 | `get_progress` | Obtiene insights y métricas de esfuerzo RPE | Supabase PostgreSQL (`exercise_records`) |
+| T7 | `get_routine` | Obtiene la rutina activa asignada del día | Supabase PostgreSQL (`daily_routines`) |
+| T8 | `generate_routine` | Crea rutina adaptada para el usuario | Motor algorítmico + catálogo clínico |
 
 ### Interfaz común
 
@@ -114,9 +116,9 @@ sequenceDiagram
     participant U as Usuario
     participant C as Coach Agent
     participant PB as PromptBuilder
-    participant L as LLM (phi3:mini)
+    participant L as LLM (Gemini Flash / OpenRouter)
     participant T as Tools
-    participant M as Memory
+    participant M as PostgresMemoryStore
 
     U->>C: chat(user_id, message)
     C->>M: get_history(user_id)

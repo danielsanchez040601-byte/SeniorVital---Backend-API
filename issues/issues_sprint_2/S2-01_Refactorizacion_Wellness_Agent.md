@@ -37,7 +37,15 @@ graph LR
 
 ## 🛠️ 2. Cambios Arquitectónicos Aplicados en la Refactorización
 
-1. **Desacoplamiento Modular:** Creación de `app/tools/clinical_tools.py` para separar las funciones de base de datos (*Tool Calling*) de la lógica de orquestación.
-2. **Patrón ReAct Integrado:** Implementación del método `execute_react_cycle` en `app/agents/wellness_coach.py` para forzar razonamiento previo a la acción.
-3. **Memoria de Sesión Dinámica:** Adición de `ConversationalMemoryManager` con control de turnos y retención de contexto a corto plazo.
-4. **Resiliencia Multi-Proveedor:** Prioridad en Google AI Studio (`gemini-3.6-flash`) con conmutación en caliente hacia OpenRouter ante errores de cuota o timeouts.
+1. **Desacoplamiento Modular:** Definición de herramientas clínicas en `src/tools/wellness/` (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`) para separar las capacidades operativas de la orquestación.
+2. **Patrón ReAct Integrado:** Implementación del motor de razonamiento en `src/agents/wellness/reasoning.py` e integración en `src/agents/wellness/coach.py` (`WellnessCoachAgent`), forzando el ciclo Thought → Action → Observation → Final Answer.
+3. **Memoria Conversacional Persistente:** Conexión con `src/memory/postgres_store.py` (`PostgresMemoryStore`) en Supabase PostgreSQL con retención de contexto por sesión.
+4. **Resiliencia Multi-Proveedor:** Inferencia primaria en Google Gemini Flash con conmutación hacia OpenRouter ante caídas o agotamiento de cuota.
+
+---
+
+## 🔍 3. Nota de Auditoría Técnica y Unificación Canónica
+
+- **Alineación de Módulos:** Se depuraron y unificaron las referencias hacia `src/agents/wellness/coach.py`, eliminando la dependencia de código duplicado legacy. Cualquier llamada residual a `app/agents/` se redirige formalmente a la implementación canónica.
+- **Estado del Componente:** Completado, validado y con herencia formal de `WellnessAgent`.
+

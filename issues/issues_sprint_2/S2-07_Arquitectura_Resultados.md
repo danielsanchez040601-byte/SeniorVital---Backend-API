@@ -60,7 +60,16 @@ sequenceDiagram
 
 ## 🌟 2. Resumen de Logros del Sprint 2
 
-1. **Patrón ReAct Operativo:** El agente razona antes de actuar, garantizando prescripciones 100% seguras y libres de riesgo lesional.
-2. **Tool Calling Conectado a Supabase:** Integración nativa asíncrona para consultar perfiles clínicos, historial de fatiga y catálogo de ejercicios.
-3. **Memoria Conversacional de Sesión:** Ventana deslizante contextual que recuerda las interacciones previas del adulto mayor.
-4. **Resiliencia Multi-Proveedor:** Inferencia primaria ultra-rápida con Google AI Studio y conmutación automática hacia OpenRouter ante caídas o cuotas.
+1. **Patrón ReAct Operativo:** El agente razona antes de actuar, garantizando prescripciones seguras y libres de riesgo lesional con ejecución dinámica de herramientas (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`).
+2. **Tool Calling Conectado a Supabase:** Integración asíncrona para consultar perfiles clínicos, restricciones y base vectorial RAG.
+3. **Memoria Conversacional Persistente:** Conexión con `PostgresMemoryStore` sobre Supabase PostgreSQL, preservando el contexto histórico por sesión sin depender de almacenamiento volátil en RAM.
+4. **Resiliencia Multi-Proveedor:** Inferencia primaria con Google Gemini Flash y conmutación automática hacia OpenRouter ante caídas de servicio o límites de cuota.
+
+---
+
+## 🛠️ 3. Auditoría Técnica de Arquitectura Unificada y Cierre de Sprint
+
+- **Unificación Arquitectónica:** Se eliminó la divergencia legacy entre `app/` y `src/`. El endpoint `POST /api/v1/chat` ahora ejecuta canónicamente los componentes en `src/`, invocando `WellnessCoachAgent` (heredado de `WellnessAgent`), el motor `ReActEngine` (`reasoning.py`), las 4 herramientas especializadas y `PostgresMemoryStore`.
+- **Sincronización Documental y Benchmark:** Se armonizaron las métricas de evaluación sobre los 20 escenarios clínicos (100.0% Safety Compliance, 97.0% Tool Accuracy) entre `metrics_summary.json`, el reporte de sprint y los issues técnicos.
+- **Estado del Componente:** Completado, validado mediante suite de integración automatizada (`tests/integration/test_chat_endpoint.py`) y listo para producción.
+

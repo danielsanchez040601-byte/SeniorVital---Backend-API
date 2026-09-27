@@ -51,3 +51,12 @@ En su lugar, puede realizar:
 
 Si el dolor persiste o es punzante, descanse y consulte a su médico o fisioterapeuta."
 ```
+
+---
+
+## 🔍 3. Nota de Auditoría Técnica y Ciclo Iterativo
+
+* **Integración al Endpoint HTTP:** El motor `ReActEngine` (`src/agents/wellness/reasoning.py`) se integró de forma directa al controlador de chat `/api/v1/chat`.
+* **Ciclo Formal y Límite de Iteraciones:** Se garantiza el cumplimiento estricto del ciclo Thought → Action → Action Input → Observation → Final Answer con un tope de 3 iteraciones y control de fallos sucesivos para proteger la latencia y la experiencia del usuario.
+* **Estado Final:** ✅ **Completado, acoplado al backend y probado de extremo a extremo.**
+

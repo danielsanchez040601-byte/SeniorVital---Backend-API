@@ -46,3 +46,12 @@ async def consultar_base_conocimiento_rag(consulta: str) -> str:
 1. **Gestión de Contingencias en Red:** Si la conexión hacia Supabase pgvector experimenta latencia o fallo transitorio, la herramienta captura la excepción y conmuta automáticamente a `IN_MEMORY_FALLBACK`, documentando el estado degradado en la telemetría en vez de abortar la ejecución del agente.
 2. **Adherencia Clínica Heurística:** La adherencia a las guías geriátricas (OARSI, EWGSOP2) se valida mediante inspección determinista de reglas y palabras clave contraindicadas, sin asumir garantías absolutas de infalibilidad.
 3. **Límites de Cuota de Inferencia:** En entornos sin API keys configuradas, el agente activa el motor de razonamiento clínico determinista para garantizar respuestas seguras de baja intensidad.
+
+---
+
+## 🔍 4. Nota de Auditoría Técnica y Dinamismo de Herramientas
+
+* **Tool Calling Autónomo:** El agente evalúa dinámicamente la intención de la consulta mediante el ciclo ReAct y decide si invocar o no herramientas (`safety_check`, `exercise_catalog`, `rag_search`, `log_habit`), erradicando ejecuciones estáticas incondicionales.
+* **Telemetría de Invocación:** La traza de herramientas ejecutadas se propaga en el campo `telemetry.tool_calls` de la respuesta JSON del endpoint `/api/v1/chat`.
+* **Estado Final:** ✅ **Completado, desacoplado y validado en integración.**
+
