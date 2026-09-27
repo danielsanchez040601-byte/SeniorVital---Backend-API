@@ -24,18 +24,32 @@ from src.tools import Tool, ToolResult
 logger = logging.getLogger(__name__)
 
 
+class _DefaultUserDataService:
+    """Servicio por defecto de datos de usuario para inicialización sin BD."""
+
+    async def get_user_data(self, user_id: int):
+        from src.services.user_data import UserData
+
+        uid = int(user_id) if str(user_id).isdigit() else 1
+        return UserData(
+            user_id=uid,
+            profile={"name": "Adulto Mayor", "age": 70, "city": "Maracaibo"},
+            health_profile={"pathologies": []},
+            preferences={},
+            safe_exercises=[],
+        )
+
+
 class WellnessCoachAgent(WellnessAgent):
-    """Agente conversacional cognitivo con tool calling y ReAct.
+    """Agente conversacional especializado en bienestar para adultos mayores.
 
-    Hereda formalmente de la clase base WellnessAgent como fuente canónica.
+    Usa patrón ReAct para razonar sobre mensajes del usuario y ejecutar
+    herramientas cuando sea necesario antes de generar una respuesta.
+
     Precondiciones:
-        - LLMService con conexión o fallback activo.
-        - Herramientas inyectadas y funcionales.
-        - MemoryStore implementado (puede ser None para modo sin memoria).
-
-    Postcondiciones:
-        - Retorna respuesta personalizada basada en razonamiento ReAct.
-        - Historial conversacional actualizado en MemoryStore (si está configurado).
+        - LLM configurado (Ollama/Gemini/OpenRouter).
+        - Base de datos disponible para tools de consulta.
+        - Memoria PostgreSQL para persistencia de conversaciones.
 
     Efectos secundarios:
         - Ejecuta herramientas que pueden consultar o modificar BD.
@@ -44,14 +58,21 @@ class WellnessCoachAgent(WellnessAgent):
 
     def __init__(
         self,
-        llm: LLMService,
-        user_data: UserDataService,
-        tools: list[Tool],
+        llm: LLMService | None = None,
+        user_data: UserDataService | None = None,
+        tools: list[Tool] | None = None,
         memory_store: MemoryStore | None = None,
         config: WellnessConfig | None = None,
         routine_repo: RoutineRepository | None = None,
         prompt_builder: RoutinePromptBuilder | None = None,
     ) -> None:
+        if llm is None:
+            llm = LLMService()
+        if user_data is None:
+            user_data = _DefaultUserDataService()
+        if tools is None:
+            tools = []
+
         super().__init__(
             llm=llm,
             user_data=user_data,
@@ -68,6 +89,7 @@ class WellnessCoachAgent(WellnessAgent):
             max_iterations=self._config.max_react_iterations,
             tool_failure_threshold=self._config.tool_failure_threshold,
         )
+
 
     async def chat(self, user_id: int | str, message: str) -> str:
         """Procesa un mensaje del usuario y retorna una respuesta en texto plano.
@@ -90,7 +112,7 @@ class WellnessCoachAgent(WellnessAgent):
         Flujo:
             1. Obtener historial conversacional desde MemoryStore.
             2. Construir prompt con perfil + historial.
-            3. Ejecutar ciclo ReAct iterativo (Thought → Action → Observation).
+            3. Ejecutar ciclo ReAct iterativo (Thought -> Action -> Observation).
             4. Persistir mensajes de usuario y asistente en memoria.
             5. Retornar tupla (respuesta_final, traza_react).
         """
@@ -180,3 +202,16 @@ class WellnessCoachAgent(WellnessAgent):
         except Exception as e:
             logger.warning(f"Failed to get user profile for {user_id}: {e}")
             return {"user_id": user_id}
+
+
+_wellness_coach_agent_instance: WellnessCoachAgent | None = None
+
+
+def get_wellness_coach_agent() -> WellnessCoachAgent:
+    # Retorna una instancia singleton de WellnessCoachAgent
+    global _wellness_coach_agent_instance
+    if _wellness_coach_agent_instance is None:
+        _wellness_coach_agent_instance = WellnessCoachAgent()
+    return _wellness_coach_agent_instance
+
+
