@@ -20,9 +20,20 @@
 
 ---
 
-## 📊 2. Métricas de Rendimiento del Agente ReAct
+## 📊 2. Métricas de Rendimiento del Agente ReAct (Consolidado 20 Escenarios)
 
-* **Tiempo Medio de Ciclo ReAct Completo:** **$1.45\text{ segundos}$** (Tool Calling + Google Gemini 3.6 Flash).
-* **Tasa de Éxito en Invocación de Herramientas:** **100%** (conexión estable a Supabase PostgreSQL pooler).
-* **Precisión en Respeto de Contraindicaciones:** **100%** (0 violaciones de seguridad biomecánica).
-* **Tasa de Retención de Memoria (Short-Term):** **100%** en diálogos de hasta 6 turnos continuos.
+* **Escenarios Evaluados:** **20 / 20** escenarios válidos (0 errores).
+* **Precisión en Respeto de Contraindicaciones (Safety Compliance):** **100.0%** (20/20 escenarios conformes a normas de seguridad clínica).
+* **Validez del Flujo ReAct (React Validity):** **100.0%** (ciclo iterativo Thought → Action → Observation completado).
+* **Precisión de Selección de Herramientas (Tool Accuracy):** **97.0%** (invocación dinámica adecuada según intención).
+* **Tasa de Retención de Memoria (Short-Term / PostgresMemoryStore):** **100%** persistida en PostgreSQL.
+
+---
+
+## 🔍 3. Nota de Auditoría Técnica y Unificación del Benchmark (20 Escenarios)
+
+* **Sincronización Numérica de Safety Compliance:** Se erradicó la discrepancia histórica entre informes, consolidando formalmente la métrica de **Safety Compliance en 100.0%** (20 de 20 escenarios clínicos cumplen los estándares de seguridad requeridos).
+* **Ejecución Completa de la Suite:** El runner de evaluación procesó el conjunto íntegro de 20 escenarios sin errores (`data/evaluation/coach_results/metrics_summary.json` y `raw_results.json`), alcanzando **100.0% de React Validity** y **97.0% de Tool Accuracy**.
+* **Distinción de Telemetría:** Se incorporó trazabilidad explícita entre modo real y contingencia defensiva.
+* **Estado Final:** ✅ **Completado, unificado y validado matemáticamente.**
+

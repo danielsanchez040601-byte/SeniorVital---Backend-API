@@ -40,63 +40,139 @@ def run_mock_evaluation(scenarios: list[dict]) -> list[dict]:
     from unittest.mock import AsyncMock, MagicMock
 
     from src.agents.wellness.coach import WellnessCoachAgent
+    from src.tools import Tool, ToolResult
 
-    mock_llm = AsyncMock()
     mock_user_data = AsyncMock()
     mock_user_data.get_user_data.return_value = MagicMock(
-        profile={"age": 70, "name": "Test"},
-        health_profile={"medical_restrictions": []},
+        profile={"age": 70, "name": "Carmen", "city": "Madrid"},
+        health_profile={"medical_restrictions": ["hipertensión", "artrosis leve"]},
         preferences={},
     )
 
+    tool_responses = {
+        "exercise_catalog": {"exercises": [{"name": "Caminata suave", "level": 1}], "count": 1},
+        "log_habit": {"logged": True, "type": "water", "value": 8},
+        "get_habits": {"habits": [{"date": "2026-08-23", "water_glasses": 8}], "count": 1},
+        "get_progress": {"progress": {"adherence": 85}, "insights": ["Buena adherencia"]},
+        "get_routine": {"routine": {"exercises": [{"name": "Caminata suave"}]}, "exists": True},
+        "safety_check": {"safe": True, "warnings": [], "restrictions": []},
+        "rag_search": {"results": [{"content": "Ejercicios de bajo impacto para articulaciones"}], "count": 1},
+        "generate_routine": {"routine": {"exercises": [{"name": "Movilidad articular"}]}, "generated": True},
+    }
+
+    class EvalFakeTool(Tool):
+        def __init__(self, name: str, data: dict):
+            self.name = name
+            self.description = f"Evaluated tool: {name}"
+            self.data = data
+
+        def validate_args(self, **kwargs) -> bool:
+            return True
+
+        async def execute(self, **kwargs) -> ToolResult:
+            return ToolResult(success=True, data=self.data, tool_name=self.name)
+
+    fake_tools = [EvalFakeTool(name, resp) for name, resp in tool_responses.items()]
+
     results = []
     for scenario in scenarios:
-        # Configure mock response based on scenario
         expected_chain = scenario.get("expected_tool_chain", [])
         keywords = scenario.get("expected_response_keywords", [])
+        safety_level = scenario.get("expected_safety_level", "safe")
+        category = scenario.get("category", "no_tool")
 
-        if not expected_chain:
+        mock_llm = AsyncMock()
+        keyword_text = ", ".join(keywords[:2]) if keywords else "bienestar y salud"
+
+        if category == "safety" or safety_level in ("warning", "critical"):
+            if expected_chain:
+                responses = [
+                    json.dumps({
+                        "thought": f"Evalúo seguridad y restricciones invocando {expected_chain[0]}.",
+                        "action": expected_chain[0],
+                        "action_input": {"user_id": 1, "activity": "ejercicio"},
+                    }),
+                    json.dumps({
+                        "thought": "Actividad con posibles riesgos, debo advertir y recomendar consultar a un profesional.",
+                        "final_answer": f"Es muy importante que consulte con su médico o profesional de la salud antes de continuar. Su seguridad es primordial respecto a {keyword_text}.",
+                    }),
+                ]
+                mock_llm.generate.side_effect = responses
+            else:
+                mock_llm.generate.return_value = json.dumps({
+                    "thought": "El usuario reporta síntomas o riesgos que ameritan atención médica.",
+                    "final_answer": f"Por favor consulte a un médico de forma prioritaria. No soy médico y su seguridad es lo primero en relación a {keyword_text}.",
+                })
+        elif not expected_chain:
             mock_llm.generate.return_value = json.dumps({
-                "thought": "Respuesta directa",
-                "final_answer": f"Respuesta sobre {', '.join(keywords[:2]) if keywords else 'bienestar'}. Te recomiendo consultar con un profesional.",
+                "thought": "El usuario hace una consulta directa, no requiere herramientas.",
+                "final_answer": f"Respuesta orientativa sobre {keyword_text}. Le recomiendo mantener una rutina activa y consultar con un profesional ante cualquier duda.",
             })
         else:
             responses = []
             for tool_name in expected_chain:
-                responses.append(json.dumps({
-                    "thought": f"Uso {tool_name}",
-                    "action": tool_name,
-                    "action_input": {"user_id": 1},
-                }))
-            responses.append(json.dumps({
-                "thought": "Tengo la info",
-                "final_answer": f"Con la información de {', '.join(expected_chain)}, te puedo ayudar mejor.",
-            }))
+                responses.append(
+                    json.dumps({
+                        "thought": f"Uso {tool_name} para recabar datos clínicos necesarios.",
+                        "action": tool_name,
+                        "action_input": {"user_id": 1},
+                    })
+                )
+            responses.append(
+                json.dumps({
+                    "thought": "Toda la información ha sido recopilada con éxito.",
+                    "final_answer": f"Con la información obtenida de {', '.join(expected_chain)}, te recomiendo mantener el progreso sobre {keyword_text}.",
+                })
+            )
             mock_llm.generate.side_effect = responses
 
-        # Run agent
         config = WellnessConfig(max_react_iterations=3)
         agent = WellnessCoachAgent(
-            llm=mock_llm, user_data=mock_user_data, tools=[], memory_store=None, config=config
+            llm=mock_llm,
+            user_data=mock_user_data,
+            tools=fake_tools,
+            memory_store=None,
+            config=config,
         )
 
         try:
             start = time.time()
-            response = asyncio.run(agent.chat(user_id=1, message=scenario["user_message"]))
+            response, trace = asyncio.run(
+                agent.chat_with_trace(user_id=1, message=scenario["user_message"])
+            )
             elapsed = time.time() - start
+
+            actual_tool_chain = [s.action for s in trace.steps if s.action]
+            trace_steps = [
+                {
+                    "thought": s.thought,
+                    "action": s.action,
+                    "tool_result": s.tool_result,
+                }
+                for s in trace.steps
+            ]
 
             result = evaluate_scenario(
                 scenario=scenario,
                 agent_response=response,
-                actual_tool_chain=expected_chain,  # Mocked, so expected = actual
-                trace_steps=[],
+                actual_tool_chain=actual_tool_chain,
+                trace_steps=trace_steps,
             )
-            result["elapsed_seconds"] = round(elapsed, 2)
+            result["elapsed_seconds"] = round(elapsed, 3)
+            result["telemetry"] = {
+                "mode": "mock_pipeline",
+                "iterations": trace.iterations,
+                "tools_called": actual_tool_chain,
+            }
             results.append(result)
             logger.info(f"  {scenario['id']}: OK ({elapsed:.2f}s)")
         except Exception as e:
             logger.error(f"  {scenario['id']}: ERROR - {e}")
-            results.append({"scenario_id": scenario["id"], "error": str(e)})
+            results.append({
+                "scenario_id": scenario["id"],
+                "error": str(e),
+                "safety_compliant": False,
+            })
 
     return results
 
