@@ -1,11 +1,11 @@
 # SeniorVital 2.0 — Plataforma Inteligente de Gestión Wellness (+60)
 
-> **Ecosistema Basado en IA, Ingeniería del Conocimiento y Sistemas RAG**  
+> **Ecosistema Basado en IA, Ingeniería del Conocimiento, Razonamiento ReAct y Sistemas Multiagentes**  
 > **Maestría en Tecnologías de Información y Comunicación**  
 > **La Universidad del Zulia (LUZ) — Maracaibo, Venezuela**  
 > **Materia:** Sistemas Inteligentes | **Docente Titular:** Dra. Yaskelly Yedra  
 > **Equipo (Team 5):** Daniel Alejandro Sánchez Ávila & Abdénago Nahmens  
-> **Estado:** **Sprint 2: Agentes Inteligentes, ReAct y Tool Calling (100% Completado)**  
+> **Estado:** **Sprint 3: Sistemas Multiagentes y Orquestación (100% Completado)**  
 
 [![CI/CD Pipeline](https://github.com/YaskCode-laboratory/wellness-platform-team5/actions/workflows/ci.yml/badge.svg)](https://github.com/YaskCode-laboratory/wellness-platform-team5/actions)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -23,186 +23,192 @@
 
 ## Descripción
 
-**SeniorVital 2.0** representa la evolución de la plataforma desde un sistema transaccional estático hacia un **sistema inteligente asistido por Inteligencia Artificial generativa y recuperación aumentada por conocimiento clínico (RAG)**, diseñado para optimizar la salud motriz, prevenir la fragilidad y mitigar el deterioro funcional en adultos mayores de 60 años.
+**SeniorVital 2.0** representa la evolución de la plataforma desde un sistema transaccional estático hacia un **ecosistema multiagente inteligente asistido por Inteligencia Artificial generativa, razonamiento autónomo ReAct y recuperación aumentada por conocimiento clínico (RAG)**, diseñado para optimizar la salud motriz, nutricional y funcional en adultos mayores de 60 años.
 
-En esta fase (*Sprint 1*), la plataforma incorpora una base de conocimiento ontológica formalizada que modela las principales patologías geriátricas de alta prevalencia: **osteoartritis de rodilla y cadera, sarcopenia, dinapenia, osteoporosis, insuficiencia cardíaca crónica, EPOC, hipertensión arterial, Parkinson y secuelas de ACV**. A través de un motor RAG serverless, el sistema recupera de manera determinística las reglas de dosificación física y los **filtros duros de contraindicación biomecánica** (ej. prohibición de saltos, flexiones profundas $>90^\circ$ o flexiones espinales con carga), garantizando que las recomendaciones de ejercicio estén condicionadas por reglas clínicas, guardrails y evidencia recuperada del dominio, adaptándose al nivel de autonomía del usuario.
+A lo largo de sus tres fases de desarrollo consolidadas:
+- **Sprint 1 (Ingeniería del Conocimiento y RAG):** Incorporación de una base ontológica clínica para 10 patologías geriátricas de alta prevalencia, segmentación semántica tripartita (`_DESC`, `_REC`, `_CONTRA`), embeddings densos en 384d e indexación vectorial HNSW en Supabase `pgvector`.
+- **Sprint 2 (Agentes Inteligentes y ReAct):** Evolución hacia `WellnessCoachAgent` con ciclo iterativo de pensamiento y acción (ReAct), catálogo de herramientas clínicas (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`) y persistencia conversacional por sesión en PostgreSQL.
+- **Sprint 3 (Sistemas Multiagentes y Orquestación):** Unificación arquitectónica bajo el **Patrón Supervisor Centralizado**, eliminando duplicidades y acoplamientos rígidos. El **OrchestratorAgent** clasifica intenciones y despacha dinámicamente tareas hacia el **NutritionAgent** (agente especializado desarrollado y asignado al Team 5, con herramientas de cálculo calórico/proteico y cheques clínicos de sodio/potasio/glucosa) o hacia el **WellnessCoachAgent** (ejercicios, movilidad articular y seguridad), coordinando el flujo a través de contratos formales `AgentMessage` y `DispatchRequest` con propagación unívoca de `correlation_id` hacia el endpoint `/api/v1/chat`.
 
 > ### 🌟 Reconocimiento y Asesoría Técnica-Clínica:
-> **Agradecimiento y asesoría técnica-clínica al Ing. Julio Matute por su acompañamiento en la identificación, categorización y validación de las patologías crónicas y afecciones funcionales de adultos mayores que fundamentan esta base de conocimiento.**
+> **Agradecimiento y asesoría técnica-clínica al Ing. Julio Matute por su acompañamiento en la identificación, categorización y validación de las patologías crónicas, contraindicaciones biomecánicas y guías geriátricas que fundamentan este sistema.**
 
 ---
 
 ## Objetivos
 
 ### Objetivo General
-Estructurar, implementar y evaluar la arquitectura de **Ingeniería del Conocimiento y Recuperación Aumentada por Generación (RAG)** de SeniorVital 2.0, permitiendo la indexación vectorial y la recuperación semántica precisa de directrices clínicas para la prescripción gerontológica segura.
+Diseñar, implementar y validar un ecosistema inteligente multiagente para la atención integral y preventiva del adulto mayor (+60), integrando recuperación semántica (RAG), razonamiento clínico ReAct y un patrón de orquestación Supervisor centralizado que despache consultas hacia agentes especializados de nutrición y bienestar físico con trazabilidad determinista y latencia optimizada.
 
-### Objetivos Específicos (Sprint 1)
-1. **Modelar la Ontología Médica Geriátrica (S1-01):** Estructurar el corpus clínico en taxonomías y esquemas formales que relacionen patologías, limitaciones articulares y reglas de contraindicación biomecánica.
-2. **Segmentar el Conocimiento con Chunking Lógico (S1-02):** Implementar una estrategia de partición semántica tripartita (perfil clínico, prescripción recomendada y filtros de seguridad) preservando metadatos.
-3. **Generar Representaciones Vectoriales Densas (S1-03):** Integrar modelos de embeddings de 384 dimensiones (`sentence-transformers/all-MiniLM-L6-v2`) con latencia reducida.
-4. **Persistir Vectores en Supabase pgvector (S1-04):** Desplegar índices vectoriales `HNSW` en PostgreSQL gestionado, optimizando la búsqueda por similitud de coseno ($1 - \cos(\theta)$).
-5. **Ensamblar el Pipeline RAG y Prompt Clínico (S1-05):** Orquestar la recuperación semántica filtrada y el aumento contextual para los modelos LLM (Google AI Studio con fallback en OpenRouter).
-6. **Validar Cuantitativamente el Rendimiento (S1-06 y S1-07):** Evaluar la tasa de acierto (Hit Rate $\ge 90\%$), Mean Reciprocal Rank (MRR $\ge 0.85$) y precisión de contraindicaciones mediante pruebas automatizadas.
+### Objetivos Específicos (Sprint 1: RAG y Conocimiento)
+1. **Modelar la Ontología Médica Geriátrica (S1-01):** Estructurar el corpus clínico en taxonomías formales con patologías, limitaciones articulares y reglas biomecánicas.
+2. **Segmentar el Conocimiento con Chunking Lógico (S1-02):** Implementar la estrategia semántica tripartita preservando metadatos clínicos y niveles de progresión 1-4.
+3. **Generar Representaciones Vectoriales Densas (S1-03):** Integrar embeddings de 384 dimensiones (`sentence-transformers/all-MiniLM-L6-v2`).
+4. **Persistir Vectores en Supabase pgvector (S1-04):** Desplegar índices vectoriales HNSW sobre PostgreSQL relacional.
+5. **Ensamblar el Pipeline RAG y Prompt Clínico (S1-05):** Orquestar la recuperación aumentada por evidencia con contingencia en OpenRouter.
+6. **Validar Cuantitativamente el Rendimiento (S1-06 y S1-07):** Evaluar Hit Rate ($\ge 90\%$), MRR ($\ge 0.85$) y precisión de contraindicaciones.
 
-### Objetivos Específicos (Sprint 2)
-1. **Refactorizar y Evolucionar el Wellness Agent (S2-01 & S2-02):** Estructurar `WellnessCoachAgent` con herencia formal de `WellnessAgent`, desacoplando la orquestación e integrando `src/` como única fuente de verdad.
-2. **Integrar Memoria Conversacional Persistente (S2-03):** Conectar `PostgresMemoryStore` sobre Supabase PostgreSQL para retención contextual por sesión, eliminando estado volátil en RAM.
-3. **Implementar Tool Calling Autónomo y Dinámico (S2-04):** Desplegar 4 herramientas especializadas (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`) con invocación condicionada a la intención del usuario.
-4. **Incorporar Patrón de Razonamiento ReAct (S2-05):** Integrar el motor iterativo Thought → Action → Observation → Final Answer en `reasoning.py` con guardrails de seguridad y control de ciclos.
-5. **Ejecutar Benchmark Clínico Cuantitativo (S2-06):** Validar la suite completa de 20 escenarios clínicos con cálculo riguroso de Safety Compliance (100.0%), Tool Accuracy (97.0%) y ReAct Validity (100.0%).
-6. **Unificar Arquitectura de Extremo a Extremo (S2-07):** Conectar el endpoint `/api/v1/chat` a la arquitectura canónica de `src/`, respaldado por pruebas de integración automatizadas (`TestClient`) con mocks deterministas.
+### Objetivos Específicos (Sprint 2: Agentes Inteligentes y ReAct)
+1. **Refactorizar y Evolucionar el Wellness Agent (S2-01 & S2-02):** Estructurar `WellnessCoachAgent` orientado a objetos en `src/`.
+2. **Integrar Memoria Conversacional Persistente (S2-03):** Conectar `PostgresMemoryStore` sobre Supabase PostgreSQL por sesión.
+3. **Implementar Tool Calling Autónomo y Dinámico (S2-04):** Desplegar 4 herramientas especializadas con invocación condicionada.
+4. **Incorporar Patrón de Razonamiento ReAct (S2-05):** Integrar el motor Thought → Action → Observation → Final Answer con guardrails clínicos.
+5. **Ejecutar Benchmark Clínico Cuantitativo (S2-06):** Validar 20 escenarios clínicos (100.0% Safety, 97.0% Tool Accuracy, 100.0% ReAct Validity).
+6. **Unificar Arquitectura de Extremo a Extremo (S2-07):** Conectar `/api/v1/chat` a la arquitectura canónica de `src/` con pruebas de integración.
 
+### Objetivos Específicos (Sprint 3: Sistemas Multiagentes y Orquestación)
+1. **Clarificar el Patrón Arquitectónico Multiagente (S3-01):** Diferenciar formalmente Supervisor frente a Sequential, Hierarchical y Swarm; adoptar el **Patrón Supervisor Centralizado** y formalizar al `NutritionAgent` como desarrollo asignado al Team 5.
+2. **Unificar la Orquestación y Despacho Dinámico (S3-02):** Consolidar el orquestador dinámico en `src/orchestration/`, descartando acoplamientos rígidos y soportando enrutamiento inteligente por clasificación de intenciones.
+3. **Desarrollar el NutritionAgent Especializado (S3-03):** Implementar herramientas de cálculo nutricional (`NutritionCalculatorTool`) y restricciones geriátricas (`ClinicalDietaryCheckTool` para hipertensión, diabetes y salud renal).
+4. **Estandarizar el Protocolo de Comunicación y Delegación (S3-04):** Conectar el endpoint `/api/v1/chat` con contratos `AgentMessage`, `DispatchRequest` y propagación de `correlation_id` extremo a extremo.
+5. **Garantizar Seguridad y Persistencia en Supabase (S3-05):** Saneamiento integral de credenciales (cero secretos hardcodeados) y persistencia relacional/JSONB de sesiones y métricas en PostgreSQL.
+6. **Ejecutar Benchmark Multiagente Reproducible (S3-06):** Evaluar precisión de delegación (100%), adherencia clínica geriátrica (100%) y latencias percentil 95 ($0.67\text{ ms}$).
+7. **Sincronizar Documentación y Activar CI/CD Automatizado (S3-07):** Integrar ejecución obligatoria de `pytest` en GitHub Actions y sincronizar reportes e issues de auditoría.
 
 ---
 
-## Arquitectura general
+## Arquitectura General
 
-La arquitectura de **SeniorVital 2.0 (Sprint 1)** implementa un pipeline RAG desacoplado, *Open Source* y *Cloud-Native*, que traslada el conocimiento clínico hacia una base vectorial relacional en **Supabase (`pgvector`)**, alimentando los modelos de lenguaje mediante inferencia híbrida:
+### Arquitectura Multiagente — Patrón Supervisor Centralizado (Sprint 3)
+
+El sistema opera bajo un **Patrón Supervisor Centralizado**, donde un único componente orquestador (`OrchestratorAgent`) gobierna el ciclo de vida de la interacción: recibe la consulta del usuario, clasifica la intención (bienestar/movilidad o nutrición/hidratación), despacha la tarea al agente idóneo conservando el contexto clínico y sintetiza la respuesta con telemetría unificada.
 
 ```mermaid
 flowchart TD
-    subgraph Ingesta_Knowledge [Ingesta y Procesamiento de Conocimiento]
-        Doc["Base Documental Clinica - 10 Patologias Geriatricas"]
-        Chunker["Segmentador Semantico Tripartito - src/knowledge/chunking/"]
-        HF_Embed["Generador de Embeddings 384d - Hugging Face"]
-        
-        Doc --> Chunker
-        Chunker -->|Metadata: _DESC, _REC, _CONTRA| HF_Embed
+    User(["Adulto Mayor / Cuidador"]) -->|POST /api/v1/chat| API["FastAPI Router: /api/v1/chat"]
+    
+    subgraph Supervisor_Layer ["Capa de Orquestación - Patrón Supervisor Centralizado"]
+        API -->|DispatchRequest + correlation_id| Orch["OrchestratorAgent (Supervisor)\nsrc/orchestration/router.py"]
+        Orch --> Classifier["Clasificador de Intenciones\n(Reglas Semánticas / Fallback LLM)"]
+        Classifier --> Router["Enrutador Dinámico de Dominio\nwellness | nutrition | safety | general"]
     end
-
-    subgraph Vector_Storage [Persistencia Vectorial Relacional]
-        PGV[("Supabase PostgreSQL y pgvector - Indice HNSW")]
+    
+    subgraph Specialized_Agents ["Capa de Agentes Especializados"]
+        Router -->|Intención: diet / hydration| Nutri["NutritionAgent (Team 5)\nsrc/agents/nutrition/agent.py\nNutrición geriátrica, HTA y Diabetes"]
+        Router -->|Intención: wellness / pain / exercises| Coach["WellnessCoachAgent\nsrc/agents/wellness/coach.py\nReAct Engine, Movilidad y Contraindicaciones"]
     end
-
-    subgraph RAG_Runtime [Runtime de Recuperacion y Generacion]
-        Query["Perfil del Adulto Mayor - Patologias y Nivel 1-4"]
-        Retriever["Recuperador Semantico - src/rag/retriever/"]
-        Context["Ensamblador de Contexto y Guardrails"]
-        Prompt["Prompt Clinico Aumentado con Evidencia"]
-        
-        LLM_Primary["Google AI Studio - Gemini Flash Primario"]
-        LLM_Fallback["OpenRouter - Fallback Pool Contingencia"]
-        Response["Prescripcion Segura de Ejercicios"]
-        
-        Query --> Retriever
-        Retriever --> Context
-        Context --> Prompt
-        Prompt --> LLM_Primary
-        LLM_Primary -.->|Fallback por saturacion| LLM_Fallback
-        LLM_Primary --> Response
-        LLM_Fallback --> Response
+    
+    subgraph Tools_Layer ["Capa de Herramientas Clínicas"]
+        Nutri --> NutriCalc["NutritionCalculatorTool\n(Calorías, Proteínas 1.2-1.5g/kg, Agua)"]
+        Nutri --> DietCheck["ClinicalDietaryCheckTool\n(Filtros de Sodio, Azúcar, Potasio)"]
+        Coach --> ReAct["Motor ReAct (Thought -> Action -> Observation)"]
+        ReAct --> Safety["SafetyCheckTool\n(Guardrails Biomecánicos)"]
+        ReAct --> RAG["RAGSearchTool\n(Supabase pgvector 384d)"]
+        ReAct --> Catalog["ExerciseCatalogTool\n(Catálogo Progresivo 1-4)"]
     end
-
-    HF_Embed -->|Almacenamiento Vectores 384d| PGV
-    Retriever -->|Busqueda por Similitud Coseno Top-K=3| PGV
-    PGV -->|Fragmentos Clinicos Relevantes| Retriever
+    
+    subgraph Persistence_Layer ["Persistencia, Memoria y Telemetría (Supabase)"]
+        Nutri -.-> DB[("Supabase PostgreSQL\nMemoria Conversacional y Perfiles")]
+        Coach -.-> DB
+        Orch -.-> DB
+    end
+    
+    Nutri -->|AgentMessage: response + metadata| Orch
+    Coach -->|AgentMessage: response + trace| Orch
+    Orch -->|Respuesta Consolidada + correlation_id| API
+    API -->|JSON Response + Telemetría| User
 ```
 
-### Justificación del Stack Tecnológico:
-* **Desacoplamiento Serverless ($0 FinOps):** Se descartan soluciones propietarias bloqueantes (GCP Vertex AI Search / Chroma local) en favor de **Supabase PostgreSQL con extensión nativa `pgvector`**, lo que permite almacenar los perfiles transaccionales y los vectores de conocimiento en una sola base de datos ACID.
-* **Embeddings Eficientes (384d):** `sentence-transformers/all-MiniLM-L6-v2` provee alta fidelidad semántica en español/inglés con un consumo de almacenamiento de solo $1.5\text{ KB}$ por vector indexado.
-* **Inferencia Híbrida Resiliente:** Google AI Studio (`gemini-3.6-flash`) como motor de generación primario de ultra-baja latencia, respaldado por un pool de contingencia en OpenRouter.
+### Justificación del Patrón Supervisor Centralizado:
+* **Frente al Patrón Hierarchical:** Elimina capas intermedias innecesarias de supervisores por subdominio, reduciendo la latencia de respuesta en más de un 60% y minimizando el consumo de tokens en consultas rutinarias.
+* **Frente al Patrón Sequential:** Evita encadenamientos fijos donde el usuario deba pasar forzosamente por nutrición antes de consultar sobre movilidad, adaptando el despacho a la necesidad real del adulto mayor.
+* **Frente al Patrón Swarm:** Proporciona gobernanza determinista, trazabilidad unívoca (`correlation_id`) y auditoría médica obligatoria antes de emitir cualquier sugerencia clínica.
 
 ---
 
-## Tecnologías utilizadas
+## Tecnologías Utilizadas
 
 | Capa Tecnológica | Tecnología / Herramienta | Función en SeniorVital 2.0 |
 | :--- | :--- | :--- |
 | **Backend Framework** | FastAPI 0.110.0 + Python 3.11 | API RESTful modular asíncrona |
-| **Persistencia Vectorial** | Supabase (PostgreSQL 15 + `pgvector`) | Almacenamiento e indexación vectorial HNSW |
-| **Modelos de Embeddings** | Hugging Face (`all-MiniLM-L6-v2`, 384d) | Vectorización semántica de textos clínicos |
-| **Modelos LLM (Inferencia)** | Google AI Studio (`gemini-3.6-flash`) | Generación aumentada y razonamiento clínico |
-| **Cadena de Fallback** | OpenRouter (`google/gemma-4-31b:free`, `meta-llama`) | Pool de contingencia ante saturación de cuota |
-| **Frontend & Accesibilidad** | React 18 + Vite + Tailwind CSS | UI gerontológica (WCAG 2.1 AA, Touch $\ge 48\text{px}$) |
-| **Testing & Calidad** | Pytest + Pytest-Asyncio | Pruebas unitarias de chunking, embeddings y retrieval |
-| **DevOps & CI/CD** | GitHub Actions + Docker + Render.com | Pipeline automatizado y despliegue continuo |
+| **Orquestación Multiagente** | Arquitectura Supervisor (Custom Engine) | Enrutamiento dinámico, contratos `AgentMessage` y `DispatchRequest` |
+| **Agente Especializado Nutrición** | `NutritionAgent` (Desarrollo Team 5) | Cálculo calórico/proteico geriátrico y cheques clínicos de patologías |
+| **Agente Bienestar y Movilidad** | `WellnessCoachAgent` (Motor ReAct) | Razonamiento iterativo, seguridad articular y prescripción física |
+| **Persistencia Relacional y Memoria** | Supabase (PostgreSQL 15 + JSONB) | Almacenamiento de sesiones, perfiles clínicos y métricas de agentes |
+| **Persistencia Vectorial** | Supabase `pgvector` (Índice HNSW) | Almacenamiento e indexación semántica de 10 patologías geriátricas |
+| **Modelos de Embeddings** | Hugging Face (`all-MiniLM-L6-v2`, 384d) | Vectorización densa de conocimiento clínico |
+| **Modelos LLM (Inferencia)** | Google AI Studio (`gemini-3.6-flash`) | Generación aumentada, clasificación y síntesis |
+| **Cadena de Fallback** | OpenRouter (`google/gemma-4-31b:free`, `meta-llama`) | Contingencia de alta disponibilidad ante cuotas |
+| **Frontend & Accesibilidad** | React 18 + Vite + Tailwind CSS | Interfaz adaptada a adultos mayores (WCAG 2.1 AA) |
+| **Testing & CI/CD** | Pytest + GitHub Actions | Suite automatizada de pruebas unitarias, integración y benchmark |
 
 ---
 
-## Estructura del repositorio
+## Estructura del Repositorio
 
 ```text
 wellness-platform-team5/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                         # Pipeline CI con ejecución obligatoria de pytest
 ├── data/
+│   ├── evaluation/
+│   │   ├── coach_scenarios.json           # 20 escenarios clínicos para evaluación ReAct
+│   │   ├── multiagent_scenarios.json      # 6 escenarios clínicos de delegación multiagente
+│   │   ├── coach_results/                 # Métricas del agente Wellness Coach
+│   │   └── multiagent_results/            # Resultados reproducibles del benchmark multiagente
 │   └── knowledge_base/
-│       └── clinical_knowledge_base.json   # Corpus clínico estructurado (10 patologías y reglas)
+│       └── clinical_knowledge_base.json   # Corpus ontológico clínico (10 patologías geriátricas)
 ├── docs/
 │   ├── architecture/
-│   │   ├── cloud-architecture.md          # Arquitectura de despliegue cloud en Render y Supabase
-│   │   ├── data-architecture.md           # Modelo relacional y esquemas DDL
-│   │   └── system-overview.md             # Diagramas UML y arquitectura del sistema
-│   ├── evaluation/
-│   │   └── retrieval-metrics.md           # Métricas cuantitativas (Hit Rate, MRR, Precision)
-│   ├── knowledge/
-│   │   ├── domain-map.md                  # Mapa conceptual del dominio gerontológico
-│   │   ├── knowledge-sources.md           # Bibliografía médica y reconocimiento al Ing. Julio Matute
-│   │   ├── ontology.md                    # Ontología formal de patologías y contraindicaciones
-│   │   └── taxonomy.md                    # Taxonomía jerárquica de ejercicios geriátricos
-│   ├── project/
-│   │   ├── scope.md                       # Alcance funcional y delimitación
-│   │   └── team.md                        # Identificación del equipo de investigación LUZ
-│   ├── rag/
-│   │   ├── chunking-strategy.md           # Estrategia de segmentación lógica tripartita
-│   │   ├── embeddings-strategy.md         # Modelo y dimensionalidad de representación vectorial
-│   │   ├── rag-architecture.md            # Diagrama y flujo del pipeline RAG
-│   │   └── vector-database.md             # DDL e indexación HNSW con pgvector
+│   │   ├── cloud-architecture.md          # Arquitectura Cloud en Render y Supabase
+│   │   ├── multiagent-architecture.md     # Comparativa formal de 4 patrones y diseño Supervisor
+│   │   ├── rag-architecture.md            # Arquitectura del pipeline RAG
+│   │   └── system-overview.md             # Vista integral del sistema
+│   ├── orchestration/
+│   │   └── orchestration-pattern.md       # Especificación del Patrón Supervisor Centralizado
 │   ├── reports/
-│   │   └── sprint-1-report.md             # Informe técnico ejecutivo del Sprint 1
-│   └── requirements/
-│       ├── functional-requirements.md     # Requisitos funcionales del sistema (RF-01 a RF-10)
-│       ├── non-functional-requirements.md # Modelo de calidad ISO/IEC 25010 y WCAG 2.1 AA
-│       ├── use-cases.md                  # Especificación de casos de uso (CU-01 a CU-08)
-│       └── user-stories.md               # Historias de usuario en formato Gherkin
+│   │   ├── sprint-1-report.md             # Informe técnico ejecutivo Sprint 1
+│   │   ├── sprint-2-report.md             # Informe técnico ejecutivo Sprint 2
+│   │   └── sprint-3-report.md             # Informe técnico ejecutivo Sprint 3
 ├── issues/
-│   └── issues_sprint_1/
-│       ├── S1-01_Base_Conocimiento.md     # Evidencia y diseño de ontología clínica
-│       ├── S1-02_Estrategia_Chunking.md   # Evidencia de segmentación semántica
-│       ├── S1-03_Embeddings.md            # Evidencia de representación vectorial
-│       ├── S1-04_Base_Vectorial_pgvector.md # Evidencia de persistencia en Supabase
-│       ├── S1-05_Pipeline_RAG.md          # Evidencia de integración del pipeline RAG
-│       ├── S1-06_Evaluacion_QA.md         # Evidencia de pruebas unitarias y métricas
-│       └── S1-07_Arquitectura_RAG.md      # Evidencia de arquitectura RAG consolidada
+│   ├── issues_sprint_1/                   # Evidencias y auditoría del Sprint 1 (S1-01 a S1-07)
+│   ├── issues_sprint_2/                   # Evidencias y auditoría del Sprint 2 (S2-01 a S2-07)
+│   └── issues_sprint_3/                   # Evidencias y auditoría del Sprint 3 (S3-01 a S3-07)
 ├── scripts/
+│   ├── evaluation/
+│   │   ├── evaluate_coach.py              # Benchmark del agente ReAct (Sprint 2)
+│   │   └── evaluate_multiagent.py         # Benchmark de delegación, latencia y adherencia (Sprint 3)
 │   └── ingestion/
-│       └── ingest_knowledge.py            # Script de ingesta e indexación en Supabase pgvector
+│       └── ingest_knowledge.py            # Ingesta e indexación en Supabase pgvector
 ├── src/
-│   ├── api/                               # Controladores y routers FastAPI
-│   ├── app/                               # Frontend React 18 + Vite (SPA)
-│   ├── database/                          # Conexión SQLAlchemy y modelos relacionales
-│   ├── knowledge/
-│   │   └── chunking/                      # Segmentador semántico clínico (ClinicalSemanticChunker)
-│   ├── rag/
-│   │   ├── embeddings/                    # Generador de embeddings con Hugging Face (384d)
-│   │   ├── pipeline/                      # Pipeline RAG y ensamblador de contexto clínico
-│   │   ├── retriever/                     # Recuperador semántico con filtrado por metadatos
-│   │   └── vector_store/                  # Adaptador de pgvector en Supabase
-│   └── services/                          # Lógica de servicios transaccionales
-├── tests/
-│   └── rag/
-│       ├── test_chunking.py               # Tests unitarios del segmentador
-│       ├── test_embeddings.py             # Tests unitarios del generador de embeddings
-│       └── test_retrieval.py              # Tests unitarios del pipeline RAG
-├── .env.example                           # Variables de entorno saneadas (placeholders)
-├── Dockerfile                             # Contenedor Docker para despliegue en producción
-├── README.md                              # Portada técnica y guía del repositorio
-└── requirements.txt                       # Dependencias de Python
+│   ├── agents/
+│   │   ├── nutrition/                     # NutritionAgent (Team 5): cálculo nutricional y cheques
+│   │   │   ├── agent.py                   # Lógica de agente y manejo de condiciones geriátricas
+│   │   │   └── tools.py                   # NutritionCalculatorTool y ClinicalDietaryCheckTool
+│   │   └── wellness/                      # WellnessCoachAgent: razonamiento ReAct y coach físico
+│   ├── api/
+│   │   ├── chat.py                        # Endpoint /api/v1/chat conectado al Supervisor
+│   │   ├── config.py                      # Configuración segura de entorno (cero secretos)
+│   │   └── main.py                        # Punto de entrada de FastAPI
+│   ├── memory/
+│   │   └── postgres_store.py              # Memoria conversacional sobre Supabase PostgreSQL
+│   ├── orchestration/                     # Motor de orquestación canónico (Única fuente de verdad)
+│   │   ├── contracts.py                   # Contratos AgentMessage, DispatchRequest, WorkflowContext
+│   │   ├── engine.py                      # Motor de flujos de trabajo WorkflowEngine
+│   │   └── router.py                      # Enrutador Supervisor y clasificador de intenciones
+│   ├── rag/                               # Pipeline RAG, embeddings y pgvector
+│   └── tools/                             # Herramientas clínicas (SafetyCheck, Catalog, RAG)
+└── tests/
+    ├── agents/                            # Pruebas unitarias de agentes (Wellness y Nutrition)
+    ├── integration/                       # Pruebas de integración del endpoint chat y flujos
+    ├── multiagent/                        # Pruebas del orquestador y protocolos de despacho
+    └── rag/                               # Pruebas del pipeline RAG y embeddings
 ```
 
 ---
 
-## 🎯 Matriz de Trazabilidad de Entregables (Sprint 1)
+## 🎯 Matriz de Trazabilidad de Entregables (Sprint 3: Sistemas Multiagentes)
 
 | Issue | Descripción del Entregable | Módulo / Ubicación en Repositorio | Estado |
 | :---: | :--- | :--- | :---: |
-| **`S1-01`** | **Base de Conocimiento y Ontología Médica:** Modelado de 10 patologías geriátricas, restricciones biomecánicas y reconocimiento al Ing. Julio Matute. | `data/knowledge_base/`<br/>`docs/knowledge/`<br/>[`issues/issues_sprint_1/S1-01_Base_Conocimiento.md`](issues/issues_sprint_1/S1-01_Base_Conocimiento.md) | ✅ **100%** (Aprobado) |
-| **`S1-02`** | **Estrategia de Segmentación Lógica (Chunking):** Chunking semántico tripartito (`_DESC`, `_REC`, `_CONTRA`) preservando niveles de progresión segura (1-4). | `src/knowledge/chunking/chunker.py`<br/>`docs/rag/chunking-strategy.md`<br/>[`issues/issues_sprint_1/S1-02_Estrategia_Chunking.md`](issues/issues_sprint_1/S1-02_Estrategia_Chunking.md) | ✅ **100%** (Aprobado) |
-| **`S1-03`** | **Generación de Representaciones Vectoriales (Embeddings):** Vectorización densa (384d) vía Hugging Face real y aserción estricta (`HUGGINGFACE_REAL_MODEL`). | `src/rag/embeddings/hf_embeddings.py`<br/>`docs/rag/embeddings-strategy.md`<br/>[`issues/issues_sprint_1/S1-03_Embeddings.md`](issues/issues_sprint_1/S1-03_Embeddings.md) | ✅ **100%** (Corregido y Verificado) |
-| **`S1-04`** | **Base de Datos Vectorial con pgvector:** Almacenamiento en Supabase PostgreSQL con índice `HNSW` y similitud de coseno. | `src/rag/vector_store/pgvector_store.py`<br/>`docs/rag/vector-database.md`<br/>[`issues/issues_sprint_1/S1-04_Base_Vectorial_pgvector.md`](issues/issues_sprint_1/S1-04_Base_Vectorial_pgvector.md) | ✅ **100%** (Aprobado) |
-| **`S1-05`** | **Pipeline RAG Integrado:** Orquestación de consulta, recuperación semántica y prompt clínico aumentado con telemetría unívoca y prueba automatizada mockeada. | `src/rag/pipeline/rag_pipeline.py`<br/>`src/rag/retriever/retriever.py`<br/>[`issues/issues_sprint_1/S1-05_Pipeline_RAG.md`](issues/issues_sprint_1/S1-05_Pipeline_RAG.md) | ✅ **100%** (Corregido y Verificado) |
-| **`S1-06`** | **Evaluación Cuantitativa y QA:** Suite de tests automatizados, métricas de recuperación recalculadas (Hit Rate 100%, MRR 0.9000, P@3 0.6333) y telemetría de latencias. | `tests/rag/`<br/>`docs/evaluation/retrieval-metrics.md`<br/>[`issues/issues_sprint_1/S1-06_Evaluacion_QA.md`](issues/issues_sprint_1/S1-06_Evaluacion_QA.md) | ✅ **100%** (Corregido y Verificado) |
-| **`S1-07`** | **Arquitectura RAG Consolidada:** Documentación arquitectónica consolidada, distinción formal de telemetría y purga terminológica metodológica. | `docs/architecture/rag-architecture.md`<br/>`docs/reports/sprint-1-report.md`<br/>[`issues/issues_sprint_1/S1-07_Arquitectura_RAG.md`](issues/issues_sprint_1/S1-07_Arquitectura_RAG.md) | ✅ **100%** (Corregido y Consolidado) |
+| **`S3-01`** | **Clarificación del Patrón Arquitectónico Multiagente:** Diferenciación formal de 4 patrones (Supervisor, Sequential, Hierarchical, Swarm), adopción del Patrón Supervisor Centralizado y formalización del `NutritionAgent` como componente asignado al Team 5. | `docs/architecture/multiagent-architecture.md`<br/>`docs/orchestration/orchestration-pattern.md`<br/>[`issues/issues_sprint_3/S3-01_Arquitectura_Multiagente.md`](issues/issues_sprint_3/S3-01_Arquitectura_Multiagente.md) | ✅ **100%** (Aprobado y Validado) |
+| **`S3-02`** | **Unificación de la Orquestación bajo el Patrón Supervisor:** Eliminación de pipelines rígidos legacy en `app/`, consolidación en `src/orchestration/` y enrutamiento inteligente por intención hacia agentes especializados. | `src/orchestration/router.py`<br/>`src/orchestration/engine.py`<br/>[`issues/issues_sprint_3/S3-02_Orchestrator_Agent.md`](issues/issues_sprint_3/S3-02_Orchestrator_Agent.md) | ✅ **100%** (Aprobado y Validado) |
+| **`S3-03`** | **Implementación y Evidencia del NutritionAgent (Team 5):** Desarrollo completo del agente especializado en nutrición geriátrica con herramientas de cálculo (`NutritionCalculatorTool`) y restricciones clínicas (`ClinicalDietaryCheckTool` para diabetes e HTA). | `src/agents/nutrition/`<br/>[`issues/issues_sprint_3/S3-03_Agente_Especializado.md`](issues/issues_sprint_3/S3-03_Agente_Especializado.md)<br/>[`issues/issues_sprint_3/S3-03_Agentes_Especializados.md`](issues/issues_sprint_3/S3-03_Agentes_Especializados.md) | ✅ **100%** (Aprobado y Validado) |
+| **`S3-04`** | **Protocolo de Comunicación y Conexión de Endpoint Chat:** Conexión de `/api/v1/chat` al Supervisor mediante contratos formales `AgentMessage`, `DispatchRequest` y propagación de `correlation_id` de extremo a extremo. | `src/api/chat.py`<br/>`src/orchestration/contracts.py`<br/>[`issues/issues_sprint_3/S3-04_Comunicacion_Delegacion.md`](issues/issues_sprint_3/S3-04_Comunicacion_Delegacion.md) | ✅ **100%** (Aprobado y Validado) |
+| **`S3-05`** | **Seguridad y Persistencia en Supabase:** Auditoría y saneamiento total de credenciales (eliminación de contraseñas hardcodeadas), carga vía variables de entorno y documentación de consultas SQL/JSONB en PostgreSQL. | `src/api/config.py`<br/>`seniorvital_shared/db.py`<br/>[`issues/issues_sprint_3/S3-05_Integracion_Datos.md`](issues/issues_sprint_3/S3-05_Integracion_Datos.md)<br/>[`issues/issues_sprint_3/S3-05_Integracion_Supabase.md`](issues/issues_sprint_3/S3-05_Integracion_Supabase.md) | ✅ **100%** (Aprobado y Validado) |
+| **`S3-06`** | **Evaluación Cuantitativa y Benchmark Multiagente:** Script reproducible `evaluate_multiagent.py` evaluando precisión de enrutamiento (100%), latencias (Media 0.31ms, P95 0.67ms) y adherencia clínica geriátrica (100%). | `scripts/evaluation/evaluate_multiagent.py`<br/>`data/evaluation/multiagent_results/`<br/>[`issues/issues_sprint_3/S3-06_Evaluacion_Multiagente.md`](issues/issues_sprint_3/S3-06_Evaluacion_Multiagente.md) | ✅ **100%** (Aprobado y Validado) |
+| **`S3-07`** | **Sincronización Documental y Activación CI/CD:** Activación obligatoria de `pytest` en GitHub Actions (`ci.yml`), sincronización completa del `README.md` con diagramas de flujo y cierre de auditorías S3-01 a S3-07. | `.github/workflows/ci.yml`<br/>`README.md`<br/>`docs/reports/sprint-3-report.md`<br/>[`issues/issues_sprint_3/S3-07_Documentacion_Demo.md`](issues/issues_sprint_3/S3-07_Documentacion_Demo.md) | ✅ **100%** (Aprobado y Validado) |
 
 ---
 
@@ -210,26 +216,39 @@ wellness-platform-team5/
 
 | Issue | Descripción del Entregable | Módulo / Ubicación en Repositorio | Estado |
 | :---: | :--- | :--- | :---: |
-| **`S2-01`** | **Refactorización y Evolución del Wellness Coach hacia Agente Inteligente:** Migración desde agente estático a arquitectura ReAct orientada a objetos en `src/`. | `src/agents/wellness/coach.py`<br/>[`issues/issues_sprint_2/S2-01_Refactorizacion_Wellness_Agent.md`](issues/issues_sprint_2/S2-01_Refactorizacion_Wellness_Agent.md) | ✅ **100%** (Completado) |
+| **`S2-01`** | **Refactorización del Wellness Coach hacia Agente Inteligente:** Migración desde agente estático a arquitectura ReAct orientada a objetos en `src/`. | `src/agents/wellness/coach.py`<br/>[`issues/issues_sprint_2/S2-01_Refactorizacion_Wellness_Agent.md`](issues/issues_sprint_2/S2-01_Refactorizacion_Wellness_Agent.md) | ✅ **100%** (Completado) |
 | **`S2-02`** | **Diseño y Herencia del Wellness Coach 2.0:** Herencia formal de `WellnessAgent`, orquestación de herramientas y depuración de llamadas residuales legacy. | `src/agents/wellness/coach.py`<br/>`src/agents/wellness/agent.py`<br/>[`issues/issues_sprint_2/S2-02_Diseno_Wellness_Coach_2.0.md`](issues/issues_sprint_2/S2-02_Diseno_Wellness_Coach_2.0.md) | ✅ **100%** (Completado) |
-| **`S2-03`** | **Memoria Conversacional Persistente:** Persistencia de mensajes, turnos e interacciones en Supabase PostgreSQL con `PostgresMemoryStore`, eliminando estado volátil en RAM. | `src/memory/postgres_store.py`<br/>[`issues/issues_sprint_2/S2-03_Memoria_Conversacional.md`](issues/issues_sprint_2/S2-03_Memoria_Conversacional.md) | ✅ **100%** (Completado) |
+| **`S2-03`** | **Memoria Conversacional Persistente:** Persistencia de mensajes en Supabase PostgreSQL con `PostgresMemoryStore`, eliminando estado volátil en RAM. | `src/memory/postgres_store.py`<br/>[`issues/issues_sprint_2/S2-03_Memoria_Conversacional.md`](issues/issues_sprint_2/S2-03_Memoria_Conversacional.md) | ✅ **100%** (Completado) |
 | **`S2-04`** | **Tool Calling Dinámico e Integración:** Catálogo de 4 herramientas especializadas (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`) invocadas autónomamente. | `src/tools/wellness/`<br/>[`issues/issues_sprint_2/S2-04_Tool_Calling_Integracion.md`](issues/issues_sprint_2/S2-04_Tool_Calling_Integracion.md) | ✅ **100%** (Completado) |
-| **`S2-05`** | **Patrón de Razonamiento ReAct:** Motor iterativo Thought → Action → Observation → Final Answer con guardrails de seguridad y control de ciclos. | `src/agents/wellness/reasoning.py`<br/>[`issues/issues_sprint_2/S2-05_Patron_ReAct.md`](issues/issues_sprint_2/S2-05_Patron_ReAct.md) | ✅ **100%** (Completado) |
-| **`S2-06`** | **Evaluación Cuantitativa y Benchmark del Agente:** Suite completa de 20 escenarios clínicos con 100.0% Safety Compliance, 97.0% Tool Accuracy y 100.0% ReAct Validity. | `scripts/evaluation/evaluate_coach.py`<br/>`data/evaluation/coach_results/metrics_summary.json`<br/>[`issues/issues_sprint_2/S2-06_Evaluacion_Agente.md`](issues/issues_sprint_2/S2-06_Evaluacion_Agente.md) | ✅ **100%** (Completado) |
-| **`S2-07`** | **Arquitectura Integral y Unificación del Endpoint /chat:** Conexión de extremo a extremo en FastAPI (`/api/v1/chat`), validación de integración automatizada (`test_chat_endpoint.py`) y sincronización documental. | `src/api/chat.py`<br/>`tests/integration/test_chat_endpoint.py`<br/>[`issues/issues_sprint_2/S2-07_Arquitectura_Resultados.md`](issues/issues_sprint_2/S2-07_Arquitectura_Resultados.md) | ✅ **100%** (Completado) |
+| **`S2-05`** | **Patrón de Razonamiento ReAct:** Motor iterativo Thought → Action → Observation → Final Answer con guardrails de seguridad. | `src/agents/wellness/reasoning.py`<br/>[`issues/issues_sprint_2/S2-05_Patron_ReAct.md`](issues/issues_sprint_2/S2-05_Patron_ReAct.md) | ✅ **100%** (Completado) |
+| **`S2-06`** | **Evaluación Cuantitativa del Agente:** Suite completa de 20 escenarios clínicos con 100.0% Safety Compliance y 97.0% Tool Accuracy. | `scripts/evaluation/evaluate_coach.py`<br/>`data/evaluation/coach_results/metrics_summary.json`<br/>[`issues/issues_sprint_2/S2-06_Evaluacion_Agente.md`](issues/issues_sprint_2/S2-06_Evaluacion_Agente.md) | ✅ **100%** (Completado) |
+| **`S2-07`** | **Arquitectura Integral y Endpoint /chat:** Conexión de extremo a extremo en FastAPI (`/api/v1/chat`), validación de integración (`test_chat_endpoint.py`) y sincronización documental. | `src/api/chat.py`<br/>`tests/integration/test_chat_endpoint.py`<br/>[`issues/issues_sprint_2/S2-07_Arquitectura_Resultados.md`](issues/issues_sprint_2/S2-07_Arquitectura_Resultados.md) | ✅ **100%** (Completado) |
 
 ---
 
+## 🎯 Matriz de Trazabilidad de Entregables (Sprint 1: RAG y Conocimiento)
 
-## Instalación y ejecución (Guía de Reproducibilidad)
+| Issue | Descripción del Entregable | Módulo / Ubicación en Repositorio | Estado |
+| :---: | :--- | :--- | :---: |
+| **`S1-01`** | **Base de Conocimiento y Ontología Médica:** Modelado de 10 patologías geriátricas, restricciones biomecánicas y reconocimiento al Ing. Julio Matute. | `data/knowledge_base/`<br/>`docs/knowledge/`<br/>[`issues/issues_sprint_1/S1-01_Base_Conocimiento.md`](issues/issues_sprint_1/S1-01_Base_Conocimiento.md) | ✅ **100%** (Aprobado) |
+| **`S1-02`** | **Estrategia de Segmentación Lógica (Chunking):** Chunking semántico tripartito (`_DESC`, `_REC`, `_CONTRA`) preservando niveles de progresión segura (1-4). | `src/knowledge/chunking/chunker.py`<br/>`docs/rag/chunking-strategy.md`<br/>[`issues/issues_sprint_1/S1-02_Estrategia_Chunking.md`](issues/issues_sprint_1/S1-02_Estrategia_Chunking.md) | ✅ **100%** (Aprobado) |
+| **`S1-03`** | **Generación de Representaciones Vectoriales (Embeddings):** Vectorización densa (384d) vía Hugging Face real y aserción estricta (`HUGGINGFACE_REAL_MODEL`). | `src/rag/embeddings/hf_embeddings.py`<br/>`docs/rag/embeddings-strategy.md`<br/>[`issues/issues_sprint_1/S1-03_Embeddings.md`](issues/issues_sprint_1/S1-03_Embeddings.md) | ✅ **100%** (Corregido y Verificado) |
+| **`S1-04`** | **Base de Datos Vectorial con pgvector:** Almacenamiento en Supabase PostgreSQL con índice `HNSW` y similitud de coseno. | `src/rag/vector_store/pgvector_store.py`<br/>`docs/rag/vector-database.md`<br/>[`issues/issues_sprint_1/S1-04_Base_Vectorial_pgvector.md`](issues/issues_sprint_1/S1-04_Base_Vectorial_pgvector.md) | ✅ **100%** (Aprobado) |
+| **`S1-05`** | **Pipeline RAG Integrado:** Orquestación de consulta, recuperación semántica y prompt clínico aumentado con telemetría unívoca. | `src/rag/pipeline/rag_pipeline.py`<br/>`src/rag/retriever/retriever.py`<br/>[`issues/issues_sprint_1/S1-05_Pipeline_RAG.md`](issues/issues_sprint_1/S1-05_Pipeline_RAG.md) | ✅ **100%** (Corregido y Verificado) |
+| **`S1-06`** | **Evaluación Cuantitativa y QA:** Suite de tests automatizados, métricas de recuperación recalculadas (Hit Rate 100%, MRR 0.9000, P@3 0.6333) y telemetría de latencias. | `tests/rag/`<br/>`docs/evaluation/retrieval-metrics.md`<br/>[`issues/issues_sprint_1/S1-06_Evaluacion_QA.md`](issues/issues_sprint_1/S1-06_Evaluacion_QA.md) | ✅ **100%** (Corregido y Verificado) |
+| **`S1-07`** | **Arquitectura RAG Consolidada:** Documentación arquitectónica consolidada, distinción formal de telemetría y purga terminológica metodológica. | `docs/architecture/rag-architecture.md`<br/>`docs/reports/sprint-1-report.md`<br/>[`issues/issues_sprint_1/S1-07_Arquitectura_RAG.md`](issues/issues_sprint_1/S1-07_Arquitectura_RAG.md) | ✅ **100%** (Corregido y Consolidado) |
 
-Sigue estos pasos para clonar, ejecutar la ingesta y validar las pruebas unitarias del sistema RAG localmente:
+---
+
+## Instalación y Ejecución (Guía de Reproducibilidad)
+
+Sigue estos pasos para clonar, ejecutar la ingesta, levantar la plataforma y validar las pruebas automatizadas del ecosistema multiagente:
 
 ### 1. Clonar el repositorio y posicionarse en la rama del sprint
 ```bash
 git clone https://github.com/YaskCode-laboratory/wellness-platform-team5.git
 cd wellness-platform-team5
-git checkout sprint-1
+git checkout sprint-3
 ```
 
 ### 2. Configurar el entorno virtual e instalar dependencias
@@ -262,42 +281,38 @@ cp .env.example .env
 > ENVIRONMENT=development
 > ```
 
-### 4. Ejecutar la ingesta y vectorización del conocimiento
+### 4. Ejecutar la ingesta y vectorización del conocimiento clínico
 ```bash
 python scripts/ingestion/ingest_knowledge.py
 ```
-*Salida esperada:*
-```text
-[SeniorVital] Iniciando pipeline de ingesta clinica...
-[Chunking] Chunks generados exitosamente: 30 fragmentos clinicos estructurados.
-[Embeddings] Generando representaciones vectoriales (384d) para 30 documentos...
-[VectorStore] Tabla 'clinical_knowledge_vectors' e indice HNSW inicializados en Supabase pgvector.
-[SUCCESS] Ingesta e indexacion vectorial completada con exito.
-```
 
-### 5. Ejecutar la suite completa de pruebas automatizadas (RAG, Agente e Integración)
+### 5. Ejecutar la suite completa de pruebas automatizadas en CI
 ```bash
-python -m pytest tests/rag/ tests/agents/ tests/integration/ -v
+python -m pytest tests/ -v --ignore=tests/legacy/
 ```
 *Salida esperada:*
 ```text
-tests/rag/test_chunking.py::test_semantic_chunker_generates_three_chunks_per_pathology PASSED
-tests/rag/test_embeddings.py::test_embeddings_generator_returns_384_dimension_vector PASSED
-tests/rag/test_retrieval.py::test_rag_pipeline_system_prompt_structure PASSED
-tests/rag/test_retrieval.py::test_rag_pipeline_full_orchestration_with_telemetry PASSED
-tests/agents/test_wellness_agent.py::... PASSED
-tests/integration/test_chat_endpoint.py::test_chat_endpoint_react_cycle_with_tools_and_memory PASSED
-tests/integration/test_chat_endpoint.py::test_chat_endpoint_direct_response_without_tools PASSED
-tests/integration/test_chat_endpoint.py::test_chat_endpoint_guardrail_activation PASSED
-
-============================== 10 passed in 3.12s ==============================
+============================== 237 passed, 37 skipped in 72.45s ==============================
 ```
 
-### 6. Ejecución de la API Backend y Frontend
+### 6. Ejecutar el benchmark multiagente (Precisión de Enrutamiento y Calidad Clínica)
+```bash
+python scripts/evaluation/evaluate_multiagent.py
+```
+*Salida esperada:*
+```text
+Delegation Accuracy:      100.0% (6/6)
+Clinical Adherence Rate:  100.0% (6/6)
+Critical Safety Block:    100.0%
+Latency Mean:             0.31 ms
+Latency P95:              0.67 ms
+```
+
+### 7. Ejecución de la API Backend y Frontend
 ```bash
 # Iniciar Servidor FastAPI
 uvicorn src.api.main:app --reload --port 8000
-# Swagger UI disponible en: http://localhost:8000/docs
+# Swagger UI interactivo disponible en: http://localhost:8000/docs
 
 # Iniciar Frontend (en otra terminal)
 cd src/app
@@ -309,6 +324,20 @@ npm run dev
 ---
 
 ## 📑 Índice de Documentación Viva
+
+### Sprint 3: Sistemas Multiagentes y Orquestación Supervisor
+* 🏛️ **Arquitectura Multiagente Formal:** [`docs/architecture/multiagent-architecture.md`](docs/architecture/multiagent-architecture.md)
+* 🔄 **Especificación del Patrón Supervisor:** [`docs/orchestration/orchestration-pattern.md`](docs/orchestration/orchestration-pattern.md)
+* 🥗 **NutritionAgent (Team 5):** [`issues/issues_sprint_3/S3-03_Agente_Especializado.md`](issues/issues_sprint_3/S3-03_Agente_Especializado.md)
+* 📊 **Resultados del Benchmark Multiagente:** [`data/evaluation/multiagent_results/multiagent_benchmark_results.json`](data/evaluation/multiagent_results/multiagent_benchmark_results.json)
+* 📋 **Informe Ejecutivo Sprint 3:** [`docs/reports/sprint-3-report.md`](docs/reports/sprint-3-report.md)
+* 📂 **Evidencias de Issues (S3-01 a S3-07):** [`issues/issues_sprint_3/`](issues/issues_sprint_3/)
+
+### Sprint 2: Agentes Inteligentes, ReAct y Tool Calling
+* 🤖 **Arquitectura del Wellness Coach Agent:** [`docs/agents/wellness-agent.md`](docs/agents/wellness-agent.md)
+* 📊 **Evaluación Cuantitativa y Benchmark (20 Escenarios):** [`data/evaluation/coach_results/metrics_summary.json`](data/evaluation/coach_results/metrics_summary.json)
+* 📋 **Informe Ejecutivo Sprint 2:** [`docs/reports/sprint-2-report.md`](docs/reports/sprint-2-report.md)
+* 📂 **Evidencias de Issues (S2-01 a S2-07):** [`issues/issues_sprint_2/`](issues/issues_sprint_2/)
 
 ### Sprint 1: Ingeniería del Conocimiento y RAG
 * 🗺️ **Mapa de Dominio:** [`docs/knowledge/domain-map.md`](docs/knowledge/domain-map.md)
@@ -323,12 +352,6 @@ npm run dev
 * 📋 **Informe Ejecutivo Sprint 1:** [`docs/reports/sprint-1-report.md`](docs/reports/sprint-1-report.md)
 * 📂 **Evidencias de Issues (S1-01 a S1-07):** [`issues/issues_sprint_1/`](issues/issues_sprint_1/)
 
-### Sprint 2: Agentes Inteligentes, ReAct y Tool Calling
-* 🤖 **Arquitectura del Wellness Coach Agent:** [`docs/agents/wellness-agent.md`](docs/agents/wellness-agent.md)
-* 📊 **Evaluación Cuantitativa y Benchmark (20 Escenarios):** [`data/evaluation/coach_results/metrics_summary.json`](data/evaluation/coach_results/metrics_summary.json)
-* 📋 **Informe Ejecutivo Sprint 2:** [`docs/reports/sprint-2-report.md`](docs/reports/sprint-2-report.md)
-* 📂 **Evidencias de Issues (S2-01 a S2-07):** [`issues/issues_sprint_2/`](issues/issues_sprint_2/)
-
 ---
 
 ## Equipo
@@ -340,15 +363,16 @@ npm run dev
 
 ---
 
-## Estado del proyecto
+## Estado del Proyecto
 
-* **Fase Actual:** **Sprint 2: Agentes Inteligentes, ReAct y Tool Calling (Completado al 100% / 30% del Proyecto Total).**
-* **Hitos Alcanzados:**
+* **Fase Actual:** **Sprint 3: Sistemas Multiagentes y Orquestación (Completado al 100% / 45% del Proyecto Total).**
+* **Hitos Consolidados:**
   - Base de conocimiento de 10 patologías geriátricas y RAG integrado (Sprint 1).
-  - `WellnessCoachAgent` con herencia formal de `WellnessAgent` y arquitectura modular en `src/`.
-  - Conexión de `PostgresMemoryStore` sobre Supabase PostgreSQL por sesión de usuario.
-  - Motor de razonamiento ReAct (`reasoning.py`) con Tool Calling dinámico de 4 herramientas clínicas.
-  - Endpoint `/api/v1/chat` integrado de extremo a extremo con telemetría estructurada.
-  - Benchmark sobre 20 escenarios clínicos con 100.0% Safety Compliance, 97.0% Tool Accuracy y 100.0% ReAct Validity.
-* **Próxima Fase:** **Sprint 3: Monitoreo, Tracking y Evaluación Preventiva Continua.**
-
+  - `WellnessCoachAgent` con herencia formal de `WellnessAgent`, Tool Calling y ciclo ReAct en `src/` (Sprint 2).
+  - Conexión de `PostgresMemoryStore` sobre Supabase PostgreSQL por sesión de usuario (Sprint 2).
+  - Unificación bajo el **Patrón Supervisor Centralizado** en `src/orchestration/`, descartando acoplamientos rígidos legacy (Sprint 3).
+  - Desarrollo del **NutritionAgent** (especializado para Team 5) con herramientas de cálculo y cheques de patologías geriátricas (Sprint 3).
+  - Integración del endpoint `/api/v1/chat` con enrutamiento dinámico, contratos `AgentMessage`, `DispatchRequest` y propagación de `correlation_id` (Sprint 3).
+  - Ejecución de benchmark multiagente con 100% de precisión de delegación y 100% de adherencia clínica (Sprint 3).
+  - Activación obligatoria de `pytest` en CI de GitHub Actions y saneamiento total de credenciales (Sprint 3).
+* **Próxima Fase:** **Sprint 4: Integración Avanzada, Monitoreo Continuo y Despliegue en Producción.**

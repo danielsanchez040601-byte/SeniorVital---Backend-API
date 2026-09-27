@@ -1,39 +1,85 @@
-# 🎛️ Issue S3-02: Diseño e Implementación del Orchestrator Agent (Supervisor)
+# 🎛️ Issue S3-02: Diseño e Implementación del Orchestrator Agent (Supervisor Centralizado)
 
 **Materia:** Sistemas Inteligentes  
 **Docente:** Dra. Yaskelly Yedra  
 **Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
 **Proyecto:** SeniorVital 2.0 — Sistemas Multiagentes y Orquestación  
 **Sprint Técnico:** Sprint 3 — Arquitectura Multiagente y Supervisor Pattern  
+**Estado:** ✅ APROBADO Y CERRADO TRAS AUDITORÍA DE SPRINT 3  
 
 ---
 
-## 🎯 1. Responsabilidades del Orchestrator Agent
+## 🎯 1. Responsabilidades del Orchestrator Agent Centralizado
 
-El `MultiAgentOrchestrator` implementado en `app/agents/multi_agent_orchestrator.py` actúa como el nodo raíz del sistema:
+Unificamos la arquitectura tomando como **única fuente de verdad** el motor dinámico en `src/orchestration/`:
+- El módulo rígido anterior en `app/agents/multi_agent_orchestrator.py` fue depurado y redirigido para mantener compatibilidad legacy sin interferir en el runtime.
+- El núcleo operativo reside en `src/orchestration/router.py` bajo la clase `OrchestratorAgent`.
 
-1. **Gestión de Identificadores de Traza (`trace_id`):** Genera un ID único para cada sesión para garantizar la observabilidad de extremo a extremo.
-2. **Control de Flujo Secuencial (Pipeline A2A):**
-   * **Fase 1 (Analítica):** Invoca a `AnalyticsAgent` para evaluar adherencia y riesgo.
-   * **Fase 2 (Empatía):** Invoca a `MotivationAgent` para preparar el tono afectivo adaptado.
-   * **Fase 3 (Razonamiento Clínico):** Invoca a `WellnessCoachAgent` con el patrón ReAct y RAG.
-   * **Fase 4 (Control de Calidad):** Invoca a `QAArchitectAgent` para validar guardrails.
-3. **Consolidación de Salida:** Agrega métricas, trazas de tiempo (`elapsed_ms`) y respuesta final en una estructura JSON transparente.
+### Capacidades Implementadas:
+1. **Clasificación Dinámica de Intenciones (`IntentClassifier`):**
+   - **Fast-Path Léxico:** Mapeo de términos de alta frecuencia en salud gerontológica (nutrición, ejercicio, seguridad, dolor, medicamentos). Si la confianza supera el umbral (0.7), enruta inmediatamente sin invocar al LLM.
+   - **Clasificador Semántico LLM:** Si la consulta es compleja, invoca al modelo de lenguaje con un prompt estructurado en JSON para determinar el dominio.
+2. **Despacho Dinámico (`dispatch`):**
+   - Recibe instancias tipadas de `DispatchRequest` desde el endpoint `/api/v1/chat`.
+   - Selecciona el agente idóneo (`NutritionAgent`, `WellnessCoachAgent` o agentes de soporte) en función de la intención clasificada.
+   - Activa el agente de fallback (`WellnessCoachAgent`) en caso de intenciones generales o contingencias.
+3. **Control Anti-Ciclos y Trazabilidad:**
+   - Detecta reentradas con el mismo `correlation_id` mediante el conjunto `_active_correlations`, arrojando `OrchestrationError` si se detecta recursión no controlada.
+   - Emite telemetría estructurada mediante `OrchestrationLogger` (`dispatch_start`, `agent_selected`, `dispatch_end`).
 
 ---
 
-## 💻 2. Código Central de la Orquestación
+## 💻 2. Implementación Canónica de Orquestación (`src/orchestration/router.py`)
 
 ```python
-class MultiAgentOrchestrator:
-    async def orchestrate_request(self, user_id: str, query: str, user_role: str = "senior") -> Dict[str, Any]:
-        # 1. Analytics
-        analytics = await self.analytics_agent.analyze_patient_progression(uid)
-        # 2. Motivation
-        motivation = await self.motivation_agent.generate_encouragement(analytics["adherence_rate"])
-        # 3. Clinical Coach
-        coach = await self.wellness_coach.execute_react_cycle(user_id=str(uid), query=query)
-        # 4. QA Audit
-        qa = self.qa_agent.audit_response(coach.get("response", ""))
-        return payload
+class OrchestratorAgent:
+    """Orquestador centralizado que clasifica la intención y delega a agentes especializados."""
+
+    def __init__(self, llm: LLMService) -> None:
+        self._llm = llm
+        self._agents: dict[str, Any] = {}
+        self._classifier = IntentClassifier(llm)
+        self._fallback_agent: Any = None
+        self._active_correlations: set[str] = set()
+
+    async def dispatch(self, request: DispatchRequest) -> DispatchResponse:
+        correlation_id = request.correlation_id or request.request_id
+        
+        # 1. Anti-ciclos
+        if correlation_id in self._active_correlations:
+            raise OrchestrationError(f"Delegation cycle detected: {correlation_id}")
+        self._active_correlations.add(correlation_id)
+
+        try:
+            # 2. Clasificación de intención
+            intent = await self._classifier.classify(request.message) if not request.intent else ...
+
+            # 3. Selección y delegación dinámica
+            agent = self.select_agent(intent)
+            response = await agent.handle(AgentRequest(
+                message=request.message,
+                user_id=request.user_id,
+                context={"correlation_id": correlation_id}
+            ))
+
+            # 4. Verificación de seguridad crítica
+            blocked = response.safety_level == "critical"
+            return response_to_dispatch_response(
+                response,
+                request_id=request.request_id,
+                agent=getattr(agent, "name", "unknown"),
+                intent=intent.domain,
+                blocked=blocked
+            )
+        finally:
+            self._active_correlations.discard(correlation_id)
 ```
+
+---
+
+## 🔗 3. Conexión de Extremo a Extremo con el Endpoint `/api/v1/chat`
+
+En `src/api/chat.py`, el endpoint `/chat` fue refactorizado para instanciar e inyectar el supervisor:
+- Delega consultas de dieta, alimentos e hidratación directamente al `NutritionAgent`.
+- Delega consultas de dolor articular, acondicionamiento físico o progreso al `WellnessCoachAgent`.
+- Devuelve `ChatResponse` con telemetría estructurada, `correlation_id` y tiempo de ejecución.

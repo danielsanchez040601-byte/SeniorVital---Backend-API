@@ -1,4 +1,4 @@
-# 🗄️ Issue S3-05: Integración con Supabase PostgreSQL, Consultas JSONB y Seguridad
+# 🗄️ Issue S3-05: Seguridad, Persistencia en Supabase y Consultas JSONB
 
 **Materia:** Sistemas Inteligentes  
 **Docente:** Dra. Yaskelly Yedra  
@@ -109,6 +109,33 @@ LEFT JOIN daily_routines dr
 WHERE er.senior_id = :user_id
   AND er.completed_at >= (NOW() - INTERVAL '14 days')
 GROUP BY er.senior_id;
+```
+
+### 2.4. Persistencia de Hábitos Gerontológicos (`daily_habits`)
+Permite el seguimiento de hidratación (vasos de agua) y descanso (horas de sueño):
+
+```sql
+-- Upsert diario de hábitos
+INSERT INTO daily_habits (
+    senior_id,
+    log_date,
+    water_glasses,
+    sleep_hours,
+    mood,
+    created_at
+) VALUES (
+    :senior_id,
+    :log_date,
+    :water_glasses,
+    :sleep_hours,
+    :mood,
+    NOW()
+)
+ON CONFLICT (senior_id, log_date)
+DO UPDATE SET
+    water_glasses = EXCLUDED.water_glasses,
+    sleep_hours = EXCLUDED.sleep_hours,
+    mood = EXCLUDED.mood;
 ```
 
 ---

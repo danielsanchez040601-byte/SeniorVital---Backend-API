@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     OLLAMA_URL: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
 
     # Seguridad y JWT
-    JWT_SECRET: str = os.getenv("JWT_SECRET", "seniorvital-production-secret-key-2026")
+    JWT_SECRET: str = os.getenv("JWT_SECRET", "dev-secret-key-change-in-production")
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_DAYS: int = 7
 
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
 
     # Servidor y Puerto (Render.com)
     PORT: int = int(os.getenv("PORT", "8000"))
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "production")
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
     # Orígenes CORS permitidos
     CORS_ORIGINS: List[str] = [

@@ -2,8 +2,12 @@
 SeniorVital 2.0 - Ecosistema Multiagente y Orquestación Supervisor
 Materia: Sistemas Inteligentes (Dra. Yaskelly Yedra)
 Autores: Daniel Alejandro Sánchez Ávila & Abdenago Nahmens
-Patrón: Supervisor Jerárquico (Hierarchical Orchestrator + Specialized Agents)
+Patrón: Patrón Supervisor Centralizado (Centralized Orchestrator + Specialized Agents)
 Stack: FastAPI + Supabase PostgreSQL (SQL/JSONB) + Google AI Studio (Gemini) / OpenRouter
+
+Nota arquitectónica: La implementación canónica y dinámica del Supervisor reside en
+`src/orchestration/`. Este módulo mantiene compatibilidad con la suite de pruebas
+legacy de `tests/multiagent/`.
 """
 
 import json
@@ -11,7 +15,7 @@ import logging
 import time
 import uuid
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.future import select
 from sqlalchemy import func
 
@@ -43,7 +47,7 @@ class AnalyticsAgent:
         try:
             async with AsyncSessionLocal() as session:
                 # 1. Consultar rutinas de los últimos 14 días
-                limit_date = (datetime.utcnow() - timedelta(days=14)).date()
+                limit_date = (datetime.now(timezone.utc) - timedelta(days=14)).date()
                 routines_query = (
                     select(DailyRoutine)
                     .filter(DailyRoutine.senior_id == user_id, DailyRoutine.assigned_date >= limit_date)
@@ -203,7 +207,7 @@ class QAArchitectAgent:
 # ---------------------------------------------------------------------------
 class MultiAgentOrchestrator:
     """
-    Supervisor Jerárquico:
+    Patrón Supervisor Centralizado:
     1. Recibe la solicitud del usuario o cuidador
     2. Clasifica la intención y delega a los agentes especializados
     3. Coordina el paso de mensajes (A2A) sin ciclos infinitos
