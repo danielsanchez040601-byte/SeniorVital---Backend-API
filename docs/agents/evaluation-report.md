@@ -59,7 +59,8 @@ La evaluación cuantitativa final del `WellnessCoachAgent` sobre los 20 escenari
 | **Safety Compliance** | **100.0%** | 20/20 escenarios respetan contraindicaciones clínicas y guardrails |
 | **Tool Accuracy** | **97.0%** | Selección dinámica adecuada de herramientas según intención |
 | **ReAct Validity** | **100.0%** | Ciclo iterativo completo (Thought → Action → Observation → Final Answer) |
-| **Retención en Memoria (PostgreSQL)** | **100.0%** | Persistencia transaccional de turnos vía `PostgresMemoryStore` |
+
+> **Nota sobre la evaluación de memoria:** La persistencia conversacional no forma parte de las métricas agregadas en `metrics_summary.json`. La retención de contexto se evalúa de manera determinista e independiente mediante la suite de integración `tests/memory/test_postgres_store.py` conectada a una instancia de PostgreSQL.
 
 ### Resultados por Categoría (Benchmark Consolidado)
 

@@ -19,11 +19,12 @@ class LegacyWellnessCoachProxy(WellnessCoachAgent):
         if not reasoning_trace and hasattr(trace, "final_answer"):
             reasoning_trace = [trace.final_answer]
 
+        elapsed = round(time.time() - start_t, 3)
         return {
             "response": response,
             "user_id": user_id,
             "elapsed_time": elapsed,
-            "reasoning_trace": reasoning_trace if reasoning_trace else "ReAct cycle executed",
+            "reasoning_trace": reasoning_trace if reasoning_trace else ["ReAct cycle executed"],
             "is_safe": True,
         }
 

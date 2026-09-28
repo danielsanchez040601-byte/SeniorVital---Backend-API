@@ -48,20 +48,20 @@ Metadatos de usuario              Acción ejecutada (tool call)
 
 ## Herramientas
 
-### Catálogo de Herramientas Especializadas
+### Catálogo de Herramientas del Endpoint `/api/v1/chat`
 
-El agente prioriza 4 herramientas clínicas centrales para el ciclo ReAct junto a utilidades complementarias:
+El agente inyecta activamente 7 herramientas en el endpoint `/api/v1/chat` para el ciclo ReAct:
 
-| # | Nombre | Descripción | Fuente / Backend |
-|---|--------|-------------|------------------|
-| **T1** | `safety_check` | Validación de contraindicaciones y seguridad biomecánica | Tabla `exercises` + restricciones de usuario |
-| **T2** | `exercise_catalog` | Busca ejercicios por nivel funcional (1-4) o patología | Supabase PostgreSQL (`exercises`) |
-| **T3** | `rag_search` | Consulta la base de conocimiento gerontológico | Supabase `pgvector` (`clinical_knowledge_embeddings`) |
-| **T4** | `log_habit` | Registra consumo de agua o horas de sueño | Supabase PostgreSQL (`daily_habits` / `habits`) |
-| T5 | `get_habits` | Obtiene registro histórico de agua y descanso | Supabase PostgreSQL (`daily_habits`) |
-| T6 | `get_progress` | Obtiene insights y métricas de esfuerzo RPE | Supabase PostgreSQL (`exercise_records`) |
-| T7 | `get_routine` | Obtiene la rutina activa asignada del día | Supabase PostgreSQL (`daily_routines`) |
-| T8 | `generate_routine` | Crea rutina adaptada para el usuario | Motor algorítmico + catálogo clínico |
+| # | Nombre | Descripción | Fuente / Backend | Estado en `/chat` |
+|---|--------|-------------|------------------|:---:|
+| **T1** | `safety_check` | Validación de contraindicaciones y seguridad biomecánica | Tabla `exercises` + restricciones de usuario | **Activa** |
+| **T2** | `exercise_catalog` | Busca ejercicios por nivel funcional (1-4) o patología | Supabase PostgreSQL (`exercises`) | **Activa** |
+| **T3** | `rag_search` | Consulta la base de conocimiento gerontológico | Supabase `pgvector` (`clinical_knowledge_embeddings`) | **Activa** |
+| **T4** | `log_habit` | Registra consumo de agua o horas de sueño | Supabase PostgreSQL (`daily_habits` / `habits`) | **Activa** |
+| **T5** | `get_habits` | Obtiene registro histórico de agua y descanso | Supabase PostgreSQL (`daily_habits`) | **Activa** |
+| **T6** | `get_progress` | Obtiene insights y métricas de esfuerzo RPE | Supabase PostgreSQL (`exercise_records`) | **Activa** |
+| **T7** | `get_routine` | Obtiene la rutina activa asignada del día | Supabase PostgreSQL (`daily_routines`) | **Activa** |
+| T8 | `generate_routine` | Generación algorítmica de planes de entrenamiento | Motor algorítmico + catálogo clínico | *Librería externa* |
 
 ### Interfaz común
 
@@ -116,7 +116,7 @@ sequenceDiagram
     participant U as Usuario
     participant C as Coach Agent
     participant PB as PromptBuilder
-    participant L as LLM (Gemini Flash / OpenRouter)
+    participant L as LLMService (Ollama / phi3:mini)
     participant T as Tools
     participant M as PostgresMemoryStore
 
