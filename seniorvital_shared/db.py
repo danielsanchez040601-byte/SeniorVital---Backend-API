@@ -299,10 +299,11 @@ def _get_dsn():
 
     :return: DSN para conectar a PostgreSQL.
     """
-    return os.getenv(
+    url = os.getenv(
         "DATABASE_URL",
         "postgresql://postgres:postgres@127.0.0.1:5432/wellness_db",
     )
+    return url.replace("postgresql+asyncpg://", "postgresql://")
 
 
 async def init_pool(min_size=2, max_size=10, owner="default"):

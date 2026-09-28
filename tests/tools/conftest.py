@@ -20,11 +20,16 @@ async def engine():
         "DATABASE_URL",
         "postgresql://postgres:postgres@127.0.0.1:5432/wellness_db",
     )
-    db_url_async = db_url.replace("postgresql://", "postgresql+asyncpg://")
+    if "postgresql+asyncpg://" in db_url:
+        db_url_async = db_url
+    else:
+        db_url_async = db_url.replace("postgresql://", "postgresql+asyncpg://")
     eng = create_async_engine(db_url_async, pool_size=2, max_overflow=2)
     try:
         async with eng.connect() as conn:
             await conn.execute(text("SELECT 1"))
+        from seniorvital_shared.db import init_db
+        await init_db()
     except Exception as e:
         await eng.dispose()
         pytest.skip(f"Live PostgreSQL instance not reachable: {e}")

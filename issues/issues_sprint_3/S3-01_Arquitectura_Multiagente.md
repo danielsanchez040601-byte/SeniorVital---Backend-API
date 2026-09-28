@@ -5,7 +5,7 @@
 **Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
 **Proyecto:** SeniorVital 2.0 — Sistemas Multiagentes y Orquestación  
 **Sprint Técnico:** Sprint 3 — Arquitectura Multiagente y Supervisor Pattern  
-**Estado:** ✅ APROBADO Y CERRADO TRAS AUDITORÍA DE SPRINT 3  
+**Estado:** Implementado — pendiente de aprobación docente  
 
 ---
 

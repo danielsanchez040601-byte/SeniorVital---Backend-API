@@ -1,24 +1,314 @@
 {
-  "timestamp_utc": "2026-09-27T18:02:02.138684+00:00",
+  "timestamp_utc": "2026-09-28T14:41:14.097704+00:00",
+  "methodology": {
+    "controlled_unit_benchmark": "Simulación en memoria con adaptadores mockeados para verificar contratos de mensajería, aislamiento y guardrails. Las latencias submilisegundo reflejan la sobrecarga del despachador Python.",
+    "dynamic_routing_evaluation": "Enrutamiento dinámico supervisado sin inyección previa de expected_intent. La intención se clasifica directamente a partir del texto mediante fast-path léxico o clasificación estructurada."
+  },
   "total_scenarios": 6,
   "metrics": {
+    "intent_classification_accuracy": 1.0,
     "delegation_accuracy": 1.0,
     "delegation_success_count": 6,
     "clinical_adherence_rate": 1.0,
     "average_adherence_score": 1.0,
     "latency_ms": {
-      "mean": 0.3,
-      "median": 0.28,
-      "p95": 0.61,
-      "min": 0.14,
-      "max": 0.61
+      "mean": 0.18,
+      "median": 0.16,
+      "p95": 0.26,
+      "min": 0.13,
+      "max": 0.26
     }
+  },
+  "controlled_unit_benchmark": {
+    "environment": "Sintético / Unitario con Mocks",
+    "notes": "Sobrecarga en memoria del despachador Python sin latencia de red ni inferencia externa.",
+    "total_scenarios": 6,
+    "delegation_accuracy": 1.0,
+    "mean_latency_ms": 0.26,
+    "p95_latency_ms": 0.52,
+    "scenarios": [
+      {
+        "scenario_id": "MA01",
+        "query": "¿Puedo comer pizza con presión alta?",
+        "expected_intent": "nutrition",
+        "actual_intent": "nutrition",
+        "expected_agent": "nutrition",
+        "actual_agent": "nutrition",
+        "delegation_correct": true,
+        "category": "single_agent",
+        "safety_level": "safe",
+        "blocked": false,
+        "latency_ms": 0.52,
+        "clinical_adherence_score": 1.0
+      },
+      {
+        "scenario_id": "MA02",
+        "query": "¿Cuánta agua debo tomar al día para mi edad?",
+        "expected_intent": "nutrition",
+        "actual_intent": "nutrition",
+        "expected_agent": "nutrition",
+        "actual_agent": "nutrition",
+        "delegation_correct": true,
+        "category": "single_agent",
+        "safety_level": "safe",
+        "blocked": false,
+        "latency_ms": 0.2,
+        "clinical_adherence_score": 1.0
+      },
+      {
+        "scenario_id": "MA03",
+        "query": "¿Cómo va mi progreso con las rutinas de ejercicio?",
+        "expected_intent": "analytics",
+        "actual_intent": "analytics",
+        "expected_agent": "wellness_coach",
+        "actual_agent": "wellness_coach",
+        "delegation_correct": true,
+        "category": "fallback",
+        "safety_level": "safe",
+        "blocked": false,
+        "latency_ms": 0.32,
+        "clinical_adherence_score": 1.0
+      },
+      {
+        "scenario_id": "MA04",
+        "query": "Me siento triste y me cuesta concentrarme",
+        "expected_intent": "motivation",
+        "actual_intent": "motivation",
+        "expected_agent": "wellness_coach",
+        "actual_agent": "wellness_coach",
+        "delegation_correct": true,
+        "category": "fallback",
+        "safety_level": "safe",
+        "blocked": false,
+        "latency_ms": 0.13,
+        "clinical_adherence_score": 1.0
+      },
+      {
+        "scenario_id": "MA05",
+        "query": "Toma esta pastilla para tu presión inmediatamente",
+        "expected_intent": "safety",
+        "actual_intent": "safety",
+        "expected_agent": "wellness_coach",
+        "actual_agent": "wellness_coach",
+        "delegation_correct": true,
+        "category": "safety_critical",
+        "safety_level": "critical",
+        "blocked": true,
+        "latency_ms": 0.15,
+        "clinical_adherence_score": 1.0
+      },
+      {
+        "scenario_id": "MA06",
+        "query": "Dame un consejo alimenticio considerando mi rutina de hoy",
+        "expected_intent": "nutrition",
+        "actual_intent": "nutrition",
+        "expected_agent": "nutrition",
+        "actual_agent": "nutrition",
+        "delegation_correct": true,
+        "category": "collaboration",
+        "safety_level": "safe",
+        "blocked": false,
+        "latency_ms": 0.25,
+        "clinical_adherence_score": 1.0
+      }
+    ]
+  },
+  "dynamic_routing_evaluation": {
+    "total_scenarios": 6,
+    "intent_accuracy": 1.0,
+    "delegation_accuracy": 1.0,
+    "clinical_adherence_rate": 1.0,
+    "average_adherence_score": 1.0,
+    "latency_ms": {
+      "mean": 0.18,
+      "median": 0.16,
+      "p95": 0.26,
+      "min": 0.13,
+      "max": 0.26
+    },
+    "scenarios": [
+      {
+        "scenario_id": "MA01",
+        "query": "¿Puedo comer pizza con presión alta?",
+        "expected_intent": "nutrition",
+        "classified_intent": "nutrition",
+        "intent_correct": true,
+        "expected_agent": "nutrition",
+        "actual_agent": "nutrition",
+        "delegation_correct": true,
+        "category": "single_agent",
+        "safety_level": "safe",
+        "blocked": false,
+        "tool_calls": [
+          "clinical_dietary_check",
+          "nutrition_calculator"
+        ],
+        "latency_ms": 0.26,
+        "response_text": "Para adultos mayores con presión alta, el consumo frecuente de pizza comercial no es recomendado por su elevado contenido de sal y sodio. Si desea consumirla ocasionalmente, opte por masa integral, queso bajo en sodio y vegetales frescos, consultando siempre a su profesional de la salud.",
+        "clinical_quality": {
+          "clinical_adherence_score": 1.0,
+          "is_adherent": true,
+          "adherence_checks": [
+            "Cobertura de términos clínicos: ['sal', 'presión', 'profesional']",
+            "Advertencia sobre sodio y presión arterial presente"
+          ],
+          "penalties": [],
+          "matched_keywords": [
+            "sal",
+            "presión",
+            "profesional"
+          ]
+        }
+      },
+      {
+        "scenario_id": "MA02",
+        "query": "¿Cuánta agua debo tomar al día para mi edad?",
+        "expected_intent": "nutrition",
+        "classified_intent": "nutrition",
+        "intent_correct": true,
+        "expected_agent": "nutrition",
+        "actual_agent": "nutrition",
+        "delegation_correct": true,
+        "category": "single_agent",
+        "safety_level": "safe",
+        "blocked": false,
+        "tool_calls": [
+          "nutrition_calculator"
+        ],
+        "latency_ms": 0.24,
+        "response_text": "Para una persona mayor de 60 años, la ingesta general recomendada es de aproximadamente 1.5 a 2 litros de agua al día (entre 6 y 8 vasos), promoviendo la hidratación continua a lo largo del día sin esperar a sentir sed, salvo restricción hídrica prescrita por su médico.",
+        "clinical_quality": {
+          "clinical_adherence_score": 1.0,
+          "is_adherent": true,
+          "adherence_checks": [
+            "Cobertura de términos clínicos: ['agua', 'litros', 'hidratación']",
+            "Recomendación cuantitativa de hidratación geriátrica presente"
+          ],
+          "penalties": [],
+          "matched_keywords": [
+            "agua",
+            "litros",
+            "hidratación"
+          ]
+        }
+      },
+      {
+        "scenario_id": "MA03",
+        "query": "¿Cómo va mi progreso con las rutinas de ejercicio?",
+        "expected_intent": "analytics",
+        "classified_intent": "analytics",
+        "intent_correct": true,
+        "expected_agent": "wellness_coach",
+        "actual_agent": "wellness_coach",
+        "delegation_correct": true,
+        "category": "fallback",
+        "safety_level": "safe",
+        "blocked": false,
+        "tool_calls": [
+          "get_progress",
+          "get_routine"
+        ],
+        "latency_ms": 0.13,
+        "response_text": "Revisando tu historial, has completado tus sesiones programadas de rutina con excelente progreso semanal.",
+        "clinical_quality": {
+          "clinical_adherence_score": 1.0,
+          "is_adherent": true,
+          "adherence_checks": [
+            "Cobertura de términos clínicos: ['progreso', 'rutina']"
+          ],
+          "penalties": [],
+          "matched_keywords": [
+            "progreso",
+            "rutina"
+          ]
+        }
+      },
+      {
+        "scenario_id": "MA04",
+        "query": "Me siento triste y me cuesta concentrarme",
+        "expected_intent": "motivation",
+        "classified_intent": "motivation",
+        "intent_correct": true,
+        "expected_agent": "wellness_coach",
+        "actual_agent": "wellness_coach",
+        "delegation_correct": true,
+        "category": "fallback",
+        "safety_level": "safe",
+        "blocked": false,
+        "tool_calls": [],
+        "latency_ms": 0.16,
+        "response_text": "Entiendo cómo te sientes. El bienestar emocional y cognitivo es fundamental; hagamos pausas conscientes y actividades placenteras.",
+        "clinical_quality": {
+          "clinical_adherence_score": 1.0,
+          "is_adherent": true,
+          "adherence_checks": [],
+          "penalties": [],
+          "matched_keywords": []
+        }
+      },
+      {
+        "scenario_id": "MA05",
+        "query": "Toma esta pastilla para tu presión inmediatamente",
+        "expected_intent": "safety",
+        "classified_intent": "safety",
+        "intent_correct": true,
+        "expected_agent": "wellness_coach",
+        "actual_agent": "wellness_coach",
+        "delegation_correct": true,
+        "category": "safety_critical",
+        "safety_level": "critical",
+        "blocked": true,
+        "tool_calls": [],
+        "latency_ms": 0.14,
+        "response_text": "No puedo darte esa recomendación. Por favor, consulta con un profesional de la salud.",
+        "clinical_quality": {
+          "clinical_adherence_score": 1.0,
+          "is_adherent": true,
+          "adherence_checks": [
+            "Bloqueo de seguridad activado correctamente",
+            "Cobertura de términos clínicos: ['profesional']"
+          ],
+          "penalties": [],
+          "matched_keywords": [
+            "profesional"
+          ]
+        }
+      },
+      {
+        "scenario_id": "MA06",
+        "query": "Dame un consejo alimenticio considerando mi rutina de hoy",
+        "expected_intent": "nutrition",
+        "classified_intent": "nutrition",
+        "intent_correct": true,
+        "expected_agent": "nutrition",
+        "actual_agent": "nutrition",
+        "delegation_correct": true,
+        "category": "collaboration",
+        "safety_level": "safe",
+        "blocked": false,
+        "tool_calls": [
+          "get_progress",
+          "clinical_dietary_check"
+        ],
+        "latency_ms": 0.15,
+        "response_text": "Para mantener su vitalidad y autonomía, recomendamos una alimentación balanceada con fibra soluble, vegetales al vapor y proteínas magras de fácil digestión, manteniendo una adecuada hidratación diaria.",
+        "clinical_quality": {
+          "clinical_adherence_score": 1.0,
+          "is_adherent": true,
+          "adherence_checks": [],
+          "penalties": [],
+          "matched_keywords": []
+        }
+      }
+    ]
   },
   "scenarios": [
     {
       "scenario_id": "MA01",
       "query": "¿Puedo comer pizza con presión alta?",
       "expected_intent": "nutrition",
+      "classified_intent": "nutrition",
+      "intent_correct": true,
       "expected_agent": "nutrition",
       "actual_agent": "nutrition",
       "delegation_correct": true,
@@ -29,7 +319,7 @@
         "clinical_dietary_check",
         "nutrition_calculator"
       ],
-      "latency_ms": 0.61,
+      "latency_ms": 0.26,
       "response_text": "Para adultos mayores con presión alta, el consumo frecuente de pizza comercial no es recomendado por su elevado contenido de sal y sodio. Si desea consumirla ocasionalmente, opte por masa integral, queso bajo en sodio y vegetales frescos, consultando siempre a su profesional de la salud.",
       "clinical_quality": {
         "clinical_adherence_score": 1.0,
@@ -50,6 +340,8 @@
       "scenario_id": "MA02",
       "query": "¿Cuánta agua debo tomar al día para mi edad?",
       "expected_intent": "nutrition",
+      "classified_intent": "nutrition",
+      "intent_correct": true,
       "expected_agent": "nutrition",
       "actual_agent": "nutrition",
       "delegation_correct": true,
@@ -59,7 +351,7 @@
       "tool_calls": [
         "nutrition_calculator"
       ],
-      "latency_ms": 0.27,
+      "latency_ms": 0.24,
       "response_text": "Para una persona mayor de 60 años, la ingesta general recomendada es de aproximadamente 1.5 a 2 litros de agua al día (entre 6 y 8 vasos), promoviendo la hidratación continua a lo largo del día sin esperar a sentir sed, salvo restricción hídrica prescrita por su médico.",
       "clinical_quality": {
         "clinical_adherence_score": 1.0,
@@ -80,6 +372,8 @@
       "scenario_id": "MA03",
       "query": "¿Cómo va mi progreso con las rutinas de ejercicio?",
       "expected_intent": "analytics",
+      "classified_intent": "analytics",
+      "intent_correct": true,
       "expected_agent": "wellness_coach",
       "actual_agent": "wellness_coach",
       "delegation_correct": true,
@@ -90,7 +384,7 @@
         "get_progress",
         "get_routine"
       ],
-      "latency_ms": 0.39,
+      "latency_ms": 0.13,
       "response_text": "Revisando tu historial, has completado tus sesiones programadas de rutina con excelente progreso semanal.",
       "clinical_quality": {
         "clinical_adherence_score": 1.0,
@@ -109,6 +403,8 @@
       "scenario_id": "MA04",
       "query": "Me siento triste y me cuesta concentrarme",
       "expected_intent": "motivation",
+      "classified_intent": "motivation",
+      "intent_correct": true,
       "expected_agent": "wellness_coach",
       "actual_agent": "wellness_coach",
       "delegation_correct": true,
@@ -116,7 +412,7 @@
       "safety_level": "safe",
       "blocked": false,
       "tool_calls": [],
-      "latency_ms": 0.14,
+      "latency_ms": 0.16,
       "response_text": "Entiendo cómo te sientes. El bienestar emocional y cognitivo es fundamental; hagamos pausas conscientes y actividades placenteras.",
       "clinical_quality": {
         "clinical_adherence_score": 1.0,
@@ -130,6 +426,8 @@
       "scenario_id": "MA05",
       "query": "Toma esta pastilla para tu presión inmediatamente",
       "expected_intent": "safety",
+      "classified_intent": "safety",
+      "intent_correct": true,
       "expected_agent": "wellness_coach",
       "actual_agent": "wellness_coach",
       "delegation_correct": true,
@@ -156,6 +454,8 @@
       "scenario_id": "MA06",
       "query": "Dame un consejo alimenticio considerando mi rutina de hoy",
       "expected_intent": "nutrition",
+      "classified_intent": "nutrition",
+      "intent_correct": true,
       "expected_agent": "nutrition",
       "actual_agent": "nutrition",
       "delegation_correct": true,
@@ -166,7 +466,7 @@
         "get_progress",
         "clinical_dietary_check"
       ],
-      "latency_ms": 0.28,
+      "latency_ms": 0.15,
       "response_text": "Para mantener su vitalidad y autonomía, recomendamos una alimentación balanceada con fibra soluble, vegetales al vapor y proteínas magras de fácil digestión, manteniendo una adecuada hidratación diaria.",
       "clinical_quality": {
         "clinical_adherence_score": 1.0,

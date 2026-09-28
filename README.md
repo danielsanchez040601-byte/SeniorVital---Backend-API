@@ -319,7 +319,7 @@ npm run dev
 * 🥗 **NutritionAgent (Team 5):** [`issues/issues_sprint_3/S3-03_Agente_Especializado.md`](issues/issues_sprint_3/S3-03_Agente_Especializado.md)
 * 📊 **Resultados del Benchmark Multiagente:** [`data/evaluation/multiagent_results/multiagent_benchmark_results.json`](data/evaluation/multiagent_results/multiagent_benchmark_results.json)
 * 📋 **Informe Ejecutivo Sprint 3:** [`docs/reports/sprint-3-report.md`](docs/reports/sprint-3-report.md)
-* 📂 **Evidencias de Issues (S3-01 a S3-07):** [`issues/issues_sprint_3/`](issues/issues_sprint_3/)
+* 📂 **Evidencias de Issues (S3-01 a S3-07):** [`issues/issues_sprint_3/`](issues/issues_sprint_3/) *(Estado: Implementado — pendiente de aprobación docente)*
 
 ### Sprint 2: Agentes Inteligentes, ReAct y Tool Calling
 * 🤖 **Arquitectura del Wellness Coach Agent:** [`docs/agents/wellness-agent.md`](docs/agents/wellness-agent.md)

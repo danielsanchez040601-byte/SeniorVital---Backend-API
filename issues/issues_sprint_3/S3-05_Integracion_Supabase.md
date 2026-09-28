@@ -6,7 +6,7 @@
 **Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
 **Proyecto:** SeniorVital 2.0 — Sistemas Multiagentes y Orquestación  
 **Sprint Técnico:** Sprint 3 — Arquitectura Multiagente y Supervisor Pattern  
-**Estado:** ✅ APROBADO Y CERRADO TRAS AUDITORÍA DE SPRINT 3  
+**Estado:** Implementado — pendiente de aprobación docente  
 
 ---
 
@@ -15,7 +15,7 @@
 En cumplimiento estricto de las directrices de seguridad de software:
 - **Auditoría Integral de Configuraciones:** Auditamos `src/api/config.py`, `app/config.py`, `tests/tools/conftest.py`, `seniorvital_shared/db.py` y scripts de evaluación.
 - **Eliminación de Secretos y Contraseñas Hardcodeadas:** Se erradicaron contraseñas personales o URLs reales de producción que residían como valores por defecto en el código fuente.
-- **Carga Estricta desde Entorno:** Todas las credenciales sensibles (`DATABASE_URL`, `JWT_SECRET`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`) se cargan exclusivamente mediante `os.getenv(...)`. En entornos locales o de testing, se utilizan fallbacks genéricos de desarrollo (`dev-secret-key-change-in-production`, `localhost:5432/wellness_db`), garantizando que en producción se exijan variables de entorno explícitas.
+- **Carga Estricta desde Entorno:** Todas las credenciales sensibles (`DATABASE_URL`, `JWT_SECRET`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`) se cargan exclusivamente mediante `os.getenv(...)`. Purgamos el valor por defecto inseguro de `JWT_SECRET`: en entornos productivos o de staging (`ENV` o `ENVIRONMENT` en `production` o `staging`), el sistema exige de forma mandatoria la variable de entorno arrojando `ValueError` en caso de ausencia, admitiendo únicamente un valor efímero para pruebas locales (`insecure-local-testing-secret-only`) en entornos no productivos.
 
 ---
 

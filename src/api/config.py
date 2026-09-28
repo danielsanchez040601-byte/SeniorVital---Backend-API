@@ -10,6 +10,19 @@ except ImportError:
         from pydantic import BaseModel as BaseSettings
 
 
+def _resolve_jwt_secret() -> str:
+    secret = os.getenv("JWT_SECRET")
+    if not secret:
+        env = (os.getenv("ENV") or os.getenv("ENVIRONMENT") or "").lower()
+        if env in ["production", "staging"]:
+            raise ValueError("JWT_SECRET no configurado en entorno productivo.")
+        secret = "insecure-local-testing-secret-only"
+    return secret
+
+
+JWT_SECRET: str = _resolve_jwt_secret()
+
+
 class Settings(BaseSettings):
     """Configuración centralizada y tipada del sistema con Pydantic Settings."""
     
@@ -29,7 +42,7 @@ class Settings(BaseSettings):
     OLLAMA_URL: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
 
     # Seguridad y JWT
-    JWT_SECRET: str = os.getenv("JWT_SECRET", "dev-secret-key-change-in-production")
+    JWT_SECRET: str = _resolve_jwt_secret()
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_DAYS: int = 7
 
