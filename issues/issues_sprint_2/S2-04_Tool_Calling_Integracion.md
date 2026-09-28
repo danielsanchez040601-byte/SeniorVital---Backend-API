@@ -8,16 +8,21 @@
 
 ---
 
-## 🎯 1. Catálogo de Herramientas Clínicas del Agente
+## 🎯 1. Catálogo de Herramientas del Endpoint `/api/v1/chat`
 
-Se implementaron herramientas asíncronas en `app/tools/clinical_tools.py` y `src/tools/wellness/` con desacoplamiento claro y telemetría post-ejecución:
+En el endpoint `/api/v1/chat` se inyectan 7 herramientas activas para el ciclo ReAct:
 
-| Herramienta | Parámetros | Origen de Datos | Propósito Clínico y Telemetría |
+| Herramienta | Parámetros | Origen de Datos | Propósito Clínico y Operativo |
 | :--- | :--- | :--- | :--- |
-| `consultar_restricciones_medicas` / `SafetyCheckTool` | `user_id: str` | **Supabase (`senior_profiles` & `exercise_records`)** | Obtiene nivel de movilidad, patologías y promedio de esfuerzo RPE reciente. |
-| `consultar_ejercicios_disponibles` / `ExerciseCatalogTool` | `categoria: Optional[str]` | **Supabase (`exercises`)** | Consulta el catálogo geriátrico de ejercicios seguros filtrados por progresión. |
-| `consultar_base_conocimiento_rag` / `RAGSearchTool` | `consulta: str` | **Pipeline RAG S1 (`retrieve_with_telemetry`)** | Recupera contraindicaciones con embeddings HuggingFace y vector store (`SUPABASE_PGVECTOR` o `IN_MEMORY_FALLBACK`), reportando telemetría real (`embedding_mode`, `vector_backend`, `latencia_ms`). |
-| `registrar_observacion_clinica` / `LogHabitTool` | `user_id: str`, `observacion: str` | **Memoria / Supabase** | Persiste notas de fatiga, dolor o cambios en el estado del paciente. |
+| `SafetyCheckTool` (`safety_check`) | `user_id: int`, `activity: str` | **PostgreSQL (`users`, `exercises`)** | Obtiene nivel funcional, patologías y valida seguridad biomecánica contra restricciones. |
+| `ExerciseCatalogTool` (`exercise_catalog`) | `level: Optional[int]`, `keyword: Optional[str]` | **PostgreSQL (`exercises`)** | Consulta el catálogo geriátrico de ejercicios seguros filtrados por nivel (1-4) o patología. |
+| `RAGSearchTool` (`rag_search`) | `query: str` | **Pipeline RAG S1 (`retrieve_with_telemetry`)** | Recupera contraindicaciones con embeddings y pgvector (`clinical_knowledge_embeddings`), reportando telemetría real. |
+| `LogHabitTool` (`log_habit`) | `user_id: int`, `habit_type: str`, `value: float` | **PostgreSQL (`habits`)** | Registra hábitos de hidratación (agua en ml) y descanso (horas de sueño). |
+| `GetHabitsTool` (`get_habits`) | `user_id: int`, `days: int` | **PostgreSQL (`habits`)** | Recupera historial de hábitos de los últimos N días para seguimiento del coach. |
+| `GetProgressTool` (`get_progress`) | `user_id: int`, `weeks: int` | **PostgreSQL (`tracking`, `workout_sessions`)** | Obtiene métricas de cumplimiento y analítica de sesiones de entrenamiento. |
+| `GetRoutineTool` (`get_routine`) | `user_id: int` | **PostgreSQL (`routines`)** | Consulta la rutina activa prescrita para el usuario. |
+
+> *Nota sobre herramientas implementadas:* La librería `src/tools/wellness/` incluye adicionalmente `GenerateRoutineTool` (`generate_routine`) para generación algorítmica de planes de entrenamiento; no se inyecta en el ciclo interactivo de `/chat` al estar destinada a servicios de planificación independientes.
 
 ---
 
@@ -51,7 +56,8 @@ async def consultar_base_conocimiento_rag(consulta: str) -> str:
 
 ## 🔍 4. Nota de Auditoría Técnica y Dinamismo de Herramientas
 
-* **Tool Calling Autónomo:** El agente evalúa dinámicamente la intención de la consulta mediante el ciclo ReAct y decide si invocar o no herramientas (`safety_check`, `exercise_catalog`, `rag_search`, `log_habit`), erradicando ejecuciones estáticas incondicionales.
-* **Telemetría de Invocación:** La traza de herramientas ejecutadas se propaga en el campo `telemetry.tool_calls` de la respuesta JSON del endpoint `/api/v1/chat`.
-* **Estado Final:** ✅ **Completado, desacoplado y validado en integración.**
+* **Tool Calling Autónomo:** El agente evalúa dinámicamente la intención de la consulta mediante el ciclo ReAct y decide si invocar o no herramientas (`safety_check`, `exercise_catalog`, `rag_search`, `log_habit`, `get_habits`, `get_progress`, `get_routine`), erradicando ejecuciones estáticas incondicionales.
+* **Validación Automatizada en CI:** Incorporamos al pipeline de GitHub Actions la ejecución explícita de `tests/tools/` respaldada por el contenedor PostgreSQL de CI, certificando de forma continua la selección de herramientas, consultas directas sin herramientas, cadenas multi-tool y tolerancia a fallos.
+* **Telemetría de Invocación:** La traza de herramientas ejecutadas se propaga en el campo `tool_chain` / `telemetry.tool_calls` de la respuesta JSON del endpoint `/api/v1/chat`.
+* **Estado Final:** ✅ **Completado, desacoplado y listo para validación final.**
 

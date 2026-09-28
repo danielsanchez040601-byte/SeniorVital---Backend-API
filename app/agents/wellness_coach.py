@@ -14,13 +14,18 @@ class LegacyWellnessCoachProxy(WellnessCoachAgent):
     async def execute_react_cycle(self, user_id: str, query: str) -> Dict[str, Any]:
         start_t = time.time()
         response, trace = await self.chat_with_trace(user_id=user_id, message=query)
-        elapsed = round(time.time() - start_t, 2)
+        # Extraer pensamientos de los pasos iterativos reales
+        reasoning_trace = [step.thought for step in getattr(trace, "steps", []) if hasattr(step, "thought")]
+        if not reasoning_trace and hasattr(trace, "final_answer"):
+            reasoning_trace = [trace.final_answer]
+
+        elapsed = round(time.time() - start_t, 3)
         return {
             "response": response,
             "user_id": user_id,
             "elapsed_time": elapsed,
-            "reasoning_trace": trace.thought if trace else "ReAct cycle executed",
-            "is_safe": True
+            "reasoning_trace": reasoning_trace if reasoning_trace else ["ReAct cycle executed"],
+            "is_safe": True,
         }
 
 wellness_coach_agent = LegacyWellnessCoachProxy()
