@@ -2,8 +2,12 @@
 SeniorVital 2.0 - Ecosistema Multiagente y Orquestación Supervisor
 Materia: Sistemas Inteligentes (Dra. Yaskelly Yedra)
 Autores: Daniel Alejandro Sánchez Ávila & Abdenago Nahmens
-Patrón: Supervisor Jerárquico (Hierarchical Orchestrator + Specialized Agents)
+Patrón: Patrón Supervisor Centralizado (Centralized Orchestrator + Specialized Agents)
 Stack: FastAPI + Supabase PostgreSQL (SQL/JSONB) + Google AI Studio (Gemini) / OpenRouter
+
+Nota arquitectónica: La implementación canónica y dinámica del Supervisor reside en
+`src/orchestration/`. Este módulo mantiene compatibilidad con la suite de pruebas
+legacy de `tests/multiagent/`.
 """
 
 import json
@@ -11,7 +15,7 @@ import logging
 import time
 import uuid
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.future import select
 from sqlalchemy import func
 
@@ -40,65 +44,81 @@ class AnalyticsAgent:
         Calcula adherencia, detecta estancamiento y riesgo de abandono.
         """
         start_t = time.time()
-        async with AsyncSessionLocal() as session:
-            # 1. Consultar rutinas de los últimos 14 días
-            limit_date = (datetime.utcnow() - timedelta(days=14)).date()
-            routines_query = (
-                select(DailyRoutine)
-                .filter(DailyRoutine.senior_id == user_id, DailyRoutine.assigned_date >= limit_date)
-            )
-            res_routines = await session.execute(routines_query)
-            routines = res_routines.scalars().all()
+        try:
+            async with AsyncSessionLocal() as session:
+                # 1. Consultar rutinas de los últimos 14 días
+                limit_date = (datetime.now(timezone.utc) - timedelta(days=14)).date()
+                routines_query = (
+                    select(DailyRoutine)
+                    .filter(DailyRoutine.senior_id == user_id, DailyRoutine.assigned_date >= limit_date)
+                )
+                res_routines = await session.execute(routines_query)
+                routines = res_routines.scalars().all()
 
-            # 2. Consultar registros de esfuerzo RPE
-            records_query = (
-                select(ExerciseRecord)
-                .filter(ExerciseRecord.senior_id == user_id)
-                .order_by(ExerciseRecord.completed_at.desc())
-                .limit(10)
-            )
-            res_records = await session.execute(records_query)
-            records = res_records.scalars().all()
+                # 2. Consultar registros de esfuerzo RPE
+                records_query = (
+                    select(ExerciseRecord)
+                    .filter(ExerciseRecord.senior_id == user_id)
+                    .order_by(ExerciseRecord.completed_at.desc())
+                    .limit(10)
+                )
+                res_records = await session.execute(records_query)
+                records = res_records.scalars().all()
 
-            # Métricas calculadas
-            total_assigned = len(routines)
-            completed = sum(1 for r in routines if r.status == RoutineStatusEnum.COMPLETED)
-            adherence = round((completed / total_assigned * 100), 1) if total_assigned > 0 else 50.0
+                # Métricas calculadas
+                total_assigned = len(routines)
+                completed = sum(1 for r in routines if r.status == RoutineStatusEnum.COMPLETED)
+                adherence = round((completed / total_assigned * 100), 1) if total_assigned > 0 else 50.0
 
-            rpe_scores = [r.rpe_score for r in records if r.rpe_score is not None]
-            avg_rpe = round(sum(rpe_scores) / len(rpe_scores), 1) if rpe_scores else 4.0
+                rpe_scores = [r.rpe_score for r in records if r.rpe_score is not None]
+                avg_rpe = round(sum(rpe_scores) / len(rpe_scores), 1) if rpe_scores else 4.0
 
-            pain_reports = [r.reported_pain for r in records if r.reported_pain and r.reported_pain.lower() not in ["sin dolor", "ninguno", ""]]
-            has_pain = len(pain_reports) > 0
+                pain_reports = [r.reported_pain for r in records if r.reported_pain and r.reported_pain.lower() not in ["sin dolor", "ninguno", ""]]
+                has_pain = len(pain_reports) > 0
 
-            # Detección de estancamiento o riesgo clínico
-            is_stagnant = False
-            risk_level = "GREEN" # GREEN, AMBER, RED
-            recommendations = []
+                # Detección de estancamiento o riesgo clínico
+                is_stagnant = False
+                risk_level = "GREEN" # GREEN, AMBER, RED
+                recommendations = []
 
-            if has_pain or avg_rpe >= 8.0:
-                risk_level = "RED"
-                recommendations.append("Alerta clínica: Reducir carga biomecánica y notificar al cuidador.")
-            elif adherence < 50.0 or avg_rpe >= 6.5:
-                risk_level = "AMBER"
-                is_stagnant = True
-                recommendations.append("Fatiga acumulada o adherencia baja: Proponer micro-sesiones guiadas.")
-            else:
-                risk_level = "GREEN"
-                recommendations.append("Progresión óptima: Mantener nivel de actividad y reforzar motivación.")
+                if has_pain or avg_rpe >= 8.0:
+                    risk_level = "RED"
+                    recommendations.append("Alerta clínica: Reducir carga biomecánica y notificar al cuidador.")
+                elif adherence < 50.0 or avg_rpe >= 6.5:
+                    risk_level = "AMBER"
+                    is_stagnant = True
+                    recommendations.append("Fatiga acumulada o adherencia baja: Proponer micro-sesiones guiadas.")
+                else:
+                    risk_level = "GREEN"
+                    recommendations.append("Progresión óptima: Mantener nivel de actividad y reforzar motivación.")
 
+                elapsed_ms = round((time.time() - start_t) * 1000, 2)
+                
+                return {
+                    "agent": self.name,
+                    "user_id": user_id,
+                    "adherence_rate": adherence,
+                    "avg_rpe": avg_rpe,
+                    "is_stagnant": is_stagnant,
+                    "risk_level": risk_level,
+                    "pain_reported": pain_reports,
+                    "recommendations": recommendations,
+                    "elapsed_ms": elapsed_ms
+                }
+        except Exception as e:
+            logger.warning(f"Error consultando analítica en Supabase ({e}). Retornando estado base seguro.")
             elapsed_ms = round((time.time() - start_t) * 1000, 2)
-            
             return {
                 "agent": self.name,
                 "user_id": user_id,
-                "adherence_rate": adherence,
-                "avg_rpe": avg_rpe,
-                "is_stagnant": is_stagnant,
-                "risk_level": risk_level,
-                "pain_reported": pain_reports,
-                "recommendations": recommendations,
-                "elapsed_ms": elapsed_ms
+                "adherence_rate": 60.0,
+                "avg_rpe": 4.0,
+                "is_stagnant": False,
+                "risk_level": "GREEN",
+                "pain_reported": [],
+                "recommendations": ["Modo contingencia activo: Mantener dosificación suave y segura."],
+                "elapsed_ms": elapsed_ms,
+                "status": "FALLBACK"
             }
 
 
@@ -187,7 +207,7 @@ class QAArchitectAgent:
 # ---------------------------------------------------------------------------
 class MultiAgentOrchestrator:
     """
-    Supervisor Jerárquico:
+    Patrón Supervisor Centralizado:
     1. Recibe la solicitud del usuario o cuidador
     2. Clasifica la intención y delega a los agentes especializados
     3. Coordina el paso de mensajes (A2A) sin ciclos infinitos

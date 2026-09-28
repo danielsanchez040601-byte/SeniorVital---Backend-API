@@ -1,0 +1,72 @@
+[
+  {
+    "id": "Q01",
+    "query": "Tengo osteoartritis de rodilla y dolor articular, que ejercicios estan estrictamente prohibidos?",
+    "condition_id": "OA-01",
+    "expected_chunk_ids": ["OA-01_CONTRA", "OA-01_DESC"],
+    "category": "contraindications"
+  },
+  {
+    "id": "Q02",
+    "query": "Cuales son los ejercicios de fuerza y calistenia recomendados para sarcopenia y dinapenia?",
+    "condition_id": "SAR-02",
+    "expected_chunk_ids": ["SAR-02_REC", "SAR-02_DESC"],
+    "category": "recommended_exercises"
+  },
+  {
+    "id": "Q03",
+    "query": "Que protocolo de entrenamiento oseo y tai chi se aplica en osteoporosis para evitar fracturas?",
+    "condition_id": "OST-03",
+    "expected_chunk_ids": ["OST-03_REC", "OST-03_CONTRA"],
+    "category": "recommended_exercises"
+  },
+  {
+    "id": "Q04",
+    "query": "Cuales son las contraindicaciones y senales de descompensacion en insuficiencia cardiaca?",
+    "condition_id": "ICC-04",
+    "expected_chunk_ids": ["ICC-04_CONTRA", "ICC-04_DESC"],
+    "category": "contraindications"
+  },
+  {
+    "id": "Q05",
+    "query": "Cuales son los controles de glucemia y precauciones en diabetes mellitus tipo 2?",
+    "condition_id": "DMT2-05",
+    "expected_chunk_ids": ["DMT2-05_CONTRA", "DMT2-05_REC"],
+    "category": "contraindications"
+  },
+  {
+    "id": "Q06",
+    "query": "Como se realiza el entrenamiento respiratorio con labios fruncidos en EPOC?",
+    "condition_id": "EPOC-06",
+    "expected_chunk_ids": ["EPOC-06_REC", "EPOC-06_CONTRA"],
+    "category": "recommended_exercises"
+  },
+  {
+    "id": "Q07",
+    "query": "Como debe entrenar el equilibrio y la marcha un paciente con enfermedad de Parkinson?",
+    "condition_id": "PARK-07",
+    "expected_chunk_ids": ["PARK-07_REC", "PARK-07_DESC"],
+    "category": "recommended_exercises"
+  },
+  {
+    "id": "Q08",
+    "query": "Que precauciones y ejercicios se aplican en secuelas de accidente cerebrovascular ACV?",
+    "condition_id": "ACV-08",
+    "expected_chunk_ids": ["ACV-08_REC", "ACV-08_CONTRA"],
+    "category": "recommended_exercises"
+  },
+  {
+    "id": "Q09",
+    "query": "Que ejercicios y movimientos estan prohibidos en lumbalgia mecanica y espondiloartrosis?",
+    "condition_id": "LUMB-09",
+    "expected_chunk_ids": ["LUMB-09_CONTRA", "LUMB-09_DESC"],
+    "category": "contraindications"
+  },
+  {
+    "id": "Q10",
+    "query": "Cual es el plan vivifrail de movilidad para el sindrome de fragilidad geriatrica?",
+    "condition_id": "FRAG-10",
+    "expected_chunk_ids": ["FRAG-10_REC", "FRAG-10_DESC"],
+    "category": "recommended_exercises"
+  }
+]

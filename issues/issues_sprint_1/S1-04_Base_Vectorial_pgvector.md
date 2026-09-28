@@ -1,95 +1,97 @@
-# 🗄️ Issue S1-04: Almacenamiento e Indexación Vectorial con Supabase pgvector
+# 🗄️ Issue S1-04: Base de Datos Vectorial con pgvector (Supabase PostgreSQL)
 
-**Materia:** Sistemas Inteligentes  
-**Docente:** Dra. Yaskelly Yedra  
-**Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
-**Proyecto:** SeniorVital 2.0 — Sistema RAG Gerontológico  
-**Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
-
----
-
-## 🎯 1. Decisión de Persistencia Unificada: Supabase `pgvector` vs ChromaDB / FAISS
-
-En lugar de desplegar una base de datos vectorial desacoplada en memoria (como ChromaDB o FAISS en contenedores independientes que incrementan el consumo de RAM y el riesgo de inconsistencias transaccionales), se optó por **unificar la persistencia relacional y vectorial en Supabase PostgreSQL** mediante la extensión **`pgvector`**:
-
-```mermaid
-graph TB
-    subgraph Enfoque_Fragmentado["Enfoque Fragmentado (ChromaDB / FAISS)"]
-        Rel_DB[("PostgreSQL (Usuarios & Rutinas)")]
-        Vec_DB[("ChromaDB / FAISS en Memoria")]
-        Sync_Issue["Desincronización de transacciones & doble costo"]
-    end
-
-    subgraph Enfoque_Unificado["Enfoque Unificado SeniorVital (Supabase pgvector)"]
-        Supa_All[("Supabase PostgreSQL")]
-        Supa_All --> Tables["Tablas Relacionales: users, daily_routines, etc."]
-        Supa_All --> Vectors["Tabla Vectorial: clinical_knowledge (vector(384))"]
-        Supa_All --> Speed["Pooler PgBouncer en puerto 6543"]
-    end
-
-    Enfoque_Fragmentado -.->|Unificación Arquitectónica| Enfoque_Unificado
-```
+> **Materia:** Sistemas Inteligentes — Dra. Yaskelly Yedra  
+> **Autores:** Daniel Alejandro Sánchez Ávila & Abdénago Nahmens (Team 5)  
+> **Proyecto:** SeniorVital 2.0 — Plataforma Inteligente Wellness (+60)  
+> **Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
 
 ---
 
-## 🛠️ 2. Estructura de la Tabla `clinical_knowledge` y Definición SQL
+## 🎯 1. Arquitectura de Almacenamiento Vectorial
+Se integró la extensión **`pgvector`** sobre **Supabase PostgreSQL**, permitiendo almacenar tanto los registros transaccionales como los embeddings en una única base de datos relacional ACID con índice `HNSW`.
+
+---
+
+## 🛠️ 2. Esquema DDL e Indexación HNSW con Telemetría Post-Ejecución
 
 ```sql
--- 1. Habilitar extensión pgvector
+-- Habilitar extensión vectorial
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- 2. Creación de tabla para fragmentos clínicos RAG
-CREATE TABLE IF NOT EXISTS clinical_knowledge (
+-- Tabla de vectores de conocimiento clínico
+CREATE TABLE IF NOT EXISTS clinical_knowledge_embeddings (
     id SERIAL PRIMARY KEY,
-    condicion VARCHAR(255) NOT NULL,
-    categoria VARCHAR(100) NOT NULL,
-    contenido_texto TEXT NOT NULL,
-    metadata JSONB NOT NULL,
-    embedding vector(384) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    chunk_id VARCHAR(64) UNIQUE NOT NULL,
+    condition_id VARCHAR(32) NOT NULL,
+    category VARCHAR(64) NOT NULL,
+    content TEXT NOT NULL,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    embedding vector(384)
 );
 
--- 3. Índice IVFFlat para búsqueda por similitud de coseno
-CREATE INDEX IF NOT EXISTS clinical_knowledge_embedding_idx 
-ON clinical_knowledge 
-USING ivfflat (embedding vector_cosine_ops)
-WITH (lists = 100);
+-- Índice HNSW optimizado para similitud de coseno
+CREATE INDEX IF NOT EXISTS idx_clinical_knowledge_embeddings_hnsw 
+ON clinical_knowledge_embeddings USING hnsw (embedding vector_cosine_ops)
+WITH (m = 16, ef_construction = 64);
+```
 
--- 4. Función de búsqueda vectorial por similitud de coseno
-CREATE OR REPLACE FUNCTION match_clinical_knowledge (
-  query_embedding vector(384),
-  match_threshold float DEFAULT 0.40,
-  match_count int DEFAULT 3
-)
-RETURNS TABLE (
-  id int,
-  condicion varchar,
-  categoria varchar,
-  contenido_texto text,
-  metadata jsonb,
-  similarity float
-)
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT
-    ck.id,
-    ck.condicion,
-    ck.categoria,
-    ck.contenido_texto,
-    ck.metadata,
-    1 - (ck.embedding <=> query_embedding) AS similarity
-  FROM clinical_knowledge ck
-  WHERE 1 - (ck.embedding <=> query_embedding) > match_threshold
-  ORDER BY similarity DESC
-  LIMIT match_count;
-END;
-$$;
+### Lógica de Registro de Backend Post-Ejecución (`PgVectorStore`):
+```python
+try:
+    # Intento real contra Supabase PostgreSQL + pgvector
+    results = execute_pgvector_query(query_vector, top_k)
+    backend_used = "SUPABASE_PGVECTOR"
+except Exception as e:
+    logger.warning(f"Fallo en conexión/consulta pgvector: {e}")
+    results = memory_fallback_search(query_vector, top_k)
+    backend_used = "IN_MEMORY_FALLBACK"
 ```
 
 ---
 
-## 📊 3. Ventajas Operativas
-* **Transacciones ACID completas:** Los datos de salud y los vectores residen en el mismo motor transaccional.
-* **Cero latencia inter-servicios:** Las búsquedas semánticas se ejecutan dentro del motor SQL mediante el operador de distancia de coseno `<=>`.
+## 🔬 3. Evidencia Empírica de Indexación y Búsqueda (`index_pgvector.py`)
+
+Salida real obtenida en consola al ejecutar `python scripts/indexing/index_pgvector.py`:
+
+```text
+================================================================================
+SENIORVITAL 2.0 - INICIALIZACION E INDEXACION EN SUPABASE (pgvector)
+================================================================================
+[Chunking] Total de chunks clínicos generados: 30 fragmentos.
+[Embeddings] Vectorizando 30 chunks con sentence-transformers/all-MiniLM-L6-v2...
+[Embeddings] 30 vectores densos (384d) generados | Modo: [HUGGINGFACE_REAL_MODEL].
+
+[Database] Conectando a Supabase PostgreSQL y creando extensión vector...
+[Database] Tabla 'clinical_knowledge_embeddings' e indice HNSW verificados.
+[Database] 30 registros clínicos indexados en PostgreSQL/pgvector.
+
+--------------------------------------------------------------------------------
+[Query de Prueba]: "Tengo dolor agudo e inflamacion de rodilla, que ejercicios debo evitar?"
+--------------------------------------------------------------------------------
+[Resultados]: Top-3 fragmentos más similares recuperados:
+
+  Rank #1 | Chunk ID: OA-01_CONTRA | Similitud Coseno: 0.8125 | Backend: SUPABASE_PGVECTOR
+  Condición: OA-01 | Categoría: contraindications
+  Contenido: CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Osteoartritis de Rodilla y Cadera:
+MOVIMIENTOS Y ACCIONES PROHIBIDAS...
+
+  Rank #2 | Chunk ID: OA-01_REC | Similitud Coseno: 0.7625 | Backend: SUPABASE_PGVECTOR
+  Condición: OA-01 | Categoría: recommended_exercises
+  Contenido: PRESCRIPCIÓN DE EJERCICIO PARA Osteoartritis de Rodilla y Cadera:
+MODALIDADES RECOMENDADAS: Cadena cinética cerrada...
+
+  Rank #3 | Chunk ID: OA-01_DESC | Similitud Coseno: 0.6889 | Backend: SUPABASE_PGVECTOR
+  Condición: OA-01 | Categoría: clinical_profile
+  Contenido: PATOLOGÍA: Osteoartritis de Rodilla y Cadera (Código: OA-01, Categoría: Musculoesquelética)...
+
+================================================================================
+[INDEXING REPORT] Chunks indexados: 30 | Backend efectivo: SUPABASE_PGVECTOR
+[SUCCESS] INDEXACION VECTORIAL Y CONSULTA DE PRUEBA COMPLETADAS CON EXITO
+================================================================================
+```
+
+---
+
+## 🔒 4. Seguridad y DevSecOps
+- No se exponen credenciales de base de datos ni tokens en el repositorio.
+- Las variables `DATABASE_URL` y secretos se configuran de forma segura en variables de entorno locales y en los entornos de staging/producción (Render / GitHub Secrets).

@@ -116,19 +116,52 @@ async def consultar_base_conocimiento_rag(consulta: str) -> str:
     """
     Consulta la base de conocimiento ontológica geriátrica (RAG) para obtener evidencia científica,
     dosificación biomecánica y contraindicaciones estrictas (filtros duros).
+    Consume directamente retrieve_with_telemetry con captura de modo y backend efectivo.
     """
-    chunks = rag_processor.retrieve_relevant_context(consulta, top_k=2)
-    if not chunks:
-        return "No se encontraron contraindicaciones específicas en la ontología."
-    
-    formatted = []
-    for c in chunks:
-        formatted.append(
-            f"• Condición: {c['condicion']} | Categoría: {c['categoria']}\n"
-            f"  Detalle: {c['contenido_texto']}\n"
-            f"  Fuente: {c['metadata']['fuente']}"
+    try:
+        from src.rag.retriever.retriever import ClinicalRetriever
+        retriever = ClinicalRetriever()
+        chunks, telemetry = await retriever.retrieve_with_telemetry(consulta, top_k=2)
+
+        if not chunks:
+            return (
+                f"[TELEMETRÍA RAG: Modo={telemetry.get('embedding_mode')}, Backend={telemetry.get('vector_backend')}]\n"
+                "No se encontraron contraindicaciones específicas en la ontología clínica para esta consulta."
+            )
+
+        formatted = [
+            f"[TELEMETRÍA RAG: Modo={telemetry.get('embedding_mode')}, Backend={telemetry.get('vector_backend')}, Latencia={telemetry.get('vector_store_latency_ms', 0)}ms]"
+        ]
+        for c in chunks:
+            formatted.append(
+                f"• Condición: {c.get('condition_id', 'Geriátrica')} | Categoría: {c.get('category', 'Clínica')} (Similitud: {c.get('similarity', 0.0):.4f})\n"
+                f"  Detalle: {c.get('content', '')}\n"
+                f"  Metadatos: {c.get('metadata', {})}"
+            )
+        return "\n\n".join(formatted)
+
+    except Exception as e:
+        logger.warning(f"Error en consulta RAG con telemetría ({e}). Reportando contingencia.")
+        try:
+            from ..agents.rag_processor import rag_processor
+            chunks = rag_processor.retrieve_relevant_context(consulta, top_k=2)
+            if chunks:
+                formatted = ["[TELEMETRÍA RAG: Modo=IN_MEMORY_FALLBACK, Backend=IN_MEMORY_FALLBACK, Status=Degraded]"]
+                for c in chunks:
+                    formatted.append(
+                        f"• Condición: {c['condicion']} | Categoría: {c['categoria']}\n"
+                        f"  Detalle: {c['contenido_texto']}\n"
+                        f"  Fuente: {c['metadata']['fuente']}"
+                    )
+                return "\n\n".join(formatted)
+        except Exception:
+            pass
+
+        return (
+            "[TELEMETRÍA RAG: Modo=IN_MEMORY_FALLBACK, Backend=IN_MEMORY_FALLBACK, Error=True]\n"
+            f"Fallo en recuperación semántica ({e}). Se activa protocolo de seguridad: "
+            "recomendar solo ejercicios de muy bajo impacto asistidos en silla."
         )
-    return "\n\n".join(formatted)
 
 
 @tool

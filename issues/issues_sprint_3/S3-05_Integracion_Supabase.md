@@ -1,33 +1,120 @@
-# 🗄️ Issue S3-05: Integración con Supabase PostgreSQL y Consultas JSONB
+# 🗄️ Issue S3-05: Integración con Supabase PostgreSQL, Consultas JSONB y Seguridad
 
 **Materia:** Sistemas Inteligentes  
 **Docente:** Dra. Yaskelly Yedra  
+**Equipo:** Team 5  
 **Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
 **Proyecto:** SeniorVital 2.0 — Sistemas Multiagentes y Orquestación  
 **Sprint Técnico:** Sprint 3 — Arquitectura Multiagente y Supervisor Pattern  
+**Estado:** Implementado — pendiente de aprobación docente  
 
 ---
 
-## 🎯 1. Reemplazo de BigQuery por Supabase PostgreSQL + JSONB
+## 🔒 1. Auditoría de Seguridad y Saneamiento de Credenciales
 
-Para cumplir con la directriz de stack 100% libre de costos y cloud-native, toda la analítica preventiva se ejecuta directamente en Supabase mediante SQLAlchemy asíncrono y operadores nativos de PostgreSQL:
+En cumplimiento estricto de las directrices de seguridad de software:
+- **Auditoría Integral de Configuraciones:** Auditamos `src/api/config.py`, `app/config.py`, `tests/tools/conftest.py`, `seniorvital_shared/db.py` y scripts de evaluación.
+- **Eliminación de Secretos y Contraseñas Hardcodeadas:** Se erradicaron contraseñas personales o URLs reales de producción que residían como valores por defecto en el código fuente.
+- **Carga Estricta desde Entorno:** Todas las credenciales sensibles (`DATABASE_URL`, `JWT_SECRET`, `GEMINI_API_KEY`, `OPENROUTER_API_KEY`) se cargan exclusivamente mediante `os.getenv(...)`. Purgamos el valor por defecto inseguro de `JWT_SECRET`: en entornos productivos o de staging (`ENV` o `ENVIRONMENT` en `production` o `staging`), el sistema exige de forma mandatoria la variable de entorno arrojando `ValueError` en caso de ausencia, admitiendo únicamente un valor efímero para pruebas locales (`insecure-local-testing-secret-only`) en entornos no productivos.
+
+---
+
+## 💾 2. Consultas Ejecutadas contra Supabase (PostgreSQL / JSONB)
+
+Documentamos las consultas canónicas implementadas para persistencia de sesiones conversacionales, rutinas y analítica:
+
+### 2.1. Persistencia de Sesiones Conversacionales (`conversation_history`)
+Permite al `PostgresMemoryStore` persistir los turnos conversacionales con contexto estructurado en columnas JSONB:
 
 ```sql
--- Detección de estancamiento y fatiga crítica en Supabase
+-- Inserción de mensaje con metadatos estructurados
+INSERT INTO conversation_history (
+    user_id,
+    role,
+    content,
+    metadata,
+    created_at
+) VALUES (
+    $1,                                 -- user_id (VARCHAR / UUID)
+    $2,                                 -- 'user' | 'assistant'
+    $3,                                 -- texto del mensaje
+    $4::jsonb,                          -- {"correlation_id": "...", "agent": "nutrition", "tool_chain": [...]}
+    NOW()
+);
+
+-- Recuperación cronológica de historial reciente
+SELECT 
+    role,
+    content,
+    metadata,
+    created_at
+FROM conversation_history
+WHERE user_id = $1
+ORDER BY created_at DESC
+LIMIT $2;
+```
+
+### 2.2. Registro y Consulta de Rutinas Diarias (`daily_routines`)
+Almacena las rutinas prescritas por el coach con su estructura de ejercicios en formato JSONB:
+
+```sql
+-- Consulta de rutina activa para una fecha dada
+SELECT 
+    id,
+    senior_id,
+    assigned_date,
+    status,
+    exercises,                          -- JSONB con lista de ejercicios, series, repeticiones
+    notes,
+    created_at
+FROM daily_routines
+WHERE senior_id = :user_id 
+  AND assigned_date = :target_date
+LIMIT 1;
+
+-- Inserción de nueva rutina adaptada
+INSERT INTO daily_routines (
+    senior_id,
+    assigned_date,
+    status,
+    exercises,
+    notes,
+    created_at
+) VALUES (
+    :senior_id,
+    :assigned_date,
+    'pending',
+    :exercises_jsonb::jsonb,
+    :notes,
+    NOW()
+) RETURNING id;
+```
+
+### 2.3. Agregación Analítica de Adherencia y Riesgo (`exercise_records`)
+Ejecutada por el `AnalyticsAgent` para evaluar la tasa de cumplimiento y la percepción subjetiva de esfuerzo (escala Borg RPE):
+
+```sql
+-- Cálculo de adherencia y fatiga en ventana de 14 días
 SELECT 
     er.senior_id,
-    AVG(er.rpe_score) AS promedio_rpe,
-    COUNT(CASE WHEN er.reported_pain != 'Sin Dolor' THEN 1 END) AS reportes_dolor,
-    COUNT(dr.id) AS rutinas_completadas
+    COALESCE(AVG(er.rpe_score), 0.0) AS avg_rpe,
+    COUNT(er.id) AS total_records,
+    COUNT(CASE WHEN er.reported_pain != 'Sin Dolor' THEN 1 END) AS pain_incidents,
+    COUNT(dr.id) AS completed_routines
 FROM exercise_records er
-LEFT JOIN daily_routines dr ON dr.senior_id = er.senior_id AND dr.status = 'completed'
-WHERE er.completed_at >= NOW() - INTERVAL '14 days'
+LEFT JOIN daily_routines dr 
+       ON dr.senior_id = er.senior_id 
+      AND dr.status = 'completed'
+      AND dr.assigned_date >= (CURRENT_DATE - INTERVAL '14 days')
+WHERE er.senior_id = :user_id
+  AND er.completed_at >= (NOW() - INTERVAL '14 days')
 GROUP BY er.senior_id;
 ```
 
 ---
 
-## ⚡ 2. Optimización del Pool de Conexiones (PgBouncer Puerto 6543)
+## ⚡ 3. Resiliencia de Pool de Conexiones
 
-* **Parámetro `statement_cache_size=0`:** Resuelve de forma definitiva el error de *prepared statements* duplicados en transacciones concurrentes de PgBouncer.
-* **Pool Defensivo:** Configurado con `pool_size=5`, `max_overflow=5` y `pool_pre_ping=True` para soportar latencias variables en despliegues cloud.
+- Reutilizamos el pool `asyncpg` compartido a través de `seniorvital_shared.db`.
+- Configuramos `statement_cache_size=0` para operar con el pooler PgBouncer en modo transacción (puerto 6543 de Supabase).
+- Implementamos captura de desconexiones para que el sistema continúe respondiendo en modo degradado/mock ante caídas temporales de red sin abortar el flujo conversacional.

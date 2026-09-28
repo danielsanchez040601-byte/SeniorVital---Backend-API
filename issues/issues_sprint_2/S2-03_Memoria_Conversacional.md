@@ -36,3 +36,14 @@ graph TD
 * **Ventana Deslizante:** Retiene los últimos 6 turnos conversacionales por usuario para evitar desbordamiento del contexto del LLM.
 * **Trazabilidad de Razonamiento:** Almacena junto a cada respuesta la traza de herramientas invocadas y decisiones clínicas tomadas.
 * **Persistencia de Eventos:** Cualquier síntoma nuevo o dolor articular reportado se persiste asíncronamente en `exercise_records` o `health_events` en Supabase.
+
+---
+
+## 🔍 3. Nota de Auditoría Técnica y Persistencia en Supabase
+
+* **Persistencia Transaccional:** Se conectó `PostgresMemoryStore` (`src/memory/postgres_store.py`) hacia la tabla relacional `conversation_history` en PostgreSQL.
+* **Eliminación de Memoria Volátil:** Se descartó el almacenamiento efímero en diccionarios en RAM en favor de operaciones ACID (`add_message`, `get_history`), garantizando recuperación de contexto entre reinicios y múltiples sesiones.
+* **Conexión al Endpoint HTTP:** El endpoint `/api/v1/chat` recupera y persiste automáticamente el historial conversacional por `user_id`.
+* **Evidencia Automatizada en CI:** Incorporamos la ejecución de la suite `tests/memory/test_postgres_store.py` al pipeline de GitHub Actions respaldada por el servicio contenedorizado de PostgreSQL 15, validando automáticamente el ciclo completo: guardar → recuperar → conservar contexto y límites por usuario.
+* **Estado Final:** ✅ **Completado, verificado y listo para validación final.**
+
