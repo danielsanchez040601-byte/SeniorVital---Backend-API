@@ -44,5 +44,5 @@ graph TD
 * **Persistencia Transaccional:** Se conectó `PostgresMemoryStore` (`src/memory/postgres_store.py`) hacia la tabla relacional `conversation_history` en Supabase PostgreSQL.
 * **Eliminación de Memoria Volátil:** Se descartó el almacenamiento efímero en diccionarios en RAM en favor de operaciones ACID (`add_message`, `get_history`), garantizando recuperación de contexto entre reinicios y múltiples sesiones.
 * **Conexión al Endpoint HTTP:** El endpoint `/api/v1/chat` recupera y persiste automáticamente el historial conversacional por `user_id`.
-* **Estado Final:** ✅ **Completado y verificado mediante pruebas de integración.**
+* **Estado Final:** ✅ **Completado, verificado y listo para validación final.**
 

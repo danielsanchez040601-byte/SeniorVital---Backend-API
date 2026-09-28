@@ -53,7 +53,6 @@ Estructurar, implementar y evaluar la arquitectura de **Ingeniería del Conocimi
 5. **Ejecutar Benchmark Clínico Cuantitativo (S2-06):** Validar la suite completa de 20 escenarios clínicos con cálculo riguroso de Safety Compliance (100.0%), Tool Accuracy (97.0%) y ReAct Validity (100.0%).
 6. **Unificar Arquitectura de Extremo a Extremo (S2-07):** Conectar el endpoint `/api/v1/chat` a la arquitectura canónica de `src/`, respaldado por pruebas de integración automatizadas (`TestClient`) con mocks deterministas.
 
-
 ---
 
 ## Arquitectura general
@@ -219,8 +218,6 @@ wellness-platform-team5/
 | **`S2-07`** | **Arquitectura Integral y Unificación del Endpoint /chat:** Conexión de extremo a extremo en FastAPI (`/api/v1/chat`), validación de integración automatizada (`test_chat_endpoint.py`) y sincronización documental. | `src/api/chat.py`<br/>`tests/integration/test_chat_endpoint.py`<br/>[`issues/issues_sprint_2/S2-07_Arquitectura_Resultados.md`](issues/issues_sprint_2/S2-07_Arquitectura_Resultados.md) | ✅ **100%** (Completado) |
 
 ---
-
-
 ## Instalación y ejecución (Guía de Reproducibilidad)
 
 Sigue estos pasos para clonar, ejecutar la ingesta y validar las pruebas unitarias del sistema RAG localmente:
@@ -351,4 +348,3 @@ npm run dev
   - Endpoint `/api/v1/chat` integrado de extremo a extremo con telemetría estructurada.
   - Benchmark sobre 20 escenarios clínicos con 100.0% Safety Compliance, 97.0% Tool Accuracy y 100.0% ReAct Validity.
 * **Próxima Fase:** **Sprint 3: Monitoreo, Tracking y Evaluación Preventiva Continua.**
-

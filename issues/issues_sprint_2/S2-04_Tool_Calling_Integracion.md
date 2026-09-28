@@ -53,5 +53,5 @@ async def consultar_base_conocimiento_rag(consulta: str) -> str:
 
 * **Tool Calling Autónomo:** El agente evalúa dinámicamente la intención de la consulta mediante el ciclo ReAct y decide si invocar o no herramientas (`safety_check`, `exercise_catalog`, `rag_search`, `log_habit`), erradicando ejecuciones estáticas incondicionales.
 * **Telemetría de Invocación:** La traza de herramientas ejecutadas se propaga en el campo `telemetry.tool_calls` de la respuesta JSON del endpoint `/api/v1/chat`.
-* **Estado Final:** ✅ **Completado, desacoplado y validado en integración.**
+* **Estado Final:** ✅ **Completado, desacoplado y listo para validación final.**
 

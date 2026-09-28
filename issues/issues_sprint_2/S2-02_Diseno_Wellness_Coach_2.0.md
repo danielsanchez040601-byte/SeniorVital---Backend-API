@@ -39,5 +39,5 @@ fisioterapia geriátrica y prescripción de ejercicio adaptado para adultos mayo
 
 * **Herencia Formal de Clases:** `WellnessCoachAgent` en `src/agents/wellness/coach.py` hereda formalmente de la clase base `WellnessAgent` (`src/agents/wellness/agent.py`), unificando la jerarquía de agentes del sistema.
 * **Depuración de Rutas Legacy:** Se redirigió cualquier llamada residual desde `app/agents/` hacia la implementación canónica en `src/agents/wellness/coach.py`, estableciendo `src/` como única fuente de verdad técnica.
-* **Estado Final:** ✅ **Completado, unificado y validado con tests unitarios e integrados.**
+* **Estado Final:** ✅ **Completado, unificado y listo para validación final.**
 

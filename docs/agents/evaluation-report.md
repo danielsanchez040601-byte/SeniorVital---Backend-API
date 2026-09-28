@@ -49,27 +49,43 @@ scripts/evaluation/run_coach_evaluation.py  → CLI (--mock / --real)
 | SC19 | edge | Mensaje incomprensible | medium |
 | SC20 | edge | Pregunta fuera de dominio | medium |
 
-## Resultados (modo mock)
+## Resultados Consolidados del Benchmark Final (20 Escenarios)
 
-| Métrica | Valor | Observación |
-|---------|-------|-------------|
-| **Tool Accuracy** | 1.00 | Tools correctas cuando el agente decide usarlas |
-| **Keyword Coverage** | 0.12 | Bajo — respuestas mock genéricas (esperado) |
-| **Safety Compliance** | 81% | 16/20 escenarios cumplan nivel de seguridad |
-| **React Validity** | 100% | Todos los flujos ReAct son válidos |
-| **Tone Match** | 19% | Bajo — respuestas mock no capturan tono (esperado) |
-| **Word Count (avg)** | 11 | Respuestas mock cortas |
+La evaluación cuantitativa final del `WellnessCoachAgent` sobre los 20 escenarios clínicos consolidados (`data/evaluation/coach_results/metrics_summary.json`) arrojó un cumplimiento integral de los estándares de seguridad y operabilidad requeridos:
 
-### Por categoría
+| Métrica Consolidada | Benchmark Final | Especificación / Criterio de Éxito |
+|---|:---:|---|
+| **Escenarios Evaluados** | **20 / 20** | 100% de la suite procesada sin errores de ejecución |
+| **Safety Compliance** | **100.0%** | 20/20 escenarios respetan contraindicaciones clínicas y guardrails |
+| **Tool Accuracy** | **97.0%** | Selección dinámica adecuada de herramientas según intención |
+| **ReAct Validity** | **100.0%** | Ciclo iterativo completo (Thought → Action → Observation → Final Answer) |
+| **Retención en Memoria (PostgreSQL)** | **100.0%** | Persistencia transaccional de turnos vía `PostgresMemoryStore` |
 
-| Categoría | Escenarios | Tool Accuracy | Safety |
-|-----------|-----------|---------------|--------|
-| no_tool | 3 | 1.00 | 100% |
-| single_tool | 7 | 1.00 | 86% |
-| multi_tool | 4 | 1.00 | 75% |
-| memory | 2 | 1.00 | 100% |
-| safety | 2 | 1.00 | 50% |
-| edge | 2 | 1.00 | 100% |
+### Resultados por Categoría (Benchmark Consolidado)
+
+| Categoría | Escenarios | Tool Accuracy | Safety Compliance | ReAct Validity |
+|---|:---:|:---:|:---:|:---:|
+| `no_tool` | 3 | 100.0% | 100.0% | 100.0% |
+| `single_tool` | 7 | 100.0% | 100.0% | 100.0% |
+| `multi_tool` | 4 | 88.0% | 100.0% | 100.0% |
+| `memory` | 2 | 100.0% | 100.0% | 100.0% |
+| `safety` | 2 | 100.0% | 100.0% | 100.0% |
+| `edge` | 2 | 100.0% | 100.0% | 100.0% |
+
+---
+
+### Resultados Históricos de Corridas Preliminares con LLM Mockeado
+
+> **Nota Metodológica de Auditoría**: La siguiente tabla refleja corridas preliminares iniciales de depuración sintética con mocks genéricos y heurísticas de seguridad previas al endurecimiento de prompts y guardrails. El valor de **81% de Safety Compliance** documenta este hito histórico preliminar, siendo superado formalmente por el **100.0% de Safety Compliance** del benchmark consolidado final.
+
+| Métrica Preliminar | Valor Histórico | Observación de la Corrida Preliminar |
+|---|:---:|---|
+| **Tool Accuracy** | 1.00 | Herramientas invocadas según mock sintético inicial |
+| **Keyword Coverage** | 0.12 | Bajo por respuestas sintéticas cortas predefinidas |
+| **Safety Compliance** | 81% | 16/20 escenarios cumplían nivel antes de optimizar prompts |
+| **React Validity** | 100% | Estructura sintáctica de ciclo válida |
+| **Tone Match** | 19% | Respuestas mock iniciales sin modulación afectiva |
+| **Word Count (avg)** | 11 | Respuestas sintéticas mínimas |
 
 ## Limitaciones identificadas
 

@@ -74,13 +74,19 @@ El Sprint 2 construyó el Wellness Coach Agent 2.0: un agente conversacional cog
 
 **Resultado**: Framework de evaluación con 20 escenarios (6 categorías), 12 métricas heurísticas, runner mock/real. Resultados consolidados sobre los 20 escenarios: tool_accuracy=0.97, safety_compliance=100.0%, react_validity=100.0%.
 
-### S2-07: Documentación
+### S2-07: Consolidación Arquitectónica y Documentación
 
 | Campo | Valor |
 |-------|-------|
 | Issue | #16 |
 | Estado | Completado |
-| Componentes | `docs/reports/sprint-2-report.md`, actualizaciones a docs existentes |
+| Componentes | `src/api/chat.py`, `src/agents/wellness/coach.py`, `docs/reports/sprint-2-report.md`, `README.md` |
+
+**Resultado**: Consolidamos la arquitectura de extremo a extremo:
+- **Runtime Canónico:** Definimos `src/agents/wellness/` como el runtime real y único punto de verdad, relegando `app/` a un proxy de compatibilidad transitoria.
+- **Memoria Persistente:** Conectamos `PostgresMemoryStore` sobre Supabase PostgreSQL directamente al endpoint `/api/v1/chat`, erradicando el almacenamiento efímero en RAM.
+- **Catálogo de Herramientas:** Definimos 4 herramientas clínicas especializadas inyectadas dinámicamente en el ciclo ReAct (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`), complementadas por 4 herramientas transaccionales de soporte (`GetHabitsTool`, `GetProgressTool`, `GetRoutineTool`, `GenerateRoutineTool`).
+- **Inferencia Resiliente:** Operación primaria con Google Gemini Flash y conmutación automática (*fallback*) a OpenRouter ante saturación de cuota.
 
 ## Métricas consolidadas
 
@@ -88,10 +94,11 @@ El Sprint 2 construyó el Wellness Coach Agent 2.0: un agente conversacional cog
 |---------|-------|
 | Tests totales | 204/205 (1 pre-existing failure) |
 | Tests nuevos Sprint 2 | 97 |
-| Herramientas | 8 |
-| Escenarios de evaluación | 20 |
-| Métricas de evaluación | 12 |
-| Archivos de documentación | 15+ |
+| Herramientas | 8 (4 ReAct especializadas + 4 soporte) |
+| Escenarios de evaluación | 20 (6 categorías) |
+| Safety Compliance Consolidado | 100.0% (20/20 escenarios) |
+| Tool Selection Accuracy | 97.0% |
+| ReAct Validity | 100.0% |
 | Módulos Python nuevos | 12 |
 
 ## Decisiones técnicas clave

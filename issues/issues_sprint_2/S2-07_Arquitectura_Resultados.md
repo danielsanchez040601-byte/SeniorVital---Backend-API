@@ -69,7 +69,8 @@ sequenceDiagram
 
 ## 🛠️ 3. Auditoría Técnica de Arquitectura Unificada y Cierre de Sprint
 
-- **Unificación Arquitectónica:** Se eliminó la divergencia legacy entre `app/` y `src/`. El endpoint `POST /api/v1/chat` ahora ejecuta canónicamente los componentes en `src/`, invocando `WellnessCoachAgent` (heredado de `WellnessAgent`), el motor `ReActEngine` (`reasoning.py`), las 4 herramientas especializadas y `PostgresMemoryStore`.
+- **Unificación Arquitectónica:** Se eliminó la divergencia legacy entre `app/` y `src/`. El endpoint `POST /api/v1/chat` ahora ejecuta canónicamente los componentes en `src/`, invocando `WellnessCoachAgent` (heredado de `WellnessAgent`), el motor `ReActEngine` (`reasoning.py`), las 4 herramientas especializadas (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`) y `PostgresMemoryStore` sobre Supabase PostgreSQL.
+- **Capa de Compatibilidad:** `app/agents/wellness_coach.py` opera exclusivamente como proxy de compatibilidad transitoria.
 - **Sincronización Documental y Benchmark:** Se armonizaron las métricas de evaluación sobre los 20 escenarios clínicos (100.0% Safety Compliance, 97.0% Tool Accuracy) entre `metrics_summary.json`, el reporte de sprint y los issues técnicos.
-- **Estado del Componente:** Completado, validado mediante suite de integración automatizada (`tests/integration/test_chat_endpoint.py`) y listo para producción.
+- **Estado del Componente:** ✅ **Completado, validado mediante suite de integración automatizada y listo para validación final.**
 
