@@ -1,0 +1,278 @@
+{
+  "telemetry": {
+    "embedding_mode": "HUGGINGFACE_REAL_MODEL",
+    "vector_backend": "IN_MEMORY_FALLBACK",
+    "llm_provider": "deterministic_fallback"
+  },
+  "retrieval_metrics": {
+    "hit_rate_at_3": 100.0,
+    "mrr": 0.9,
+    "precision_at_3": 0.6333,
+    "avg_vector_store_latency_ms": 3.18,
+    "p95_vector_store_latency_ms": 4.11,
+    "avg_total_latency_ms": 421.2,
+    "p95_total_latency_ms": 559.93,
+    "avg_latency_ms": 421.2,
+    "p95_latency_ms": 559.93,
+    "total_queries": 10
+  },
+  "generation_evaluation": {
+    "clinical_adherence_rate": 100.0,
+    "llm_provider_used": "deterministic_fallback",
+    "total_evaluated": 10
+  },
+  "retrieval_details": [
+    {
+      "id": "Q01",
+      "query": "Tengo osteoartritis de rodilla y dolor articular, que ejercicios estan estrictamente prohibidos?",
+      "expected_chunk_ids": [
+        "OA-01_CONTRA",
+        "OA-01_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "OA-01_CONTRA",
+        "OA-01_DESC",
+        "OA-01_REC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 2.87,
+      "total_retrieval_latency_ms": 207.5,
+      "latency_ms": 207.5
+    },
+    {
+      "id": "Q02",
+      "query": "Cuales son los ejercicios de fuerza y calistenia recomendados para sarcopenia y dinapenia?",
+      "expected_chunk_ids": [
+        "SAR-02_REC",
+        "SAR-02_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "SAR-02_REC",
+        "SAR-02_CONTRA",
+        "SAR-02_DESC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 3.72,
+      "total_retrieval_latency_ms": 273.3,
+      "latency_ms": 273.3
+    },
+    {
+      "id": "Q03",
+      "query": "Que protocolo de entrenamiento oseo y tai chi se aplica en osteoporosis para evitar fracturas?",
+      "expected_chunk_ids": [
+        "OST-03_REC",
+        "OST-03_CONTRA"
+      ],
+      "retrieved_chunk_ids": [
+        "OST-03_REC",
+        "OST-03_CONTRA",
+        "OST-03_DESC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 2.54,
+      "total_retrieval_latency_ms": 326.65,
+      "latency_ms": 326.65
+    },
+    {
+      "id": "Q04",
+      "query": "Cuales son las contraindicaciones y senales de descompensacion en insuficiencia cardiaca?",
+      "expected_chunk_ids": [
+        "ICC-04_CONTRA",
+        "ICC-04_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "ICC-04_CONTRA",
+        "ICC-04_REC",
+        "ICC-04_DESC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 3.35,
+      "total_retrieval_latency_ms": 417.61,
+      "latency_ms": 417.61
+    },
+    {
+      "id": "Q05",
+      "query": "Cuales son los controles de glucemia y precauciones en diabetes mellitus tipo 2?",
+      "expected_chunk_ids": [
+        "DMT2-05_CONTRA",
+        "DMT2-05_REC"
+      ],
+      "retrieved_chunk_ids": [
+        "DMT2-05_CONTRA",
+        "DMT2-05_REC",
+        "DMT2-05_DESC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 3.35,
+      "total_retrieval_latency_ms": 424.81,
+      "latency_ms": 424.81
+    },
+    {
+      "id": "Q06",
+      "query": "Como se realiza el entrenamiento respiratorio con labios fruncidos en EPOC?",
+      "expected_chunk_ids": [
+        "EPOC-06_REC",
+        "EPOC-06_CONTRA"
+      ],
+      "retrieved_chunk_ids": [
+        "EPOC-06_DESC",
+        "EPOC-06_REC",
+        "ICC-04_REC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 0.5,
+      "precision_at_k": 0.3333,
+      "vector_store_latency_ms": 2.9,
+      "total_retrieval_latency_ms": 559.93,
+      "latency_ms": 559.93
+    },
+    {
+      "id": "Q07",
+      "query": "Como debe entrenar el equilibrio y la marcha un paciente con enfermedad de Parkinson?",
+      "expected_chunk_ids": [
+        "PARK-07_REC",
+        "PARK-07_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "PARK-07_CONTRA",
+        "PARK-07_DESC",
+        "PARK-07_REC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 0.5,
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 1.94,
+      "total_retrieval_latency_ms": 470.86,
+      "latency_ms": 470.86
+    },
+    {
+      "id": "Q08",
+      "query": "Que precauciones y ejercicios se aplican en secuelas de accidente cerebrovascular ACV?",
+      "expected_chunk_ids": [
+        "ACV-08_REC",
+        "ACV-08_CONTRA"
+      ],
+      "retrieved_chunk_ids": [
+        "ACV-08_REC",
+        "ACV-08_CONTRA",
+        "ACV-08_DESC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 3.0,
+      "total_retrieval_latency_ms": 519.14,
+      "latency_ms": 519.14
+    },
+    {
+      "id": "Q09",
+      "query": "Que ejercicios y movimientos estan prohibidos en lumbalgia mecanica y espondiloartrosis?",
+      "expected_chunk_ids": [
+        "LUMB-09_CONTRA",
+        "LUMB-09_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "LUMB-09_CONTRA",
+        "LUMB-09_REC",
+        "LUMB-09_DESC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 4.11,
+      "total_retrieval_latency_ms": 524.06,
+      "latency_ms": 524.06
+    },
+    {
+      "id": "Q10",
+      "query": "Cual es el plan vivifrail de movilidad para el sindrome de fragilidad geriatrica?",
+      "expected_chunk_ids": [
+        "FRAG-10_REC",
+        "FRAG-10_DESC"
+      ],
+      "retrieved_chunk_ids": [
+        "FRAG-10_REC",
+        "FRAG-10_CONTRA",
+        "FRAG-10_DESC"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0,
+      "precision_at_k": 0.6667,
+      "vector_store_latency_ms": 4.02,
+      "total_retrieval_latency_ms": 488.12,
+      "latency_ms": 488.12
+    }
+  ],
+  "generation_details": [
+    {
+      "id": "Q01",
+      "llm_provider": "deterministic_fallback",
+      "clinical_adherence": true,
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Osteoartritis de..."
+    },
+    {
+      "id": "Q02",
+      "llm_provider": "deterministic_fallback",
+      "clinical_adherence": true,
+      "response_sample": "[PLAN DE FUERZA ADAPTADO - Sarcopenia / Nivel 1-3]:\n\nBasado en el consenso EWGSOP2 (Cruz-Jentoft et al., 2019):\n- Fortal..."
+    },
+    {
+      "id": "Q03",
+      "llm_provider": "deterministic_fallback",
+      "clinical_adherence": true,
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- PRESCRIPCIN DE EJERCICIO PARA Osteoporosis y Fragilidad sea:\nMOD..."
+    },
+    {
+      "id": "Q04",
+      "llm_provider": "deterministic_fallback",
+      "clinical_adherence": true,
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Insuficiencia Ca..."
+    },
+    {
+      "id": "Q05",
+      "llm_provider": "deterministic_fallback",
+      "clinical_adherence": true,
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Diabetes Mellitu..."
+    },
+    {
+      "id": "Q06",
+      "llm_provider": "deterministic_fallback",
+      "clinical_adherence": true,
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- PATOLOGA: Enfermedad Pulmonar Obstructiva Crnica (EPOC) (Cdigo:..."
+    },
+    {
+      "id": "Q07",
+      "llm_provider": "deterministic_fallback",
+      "clinical_adherence": true,
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Enfermedad de Pa..."
+    },
+    {
+      "id": "Q08",
+      "llm_provider": "deterministic_fallback",
+      "clinical_adherence": true,
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- PRESCRIPCIN DE EJERCICIO PARA Secuelas de Accidente Cerebrovascul..."
+    },
+    {
+      "id": "Q09",
+      "llm_provider": "deterministic_fallback",
+      "clinical_adherence": true,
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- CONTRAINDICACIONES ESTRICTAS Y FILTROS DUROS PARA Lumbalgia Mecni..."
+    },
+    {
+      "id": "Q10",
+      "llm_provider": "deterministic_fallback",
+      "clinical_adherence": true,
+      "response_sample": "[RECOMENDACION GERONTOLOGICA BASADA EN EVIDENCIA]:\n\n- PRESCRIPCIN DE EJERCICIO PARA Sndrome de Fragilidad Geritrica:\n..."
+    }
+  ]
+}

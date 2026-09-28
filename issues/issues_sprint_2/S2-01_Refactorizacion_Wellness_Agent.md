@@ -26,7 +26,7 @@ graph LR
         ReAct --> Memory["Memoria Conversacional de Sesión"]
         ReAct --> Tools["Tool Calling a Supabase & pgvector"]
         Tools --> Obs["Observación & Contexto"]
-        Obs --> Fallback["Google AI Studio + Fallback OpenRouter"]
+        Obs --> Fallback["LLMService (Ollama phi3:mini)"]
         Fallback --> Resp2["Respuesta Clínica Segura"]
     end
 
@@ -37,7 +37,15 @@ graph LR
 
 ## 🛠️ 2. Cambios Arquitectónicos Aplicados en la Refactorización
 
-1. **Desacoplamiento Modular:** Creación de `app/tools/clinical_tools.py` para separar las funciones de base de datos (*Tool Calling*) de la lógica de orquestación.
-2. **Patrón ReAct Integrado:** Implementación del método `execute_react_cycle` en `app/agents/wellness_coach.py` para forzar razonamiento previo a la acción.
-3. **Memoria de Sesión Dinámica:** Adición de `ConversationalMemoryManager` con control de turnos y retención de contexto a corto plazo.
-4. **Resiliencia Multi-Proveedor:** Prioridad en Google AI Studio (`gemini-3.6-flash`) con conmutación en caliente hacia OpenRouter ante errores de cuota o timeouts.
+1. **Desacoplamiento Modular:** Definición de herramientas clínicas en `src/tools/wellness/` (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`, `GetHabitsTool`, `GetProgressTool`, `GetRoutineTool`) para separar las capacidades operativas de la orquestación.
+2. **Patrón ReAct Integrado:** Implementación del motor de razonamiento en `src/agents/wellness/reasoning.py` e integración en `src/agents/wellness/coach.py` (`WellnessCoachAgent`), forzando el ciclo Thought → Action → Observation → Final Answer.
+3. **Memoria Conversacional Persistente:** Conexión con `src/memory/postgres_store.py` (`PostgresMemoryStore`) en PostgreSQL con retención de contexto por sesión.
+4. **Servicio de Inferencia LLM:** `LLMService` basado en `OllamaClient` configurado con `phi3:mini` por defecto (`http://localhost:11434`) mediante `WellnessConfig`, con manejo desacoplado de excepciones y fallbacks de seguridad.
+
+---
+
+## 🔍 3. Nota de Auditoría Técnica y Unificación Canónica
+
+- **Alineación de Módulos:** Se depuraron y unificaron las referencias hacia `src/agents/wellness/coach.py`, eliminando la dependencia de código duplicado legacy. Cualquier llamada residual a `app/agents/` se redirige formalmente a la implementación canónica.
+- **Estado Final:** ✅ **Completado, validado con herencia formal de `WellnessAgent` y listo para validación final.**
+

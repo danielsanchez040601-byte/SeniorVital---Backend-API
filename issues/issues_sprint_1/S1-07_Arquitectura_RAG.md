@@ -1,104 +1,129 @@
-# 🏛️ Issue S1-07: Arquitectura Integral del Sistema RAG y Diagramas Mermaid
+# 🏛️ Arquitectura Consolidada del Sistema RAG — SeniorVital 2.0
 
-**Materia:** Sistemas Inteligentes  
-**Docente:** Dra. Yaskelly Yedra  
-**Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
-**Proyecto:** SeniorVital 2.0 — Sistema RAG Gerontológico  
-**Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
-
----
-
-## 🏛️ 1. Diagrama de Arquitectura de Capas RAG
-
-```mermaid
-graph TB
-    subgraph Capa_Cliente["1. Capa Cliente & Experiencia de Usuario"]
-        UI["SeniorVital Frontend (React 18 + Vite)"]
-        ChatUI["Módulo de Chat Conversacional"]
-        RoutineUI["Módulo de Prescripción Diaria"]
-    end
-
-    subgraph Capa_Servicios["2. Capa de Servicios y Enrutamiento (FastAPI)"]
-        API["FastAPI Application Core"]
-        RouterChat["/api/v1/chat"]
-        RouterRoutine["/routines/generate"]
-        RAGProcessor["RAG Processor (rag_processor.py)"]
-    end
-
-    subgraph Capa_Embeddings["3. Capa de Vectorización Semántica"]
-        HF["Hugging Face (sentence-transformers/all-MiniLM-L6-v2)"]
-        Vec_Query["Vector de Consulta (384d Normalizado)"]
-    end
-
-    subgraph Capa_Persistencia["4. Capa de Persistencia Vectorial (Supabase)"]
-        Supa_Pooler[("Supabase PgBouncer Pooler (Puerto 6543)")]
-        Table_Rel[("Tablas Relacionales: users, senior_profiles, routines")]
-        Table_Vec[("Tabla Vectorial: clinical_knowledge (pgvector 384d)")]
-        Index_IVFFlat["Índice IVFFlat (Cosine Similarity)"]
-    end
-
-    subgraph Capa_Seguridad_Inferencia["5. Capa de Seguridad & Modelos LLM"]
-        Guardrails["Guardrails de Seguridad Clínica & Filtros Duros"]
-        Gemini["Google AI Studio (Gemini 3.6 Flash - Modelo Principal)"]
-        OpenRouter["OpenRouter (Fallback Multimodelo Libre)"]
-        Deterministic["Generador Clínico Determinístico Local"]
-    end
-
-    UI --> API
-    API --> RouterChat
-    API --> RouterRoutine
-    RouterChat --> RAGProcessor
-    RouterRoutine --> RAGProcessor
-
-    RAGProcessor --> HF
-    HF --> Vec_Query
-    Vec_Query --> Supa_Pooler
-    Supa_Pooler --> Table_Vec
-    Table_Vec --> Index_IVFFlat
-    Table_Vec -->|Top-k Chunks| RAGProcessor
-
-    RAGProcessor --> Guardrails
-    Guardrails -->|Prompt Aumentado| Gemini
-    Gemini -.->|Falla 429 / 503| OpenRouter
-    OpenRouter -.->|Falla de Red| Deterministic
-    
-    Gemini --> RAGProcessor
-    OpenRouter --> RAGProcessor
-    Deterministic --> RAGProcessor
-    RAGProcessor --> API
-    API --> UI
-```
+> **Materia:** Sistemas Inteligentes — Dra. Yaskelly Yedra  
+> **Autores:** Daniel Alejandro Sánchez Ávila & Abdénago Nahmens (Team 5)  
+> **Asesoría Clínica:** Ing. Julio Matute  
+> **Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
+> **Estado:** Corregido y Consolidado con Benchmark Recalculado  
 
 ---
 
-## 🔄 2. Diagrama de Flujo de Datos para Ingesta y Recuperación
+## 1. Diagrama Detallado de Interacción de Componentes y Telemetría
 
 ```mermaid
 flowchart TD
-    subgraph Ingesta["Fase de Ingesta y Vectorización"]
-        DocClinico["Informe Clínico Maestro (10 Patologías)"] --> Chunking["Segmentación Semántica (40 Chunks Lógicos)"]
-        Chunking --> AddMeta["Inyección de Metadatos (Autoría, Fuentes, Reconocimiento Ing. Julio Matute)"]
-        AddMeta --> HF_Ingest["Vectorización con Hugging Face (all-MiniLM-L6-v2)"]
-        HF_Ingest --> PG_Insert["Persistencia en Supabase clinical_knowledge (pgvector)"]
+    subgraph Knowledge_Engineering [1. Ingesta y Segmentación Semántica]
+        Doc["Corpus Clínico (data/knowledge_base/clinical_knowledge_base.json)"]
+        Chunker["ClinicalSemanticChunker (src/knowledge/chunking/chunker.py)"]
+        HF_Embed["HuggingFaceEmbeddingsGenerator (src/rag/embeddings/hf_embeddings.py)"]
+        
+        Doc --> Chunker
+        Chunker -->|Chunks Tripartitos _DESC, _REC, _CONTRA| HF_Embed
     end
 
-    subgraph Recuperacion["Fase de Inferencia en Tiempo Real"]
-        QueryUser["Consulta del Adulto Mayor"] --> HF_Query["Vectorización de Consulta (384d)"]
-        HF_Query --> CosineMatch["Búsqueda por Similitud de Coseno en pgvector"]
-        PG_Insert -.-> CosineMatch
-        CosineMatch --> TopChunks["Recuperación de Top 3 Chunks Clínicos"]
-        TopChunks --> PromptGen["Construcción de Prompt Aumentado + Guardrails"]
-        PromptGen --> LLM_Inference["Inferencia con Gemini 3.6 Flash / OpenRouter"]
-        LLM_Inference --> RespSafe["Respuesta Segura, Empática y Adaptada al Adulto Mayor"]
+    subgraph Storage_Layer [2. Almacenamiento e Indexación Vectorial]
+        PGV[("Supabase PostgreSQL + pgvector (src/rag/vector_store/pgvector_store.py)")]
+        HF_Embed -->|Vectores Densos 384d (Norma L2 = 1.0)| PGV
+    end
+
+    subgraph Runtime_Retrieval [3. Recuperación Semántica y Guardrails]
+        Query["Consulta del Paciente / Perfil Geriátrico"]
+        Retriever["ClinicalRetriever (src/rag/retriever/retriever.py)"]
+        Pipeline["ClinicalRAGPipeline (src/rag/pipeline/rag_pipeline.py)"]
+        
+        Query --> Retriever
+        PGV <-->|Búsqueda Coseno Top-K=3| Retriever
+        Retriever --> Pipeline
+    end
+
+    subgraph LLM_Reasoning [4. Inferencia Aumentada y Tolerancia a Fallos]
+        Prompt["System Prompt con Contexto Inyectado"]
+        LLM_Primary["Google AI Studio (Gemini Flash Lite)"]
+        LLM_Fallback["OpenRouter Fallback Pool"]
+        Deterministic_Engine["Motor Clínico Determinista Basado en Evidencia Recuperada (deterministic_fallback)"]
+        
+        Pipeline --> Prompt
+        Prompt --> LLM_Primary
+        LLM_Primary -.->|Fallback 429/503| LLM_Fallback
+        LLM_Fallback -.->|Fallback Offline| Deterministic_Engine
+    end
+
+    subgraph Output_Layer [5. Prescripción Adaptada y Telemetría Post-Ejecución]
+        Response["Respuesta Condicionada + Metadata de Telemetría"]
+        LLM_Primary --> Response
+        LLM_Fallback --> Response
+        Deterministic_Engine --> Response
     end
 ```
 
 ---
 
-## 🌟 3. Reconocimiento y Créditos del Sprint 1
+## 2. Telemetría en Tiempo de Ejecución (Post-Execution Telemetry)
 
-> **Reconocimiento especial al Ing. Julio Matute por su asesoría técnica y clínica en la validación de patologías, afecciones y enfermedades limitantes en adultos mayores, las cuales fundamentan esta base de conocimiento.**
+Para garantizar trazabilidad técnica real y evitar reportes basados en configuración estática, el sistema formaliza tanto el esquema contractual de telemetría como el registro empírico unívoco obtenido en cada corrida:
 
-* **Desarrolladores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens.
-* **Docente Titular:** Dra. Yaskelly Yedra.
-* **Cátedra:** Sistemas Inteligentes — 2026.
+### A. Esquema Contractual y Valores Posibles:
+* **Valores Posibles del Proveedor (`provider`):** `"Google AI Studio (Gemini Flash Lite)"` | `"OpenRouter Fallback Pool"` | `"SeniorVital Clinical RAG Reasoning Engine"` | `"Safety Guardrail (Zero-Context Fallback)"`
+* **Valores Posibles del Objeto `telemetry`:**
+  * `embedding_mode`: `"HUGGINGFACE_REAL_MODEL"` | `"FALLBACK_CI"` | `"FALLBACK_API_ERROR"`
+  * `vector_backend`: `"SUPABASE_PGVECTOR"` | `"IN_MEMORY_FALLBACK"`
+  * `llm_provider`: `"google_ai_studio"` | `"openrouter"` | `"deterministic_fallback"` | `"safety_guardrail"`
+  * `vector_store_latency_ms`: Float con el tiempo de búsqueda vectorial en milisegundos.
+
+### B. Registro de Ejecución Empírica Concreta:
+En una corrida empírica real, el objeto de respuesta registra estrictamente el valor unívoco ejecutado:
+
+```json
+{
+  "query": "Tengo osteoartritis severa en rodilla, ¿puedo hacer sentadillas con salto?",
+  "status": "SUCCESS",
+  "provider": "SeniorVital Clinical RAG Reasoning Engine",
+  "telemetry": {
+    "embedding_mode": "HUGGINGFACE_REAL_MODEL",
+    "vector_backend": "IN_MEMORY_FALLBACK",
+    "llm_provider": "deterministic_fallback",
+    "vector_store_latency_ms": 3.18
+  },
+  "retrieved_chunks": [ ... ],
+  "context_injected": "...",
+  "response": "..."
+}
+```
+
+---
+
+## 3. Responsabilidad de Componentes y Decisiones de Diseño
+
+| Componente | Módulo en `/src` | Responsabilidad Técnica | Decisión de Diseño Justificada |
+| :--- | :--- | :--- | :--- |
+| **Corpus Clínico** | `data/knowledge_base/` | 10 condiciones clínicas geriátricas estructuradas en JSON. | Validación clínica con el **Ing. Julio Matute**. |
+| **Chunker** | `src/knowledge/chunking/` | Divide cada patología en fragmentos (`_DESC`, `_REC`, `_CONTRA`). | Evita contaminación entre prescripciones y contraindicaciones. |
+| **Embeddings** | `src/rag/embeddings/` | Genera vectores de 384 dimensiones (`all-MiniLM-L6-v2`). | Telemetría post-ejecución (`HUGGINGFACE_REAL_MODEL` vs fallback). |
+| **Vector Store** | `src/rag/vector_store/` | Persistencia en PostgreSQL + `pgvector` con índice `HNSW`. | Registro de backend (`SUPABASE_PGVECTOR` vs `IN_MEMORY_FALLBACK`). |
+| **Retriever** | `src/rag/retriever/` | Recuperación semántica Top-K con filtrado por metadatos. | Búsqueda coseno con medición aislada de latencia ($3.18\text{ ms}$). |
+| **Pipeline E2E** | `src/rag/pipeline/` | Enrutamiento, guardrails de seguridad y generación LLM. | Guardrail para consultas fuera de dominio (Zero-Context Fallback). |
+
+---
+
+## 4. Sincronización Final y Corrección Algorítmica (S1-06 $\leftrightarrow$ S1-07)
+
+En atención a las observaciones técnicas emitidas en la revisión final del Sprint 1, se consolidaron las siguientes acciones transversales:
+
+1. **Eliminación del Sesgo de Prefijo:** Se purgó la condición `cid.startswith(cond)` en `scripts/evaluation/evaluate_rag.py`. La relevancia se evalúa exclusivamente contra `expected_chunk_ids`.
+2. **Desagregación de Latencias:** Se instrumentó la medición diferenciada entre la latencia exclusiva del motor vectorial ($3.18\text{ ms}$ promedio) y la latencia global del ciclo `retrieve_with_telemetry` ($421.20\text{ ms}$ promedio, dominada por la inferencia en Hugging Face).
+3. **Auditoría de Enlaces Canónicos:** Se verificó que el documento canónico de arquitectura reside en `docs/architecture/rag-architecture.md`, corrigiendo referencias residuales a la ruta inexistente `docs/rag/rag-architecture.md` en el `README.md`.
+4. **Purga de Reclamos Absolutos:** Se eliminó cualquier aseveración absolutista del tipo "recomendaciones 100% seguras", adoptando la formulación rigurosa "recomendaciones condicionadas por reglas clínicas, guardrails y evidencia recuperada del dominio".
+
+---
+
+## 5. Matriz de Trazabilidad S1-01 $\rightarrow$ S1-07
+
+| Issue | Entregable en `/src` | Documentación | Script de Prueba | Métrica / Resultado | Estado |
+| :--- | :--- | :--- | :--- | :--- | :---: |
+| **S1-01** | `data/knowledge_base/` | `docs/knowledge/` | Inspección JSON | 10 condiciones clínicas modeladas | ✅ **100%** (Aprobado) |
+| **S1-02** | `src/knowledge/chunking/` | `docs/rag/chunking-strategy.md` | `tests/rag/test_chunking.py` | 30 chunks con metadatos | ✅ **100%** (Aprobado) |
+| **S1-03** | `src/rag/embeddings/` | `docs/rag/embeddings-strategy.md` | `scripts/evaluation/test_hf_embeddings.py` | Modelo 384d, L2=1.0000, inferencia real HF y aserción estricta superada | ✅ **100%** (Corregido y Verificado) |
+| **S1-04** | `src/rag/vector_store/` | `docs/rag/vector-database.md` | `scripts/indexing/index_pgvector.py` | Índice HNSW en PostgreSQL / pgvector | ✅ **100%** (Aprobado) |
+| **S1-05** | `src/rag/pipeline/` | `docs/architecture/rag-architecture.md` | `tests/rag/test_retrieval.py` | Orquestación E2E con mocks deterministas y telemetría unívoca | ✅ **100%** (Corregido y Verificado) |
+| **S1-06** | `data/evaluation/` | `docs/evaluation/retrieval-metrics.md` | `scripts/evaluation/evaluate_rag.py` | Hit Rate@3=100%, MRR=0.9000, P@3=0.6333 (techo 0.6667), lat. vec=3.18 ms | ✅ **100%** (Corregido y Verificado) |
+| **S1-07** | Consolidación | `docs/reports/sprint-1-report.md` | `pytest tests/rag/ -v` | Arquitectura consolidada, purga terminológica, rutas canónicas y suite 4/4 en verde | ✅ **100%** (Corregido y Consolidado) |

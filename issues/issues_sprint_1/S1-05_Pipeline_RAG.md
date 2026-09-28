@@ -1,80 +1,180 @@
-# 🚀 Issue S1-05: Pipeline RAG y Generación Aumentada con Contexto Clínico
+# 🚀 Issue S1-05: Pipeline RAG Integrado y Prompt Clínico Aumentado
 
-**Materia:** Sistemas Inteligentes  
-**Docente:** Dra. Yaskelly Yedra  
-**Autores:** Daniel Alejandro Sánchez Ávila & Abdenago Nahmens  
-**Proyecto:** SeniorVital 2.0 — Sistema RAG Gerontológico  
-**Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
+> **Materia:** Sistemas Inteligentes — Dra. Yaskelly Yedra  
+> **Autores:** Daniel Alejandro Sánchez Ávila & Abdénago Nahmens (Team 5)  
+> **Proyecto:** SeniorVital 2.0 — Plataforma Inteligente Wellness (+60)  
+> **Sprint Técnico:** Sprint 1 — Ingeniería del Conocimiento y Sistemas RAG  
 
 ---
 
-## 🎯 1. Flujo Integral del Pipeline RAG
+## 🎯 1. Flujo de Ejecución del Pipeline RAG y Telemetría Post-Ejecución
 
-El pipeline de **Generación Aumentada por Recuperación (RAG)** de SeniorVital consta de cuatro etapas deterministas:
+El pipeline conecta la consulta del perfil del adulto mayor con la recuperación semántica vectorial y la generación aumentada con modelos LLM:
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    actor Usuario as Adulto Mayor / Cuidador
-    participant API as FastAPI Router (/api/v1/chat o /routines/generate)
-    participant RAG as RAG Processor (rag_processor.py)
-    participant HF as Hugging Face Embedder (384d)
-    participant PGV as Supabase pgvector (clinical_knowledge)
-    participant Guard as Guardrails Clínicos
-    participant LLM as Google AI Studio (gemini-3.6-flash) / OpenRouter
-
-    Usuario->>API: Consulta o Solicitud de Rutina
-    API->>RAG: generate_rag_response(query, user_profile)
-    
-    RAG->>HF: embed_query(query_text)
-    HF-->>RAG: vector_384d
-    
-    RAG->>PGV: match_clinical_knowledge(vector_384d, limit=3)
-    PGV-->>RAG: Chunks Clínicos Relevantes (Evidencia + Contraindicaciones)
-    
-    RAG->>Guard: Evaluar seguridad clínica del prompt
-    alt Emergencia Vital Detectada (Dolor en pecho / Caída aguda)
-        Guard-->>RAG: Bloqueo de seguridad inmediato
-        RAG-->>API: Respuesta de derivación a emergencias
-    else Consulta Segura
-        Guard-->>RAG: Inyectar System Prompt + Contexto Recuperado
-        RAG->>LLM: Inferencia con Prompt Enriquecido
-        LLM-->>RAG: Respuesta Médicamente Fundamentada
-        RAG-->>API: Respuesta al Usuario
+flowchart TD
+    subgraph Input_Layer [Entrada del Paciente]
+        Query["Consulta Clínica: Perfil, Dudas o Síntomas"]
     end
-    
-    API-->>Usuario: HTTP 200 OK con Recomendación Segura
+
+    subgraph Retrieval_Layer [Recuperación y Filtrado]
+        Retriever["Recuperador Semántico (src/rag/retriever/)"]
+        PGV[("Supabase pgvector (Índice HNSW)")]
+        Threshold{"Similitud >= 0.40?"}
+        
+        Query --> Retriever
+        PGV <-->|Top-K = 3 Coseno| Retriever
+        Retriever --> Threshold
+    end
+
+    subgraph LLM_Generation [Generación Aumentada y Guardrails]
+        Context["Ensamblador de Contexto y Guardrails"]
+        Prompt["System Prompt Clínico Estructurado"]
+        LLM_Primary["Google AI Studio (Gemini Flash Lite)"]
+        LLM_Fallback["OpenRouter Fallback Pool"]
+        Guardrail_Msg["Aviso de Seguridad Médica (Fuera de Dominio)"]
+        
+        Threshold -- "Sí" --> Context
+        Threshold -- "No" --> Guardrail_Msg
+        Context --> Prompt
+        Prompt --> LLM_Primary
+        LLM_Primary -.->|Fallback| LLM_Fallback
+    end
+
+    subgraph Output_Layer [Salida Clínica Adaptada y Telemetría]
+        Response["Respuesta Condicionada + Objeto de Telemetría"]
+        LLM_Primary --> Response
+        LLM_Fallback --> Response
+        Guardrail_Msg --> Response
+    end
+```
+
+### Definición de Esquema y Contrato de Respuesta con Telemetría:
+* **Valores Posibles del Esquema (`provider`):** `"Google AI Studio (Gemini Flash Lite)"` | `"OpenRouter Fallback Pool"` | `"SeniorVital Clinical RAG Reasoning Engine"` | `"Safety Guardrail (Zero-Context Fallback)"`
+* **Valores Posibles en Telemetría (`telemetry`):**
+  * `embedding_mode`: `"HUGGINGFACE_REAL_MODEL"` | `"FALLBACK_CI"` | `"FALLBACK_API_ERROR"`
+  * `vector_backend`: `"SUPABASE_PGVECTOR"` | `"IN_MEMORY_FALLBACK"`
+  * `llm_provider`: `"google_ai_studio"` | `"openrouter"` | `"deterministic_fallback"` | `"safety_guardrail"`
+
+```json
+{
+  "query": "Tengo osteoartritis severa en rodilla, ¿puedo hacer sentadillas con salto?",
+  "status": "SUCCESS",
+  "provider": "Google AI Studio (Gemini Flash Lite)",
+  "telemetry": {
+    "embedding_mode": "HUGGINGFACE_REAL_MODEL",
+    "vector_backend": "SUPABASE_PGVECTOR",
+    "llm_provider": "google_ai_studio"
+  },
+  "retrieved_chunks": [ ... ],
+  "context_injected": "...",
+  "response": "..."
+}
 ```
 
 ---
 
-## 📝 2. Estructura del Prompt Aumentado con Contexto RAG
+## 🔬 2. Evidencia Empírica de Ejecución (`demo_rag_pipeline.py`)
+
+Salida real obtenida en consola al ejecutar `python scripts/evaluation/demo_rag_pipeline.py`:
 
 ```text
-[ROL Y DIRECTIVAS CLÍNICAS]
-Eres "SeniorVital Wellness Coach", un asistente clínico de gerontología y fisioterapia geriátrica.
-Tu misión es brindar recomendaciones de movimiento y bienestar estrictamente seguras para adultos mayores de 60 años.
+=====================================================================================
+SENIORVITAL 2.0 - DEMOSTRACION Y EVALUACION DEL PIPELINE RAG END-TO-END
+=====================================================================================
 
-[CONTEXTO CLÍNICO RECUPERADO DE LA BASE DE CONOCIMIENTO (RAG)]:
----
-Condición: {condicion_recuperada}
-Categoría: {categoria_recuperada}
-Evidencia y Plan: {contenido_texto}
-Contraindicaciones Estrictas: {contraindicaciones}
-Fuente: {metadata_fuente}
----
+#####################################################################################
+[TEST 1/3: CASO_A] Consulta con Contraindicación Crítica (Osteoartritis de Rodilla)
+[Consulta]: "Tengo osteoartritis severa en rodilla, puedo hacer sentadillas con salto?"
+[Esperado]: Advertencia médica y prohibición estricta de saltos/pliometría.
+-------------------------------------------------------------------------------------
+[Estado]: SUCCESS
+[Proveedor]: Google AI Studio (Gemini Flash Lite)
+[Telemetría Post-Ejecución]: {
+  "embedding_mode": "HUGGINGFACE_REAL_MODEL",
+  "vector_backend": "SUPABASE_PGVECTOR",
+  "llm_provider": "google_ai_studio"
+}
+[Chunks Recuperados (3)]:
+   * Chunk ID: OA-01_REC | Condicion: OA-01 | Similitud: 0.9640 | Tipo: recommended_exercises
+   * Chunk ID: OA-01_DESC | Condicion: OA-01 | Similitud: 0.9558 | Tipo: clinical_profile
+   * Chunk ID: OA-01_CONTRA | Condicion: OA-01 | Similitud: 0.9458 | Tipo: contraindications
 
-[PERFIL DEL ADULTO MAYOR]:
-- Nombre: Carlos Mendoza
-- Nivel de Condición Física: 1 (Básico / Sedentario)
-- Patologías Reportadas: Osteoartritis de Rodilla
-- Último Esfuerzo RPE: 4 (Moderado)
+[Contexto Inyectado (Muestra)]:
+[Condicion: OA-01 | Tipo: recommended_exercises | Similitud: 0.9640]
+PRESCRIPCIÓN DE EJERCICIO PARA Osteoartritis de Rodilla y Cadera:
+MODALIDADES RECOMENDADAS: Cadena cinética cerrada de bajo ángulo (sentadilla parcial asistida en silla <= 45-60 grados)...
 
-[CONSULTA DEL USUARIO]:
-"{query_usuario}"
+[Respuesta Generada]:
+Basándose exclusivamente en el contexto clínico proporcionado para Osteoartritis de Rodilla y Cadera (OA-01):
 
-[REGLAS INQUEBRANTABLES]:
-1. Si el usuario reporta dolor articular agudo o emergencia vital, ordena detener el ejercicio y consultar a urgencias.
-2. Nunca sugieras saltos (pliometría), flexiones de rodilla mayores a 90 grados ni maniobra de Valsalva.
-3. Responde con calidez, empatía y lenguaje sencillo y claro.
+NO se recomienda realizar sentadillas con salto.
+La contraindicación más estricta en su caso es la pliometría y los ejercicios con impacto (saltos), ya que pueden comprometer aún más la estabilidad articular y el cartílago.
+
+Alternativas Seguras Recomendadas:
+1. Sentadilla parcial asistida en silla (ángulo máximo de 45-60 grados).
+2. Fortalecimiento isométrico de cuádriceps y glúteo medio.
+3. Natación y ejercicios acuáticos terapéuticos.
+#####################################################################################
+
+#####################################################################################
+[TEST 2/3: CASO_B] Prescripción de Plan de Fuerza Seguro (Sarcopenia Leve)
+[Consulta]: "Que ejercicios de fuerza puedo hacer si presento sarcopenia leve?"
+[Esperado]: Calistenia adaptada, bandas elásticas y progresión Borg 3-4.
+-------------------------------------------------------------------------------------
+[Estado]: SUCCESS
+[Proveedor]: Google AI Studio (Gemini Flash Lite)
+[Telemetría Post-Ejecución]: {
+  "embedding_mode": "HUGGINGFACE_REAL_MODEL",
+  "vector_backend": "SUPABASE_PGVECTOR",
+  "llm_provider": "google_ai_studio"
+}
+[Chunks Recuperados (3)]:
+   * Chunk ID: SAR-02_REC | Condicion: SAR-02 | Similitud: 0.9955 | Tipo: recommended_exercises
+   * Chunk ID: SAR-02_CONTRA | Condicion: SAR-02 | Similitud: 0.9834 | Tipo: contraindications
+   * Chunk ID: SAR-02_DESC | Condicion: SAR-02 | Similitud: 0.9662 | Tipo: clinical_profile
+
+[Contexto Inyectado (Muestra)]:
+[Condicion: SAR-02 | Tipo: recommended_exercises | Similitud: 0.9955]
+PRESCRIPCIÓN DE EJERCICIO PARA Sarcopenia y Dinapenia Geriátrica:
+MODALIDADES RECOMENDADAS: Entrenamiento de Fuerza Progresiva (PRT) al 40-80% 1-RM con descansos amplios (2-3 min)...
+
+[Respuesta Generada]:
+Plan de Ejercicios de Fuerza para Sarcopenia Leve (SAR-02):
+
+1. Entrenamiento de Fuerza Progresiva (PRT): Carga del 40-80% 1-RM con descansos de 2-3 minutos entre series.
+2. Bandas Elásticas de Resistencia: Ideal para comenzar fortalecimiento progresivo.
+3. Calistenia Adaptada: Sit-to-stand en silla con apoyo y flexiones en pared.
+4. Dosificación: Progresar la carga solo cuando la percepción del esfuerzo sea Borg 3-4 (Ligero).
+#####################################################################################
+
+#####################################################################################
+[TEST 3/3: CASO_C] Consulta Fuera del Dominio Clínico Gerontológico
+[Consulta]: "Como programo un microcontrolador ESP32 en lenguaje C++?"
+[Esperado]: Activación del guardrail de seguridad por ausencia de contexto clínico.
+-------------------------------------------------------------------------------------
+[Estado]: OUT_OF_DOMAIN
+[Proveedor]: Safety Guardrail (Zero-Context Fallback)
+[Telemetría Post-Ejecución]: {
+  "embedding_mode": "HUGGINGFACE_REAL_MODEL",
+  "vector_backend": "SUPABASE_PGVECTOR",
+  "llm_provider": "safety_guardrail"
+}
+[Chunks Recuperados (0)]:
+
+[Respuesta Generada]:
+[AVISO DE SEGURIDAD MEDICA]: La consulta planteada se encuentra fuera del dominio de conocimiento de salud y actividad fisica para adultos mayores de SeniorVital 2.0. Por razones de seguridad clinica, solo se atienden consultas relacionadas con condiciones geriatricas, movilidad, dosificacion de esfuerzo y recomendaciones de bienestar.
+#####################################################################################
+
+=====================================================================================
+[SUCCESS] DEMOSTRACION DE FLUJO RAG E2E COMPLETADA CON EXITO
+=====================================================================================
 ```
+
+---
+
+## 🧪 3. Verificación Automatizada (CI/CD)
+```bash
+pytest tests/rag/test_retrieval.py -v
+```
+**Resultado:** `2 passed in 0.08s` (Validación de estructura del prompt aumentado y orquestación integral del pipeline con mocks deterministas superada).
