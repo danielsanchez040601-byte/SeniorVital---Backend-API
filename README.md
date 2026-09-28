@@ -5,7 +5,7 @@
 > **La Universidad del Zulia (LUZ) — Maracaibo, Venezuela**  
 > **Materia:** Sistemas Inteligentes | **Docente Titular:** Dra. Yaskelly Yedra  
 > **Equipo (Team 5):** Daniel Alejandro Sánchez Ávila & Abdénago Nahmens  
-> **Estado:** **Sprint 3: Sistemas Multiagentes y Orquestación (100% Completado)**  
+> **Estado:** **Sprint 3: Sistemas Multiagentes y Orquestación (Implementado — pendiente de aprobación docente)**  
 
 [![CI/CD Pipeline](https://github.com/YaskCode-laboratory/wellness-platform-team5/actions/workflows/ci.yml/badge.svg)](https://github.com/YaskCode-laboratory/wellness-platform-team5/actions)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -25,7 +25,7 @@
 
 **SeniorVital 2.0** representa la evolución de la plataforma desde un sistema transaccional estático hacia un **ecosistema multiagente inteligente asistido por Inteligencia Artificial generativa, razonamiento autónomo ReAct y recuperación aumentada por conocimiento clínico (RAG)**, diseñado para optimizar la salud motriz, nutricional y funcional en adultos mayores de 60 años.
 
-A lo largo de sus tres fases de desarrollo consolidadas:
+A lo largo de sus tres fases de desarrollo:
 - **Sprint 1 (Ingeniería del Conocimiento y RAG):** Incorporación de una base ontológica clínica para 10 patologías geriátricas de alta prevalencia, segmentación semántica tripartita (`_DESC`, `_REC`, `_CONTRA`), embeddings densos en 384d e indexación vectorial HNSW en Supabase `pgvector`.
 - **Sprint 2 (Agentes Inteligentes y ReAct):** Evolución hacia `WellnessCoachAgent` con ciclo iterativo de pensamiento y acción (ReAct), catálogo de herramientas clínicas (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`) y persistencia conversacional por sesión en PostgreSQL.
 - **Sprint 3 (Sistemas Multiagentes y Orquestación):** Unificación arquitectónica bajo el **Patrón Supervisor Centralizado**, eliminando duplicidades y acoplamientos rígidos. El **OrchestratorAgent** clasifica intenciones y despacha dinámicamente tareas hacia el **NutritionAgent** (agente especializado desarrollado y asignado al Team 5, con herramientas de cálculo calórico/proteico y cheques clínicos de sodio/potasio/glucosa) o hacia el **WellnessCoachAgent** (ejercicios, movilidad articular y seguridad), coordinando el flujo a través de contratos formales `AgentMessage` y `DispatchRequest` con propagación unívoca de `correlation_id` hacia el endpoint `/api/v1/chat`.
@@ -60,10 +60,10 @@ Diseñar, implementar y validar un ecosistema inteligente multiagente para la at
 1. **Clarificar el Patrón Arquitectónico Multiagente (S3-01):** Diferenciar formalmente Supervisor frente a Sequential, Hierarchical y Swarm; adoptar el **Patrón Supervisor Centralizado** y formalizar al `NutritionAgent` como desarrollo asignado al Team 5.
 2. **Unificar la Orquestación y Despacho Dinámico (S3-02):** Consolidar el orquestador dinámico en `src/orchestration/`, descartando acoplamientos rígidos y soportando enrutamiento inteligente por clasificación de intenciones.
 3. **Desarrollar el NutritionAgent Especializado (S3-03):** Implementar herramientas de cálculo nutricional (`NutritionCalculatorTool`) y restricciones geriátricas (`ClinicalDietaryCheckTool` para hipertensión, diabetes y salud renal).
-4. **Estandarizar el Protocolo de Comunicación y Delegación (S3-04):** Conectar el endpoint `/api/v1/chat` con contratos `AgentMessage`, `DispatchRequest` y propagación de `correlation_id` extremo a extremo.
+4. **Estandarizar el Protocolo de Comunicación y Delegación (S3-04):** Conectar el endpoint `/api/v1/chat` con contratos `AgentMessage`, `DispatchRequest` y propagación de `correlation_id` de extremo a extremo.
 5. **Garantizar Seguridad y Persistencia en Supabase (S3-05):** Saneamiento integral de credenciales (cero secretos hardcodeados) y persistencia relacional/JSONB de sesiones y métricas en PostgreSQL.
-6. **Ejecutar Benchmark Multiagente Reproducible (S3-06):** Evaluar precisión de delegación (100%), adherencia clínica geriátrica (100%) y latencias percentil 95 ($0.67\text{ ms}$).
-7. **Sincronizar Documentación y Activar CI/CD Automatizado (S3-07):** Integrar ejecución obligatoria de `pytest` en GitHub Actions y sincronizar reportes e issues de auditoría.
+6. **Ejecutar Benchmark Multiagente Reproducible (S3-06):** Evaluar precisión de delegación, adherencia clínica geriátrica y latencias percentil 95 distinguiendo entorno sintético controlado vs enrutamiento end-to-end.
+7. **Sincronizar Documentación y Activar CI/CD Automatizado (S3-07):** Integrar ejecución obligatoria de `pytest` con servicio PostgreSQL en GitHub Actions y sincronizar reportes e issues de auditoría.
 
 ---
 
@@ -130,7 +130,7 @@ flowchart TD
 | **Modelos LLM (Inferencia)** | Google AI Studio (`gemini-3.6-flash`) | Generación aumentada, clasificación y síntesis |
 | **Cadena de Fallback** | OpenRouter (`google/gemma-4-31b:free`, `meta-llama`) | Contingencia de alta disponibilidad ante cuotas |
 | **Frontend & Accesibilidad** | React 18 + Vite + Tailwind CSS | Interfaz adaptada a adultos mayores (WCAG 2.1 AA) |
-| **Testing & CI/CD** | Pytest + GitHub Actions | Suite automatizada de pruebas unitarias, integración y benchmark |
+| **Testing & CI/CD** | Pytest + GitHub Actions + Postgres Service | Suite automatizada de pruebas unitarias, integración y benchmark |
 
 ---
 
@@ -140,7 +140,7 @@ flowchart TD
 wellness-platform-team5/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                         # Pipeline CI con ejecución obligatoria de pytest
+│       └── ci.yml                         # Pipeline CI con ejecucion de pytest y servicio PostgreSQL
 ├── data/
 │   ├── evaluation/
 │   │   ├── coach_scenarios.json           # 20 escenarios clínicos para evaluación ReAct
@@ -202,13 +202,13 @@ wellness-platform-team5/
 
 | Issue | Descripción del Entregable | Módulo / Ubicación en Repositorio | Estado |
 | :---: | :--- | :--- | :---: |
-| **`S3-01`** | **Clarificación del Patrón Arquitectónico Multiagente:** Diferenciación formal de 4 patrones (Supervisor, Sequential, Hierarchical, Swarm), adopción del Patrón Supervisor Centralizado y formalización del `NutritionAgent` como componente asignado al Team 5. | `docs/architecture/multiagent-architecture.md`<br/>`docs/orchestration/orchestration-pattern.md`<br/>[`issues/issues_sprint_3/S3-01_Arquitectura_Multiagente.md`](issues/issues_sprint_3/S3-01_Arquitectura_Multiagente.md) | ✅ **100%** (Aprobado y Validado) |
-| **`S3-02`** | **Unificación de la Orquestación bajo el Patrón Supervisor:** Eliminación de pipelines rígidos legacy en `app/`, consolidación en `src/orchestration/` y enrutamiento inteligente por intención hacia agentes especializados. | `src/orchestration/router.py`<br/>`src/orchestration/engine.py`<br/>[`issues/issues_sprint_3/S3-02_Orchestrator_Agent.md`](issues/issues_sprint_3/S3-02_Orchestrator_Agent.md) | ✅ **100%** (Aprobado y Validado) |
-| **`S3-03`** | **Implementación y Evidencia del NutritionAgent (Team 5):** Desarrollo completo del agente especializado en nutrición geriátrica con herramientas de cálculo (`NutritionCalculatorTool`) y restricciones clínicas (`ClinicalDietaryCheckTool` para diabetes e HTA). | `src/agents/nutrition/`<br/>[`issues/issues_sprint_3/S3-03_Agente_Especializado.md`](issues/issues_sprint_3/S3-03_Agente_Especializado.md)<br/>[`issues/issues_sprint_3/S3-03_Agentes_Especializados.md`](issues/issues_sprint_3/S3-03_Agentes_Especializados.md) | ✅ **100%** (Aprobado y Validado) |
-| **`S3-04`** | **Protocolo de Comunicación y Conexión de Endpoint Chat:** Conexión de `/api/v1/chat` al Supervisor mediante contratos formales `AgentMessage`, `DispatchRequest` y propagación de `correlation_id` de extremo a extremo. | `src/api/chat.py`<br/>`src/orchestration/contracts.py`<br/>[`issues/issues_sprint_3/S3-04_Comunicacion_Delegacion.md`](issues/issues_sprint_3/S3-04_Comunicacion_Delegacion.md) | ✅ **100%** (Aprobado y Validado) |
-| **`S3-05`** | **Seguridad y Persistencia en Supabase:** Auditoría y saneamiento total de credenciales (eliminación de contraseñas hardcodeadas), carga vía variables de entorno y documentación de consultas SQL/JSONB en PostgreSQL. | `src/api/config.py`<br/>`seniorvital_shared/db.py`<br/>[`issues/issues_sprint_3/S3-05_Integracion_Datos.md`](issues/issues_sprint_3/S3-05_Integracion_Datos.md)<br/>[`issues/issues_sprint_3/S3-05_Integracion_Supabase.md`](issues/issues_sprint_3/S3-05_Integracion_Supabase.md) | ✅ **100%** (Aprobado y Validado) |
-| **`S3-06`** | **Evaluación Cuantitativa y Benchmark Multiagente:** Script reproducible `evaluate_multiagent.py` evaluando precisión de enrutamiento (100%), latencias (Media 0.31ms, P95 0.67ms) y adherencia clínica geriátrica (100%). | `scripts/evaluation/evaluate_multiagent.py`<br/>`data/evaluation/multiagent_results/`<br/>[`issues/issues_sprint_3/S3-06_Evaluacion_Multiagente.md`](issues/issues_sprint_3/S3-06_Evaluacion_Multiagente.md) | ✅ **100%** (Aprobado y Validado) |
-| **`S3-07`** | **Sincronización Documental y Activación CI/CD:** Activación obligatoria de `pytest` en GitHub Actions (`ci.yml`), sincronización completa del `README.md` con diagramas de flujo y cierre de auditorías S3-01 a S3-07. | `.github/workflows/ci.yml`<br/>`README.md`<br/>`docs/reports/sprint-3-report.md`<br/>[`issues/issues_sprint_3/S3-07_Documentacion_Demo.md`](issues/issues_sprint_3/S3-07_Documentacion_Demo.md) | ✅ **100%** (Aprobado y Validado) |
+| **`S3-01`** | **Clarificación del Patrón Arquitectónico Multiagente:** Diferenciación formal de 4 patrones (Supervisor, Sequential, Hierarchical, Swarm), adopción del Patrón Supervisor Centralizado y formalización del `NutritionAgent` como componente asignado al Team 5. | `docs/architecture/multiagent-architecture.md`<br/>`docs/orchestration/orchestration-pattern.md`<br/>[`issues/issues_sprint_3/S3-01_Arquitectura_Multiagente.md`](issues/issues_sprint_3/S3-01_Arquitectura_Multiagente.md) | Implementado — pendiente de aprobación docente |
+| **`S3-02`** | **Unificación de la Orquestación bajo el Patrón Supervisor:** Eliminación de pipelines rígidos legacy en `app/`, consolidación en `src/orchestration/` y enrutamiento inteligente por intención hacia agentes especializados. | `src/orchestration/router.py`<br/>`src/orchestration/engine.py`<br/>[`issues/issues_sprint_3/S3-02_Orchestrator_Agent.md`](issues/issues_sprint_3/S3-02_Orchestrator_Agent.md) | Implementado — pendiente de aprobación docente |
+| **`S3-03`** | **Implementación y Evidencia del NutritionAgent (Team 5):** Desarrollo completo del agente especializado en nutrición geriátrica con herramientas de cálculo (`NutritionCalculatorTool`) y restricciones clínicas (`ClinicalDietaryCheckTool` para diabetes e HTA). | `src/agents/nutrition/`<br/>[`issues/issues_sprint_3/S3-03_Agente_Especializado.md`](issues/issues_sprint_3/S3-03_Agente_Especializado.md)<br/>[`issues/issues_sprint_3/S3-03_Agentes_Especializados.md`](issues/issues_sprint_3/S3-03_Agentes_Especializados.md) | Implementado — pendiente de aprobación docente |
+| **`S3-04`** | **Protocolo de Comunicación y Conexión de Endpoint Chat:** Conexión de `/api/v1/chat` al Supervisor mediante contratos formales `AgentMessage`, `DispatchRequest` y propagación de `correlation_id` de extremo a extremo. | `src/api/chat.py`<br/>`src/orchestration/contracts.py`<br/>[`issues/issues_sprint_3/S3-04_Comunicacion_Delegacion.md`](issues/issues_sprint_3/S3-04_Comunicacion_Delegacion.md) | Implementado — pendiente de aprobación docente |
+| **`S3-05`** | **Seguridad y Persistencia en Supabase:** Auditoría y saneamiento total de credenciales (eliminación de contraseñas hardcodeadas), carga vía variables de entorno y documentación de consultas SQL/JSONB en PostgreSQL. | `src/api/config.py`<br/>`seniorvital_shared/db.py`<br/>[`issues/issues_sprint_3/S3-05_Integracion_Datos.md`](issues/issues_sprint_3/S3-05_Integracion_Datos.md)<br/>[`issues/issues_sprint_3/S3-05_Integracion_Supabase.md`](issues/issues_sprint_3/S3-05_Integracion_Supabase.md) | Implementado — pendiente de aprobación docente |
+| **`S3-06`** | **Evaluación Cuantitativa y Benchmark Multiagente:** Script reproducible `evaluate_multiagent.py` separando benchmark controlado unitario y evaluación de enrutamiento end-to-end con métricas de adherencia clínica y latencias. | `scripts/evaluation/evaluate_multiagent.py`<br/>`data/evaluation/multiagent_results/`<br/>[`issues/issues_sprint_3/S3-06_Evaluacion_Multiagente.md`](issues/issues_sprint_3/S3-06_Evaluacion_Multiagente.md) | Implementado — pendiente de aprobación docente |
+| **`S3-07`** | **Sincronización Documental y Activación CI/CD:** Activación obligatoria de `pytest` con contenedor PostgreSQL en GitHub Actions (`ci.yml`), sincronización completa del `README.md` y actualización de auditorías S3-01 a S3-07. | `.github/workflows/ci.yml`<br/>`README.md`<br/>`docs/reports/sprint-3-report.md`<br/>[`issues/issues_sprint_3/S3-07_Documentacion_Demo.md`](issues/issues_sprint_3/S3-07_Documentacion_Demo.md) | Implementado — pendiente de aprobación docente |
 
 ---
 
@@ -290,22 +290,10 @@ python scripts/ingestion/ingest_knowledge.py
 ```bash
 python -m pytest tests/ -v --ignore=tests/legacy/
 ```
-*Salida esperada:*
-```text
-============================== 237 passed, 37 skipped in 72.45s ==============================
-```
 
-### 6. Ejecutar el benchmark multiagente (Precisión de Enrutamiento y Calidad Clínica)
+### 6. Ejecutar el benchmark multiagente (Evaluación Controlada y Enrutamiento End-to-End)
 ```bash
 python scripts/evaluation/evaluate_multiagent.py
-```
-*Salida esperada:*
-```text
-Delegation Accuracy:      100.0% (6/6)
-Clinical Adherence Rate:  100.0% (6/6)
-Critical Safety Block:    100.0%
-Latency Mean:             0.31 ms
-Latency P95:              0.67 ms
 ```
 
 ### 7. Ejecución de la API Backend y Frontend
@@ -365,7 +353,7 @@ npm run dev
 
 ## Estado del Proyecto
 
-* **Fase Actual:** **Sprint 3: Sistemas Multiagentes y Orquestación (Completado al 100% / 45% del Proyecto Total).**
+* **Fase Actual:** **Sprint 3: Sistemas Multiagentes y Orquestación (Implementado — pendiente de aprobación docente).**
 * **Hitos Consolidados:**
   - Base de conocimiento de 10 patologías geriátricas y RAG integrado (Sprint 1).
   - `WellnessCoachAgent` con herencia formal de `WellnessAgent`, Tool Calling y ciclo ReAct en `src/` (Sprint 2).
@@ -373,6 +361,6 @@ npm run dev
   - Unificación bajo el **Patrón Supervisor Centralizado** en `src/orchestration/`, descartando acoplamientos rígidos legacy (Sprint 3).
   - Desarrollo del **NutritionAgent** (especializado para Team 5) con herramientas de cálculo y cheques de patologías geriátricas (Sprint 3).
   - Integración del endpoint `/api/v1/chat` con enrutamiento dinámico, contratos `AgentMessage`, `DispatchRequest` y propagación de `correlation_id` (Sprint 3).
-  - Ejecución de benchmark multiagente con 100% de precisión de delegación y 100% de adherencia clínica (Sprint 3).
-  - Activación obligatoria de `pytest` en CI de GitHub Actions y saneamiento total de credenciales (Sprint 3).
+  - Ejecución de benchmark multiagente distinguiendo entorno sintético controlado vs enrutamiento end-to-end (Sprint 3).
+  - Activación de `pytest` con servicio PostgreSQL en GitHub Actions y saneamiento total de credenciales (Sprint 3).
 * **Próxima Fase:** **Sprint 4: Integración Avanzada, Monitoreo Continuo y Despliegue en Producción.**
