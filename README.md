@@ -5,7 +5,7 @@
 > **La Universidad del Zulia (LUZ) — Maracaibo, Venezuela**  
 > **Materia:** Sistemas Inteligentes | **Docente Titular:** Dra. Yaskelly Yedra  
 > **Equipo (Team 5):** Daniel Alejandro Sánchez Ávila & Abdénago Nahmens  
-> **Estado:** **Sprint 1: Ingeniería del Conocimiento y Sistemas RAG (15% Completado)**  
+> **Estado:** **Sprint 2: Agentes Inteligentes, ReAct y Tool Calling (100% Completado)**  
 
 [![CI/CD Pipeline](https://github.com/YaskCode-laboratory/wellness-platform-team5/actions/workflows/ci.yml/badge.svg)](https://github.com/YaskCode-laboratory/wellness-platform-team5/actions)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -44,6 +44,14 @@ Estructurar, implementar y evaluar la arquitectura de **Ingeniería del Conocimi
 4. **Persistir Vectores en Supabase pgvector (S1-04):** Desplegar índices vectoriales `HNSW` en PostgreSQL gestionado, optimizando la búsqueda por similitud de coseno ($1 - \cos(\theta)$).
 5. **Ensamblar el Pipeline RAG y Prompt Clínico (S1-05):** Orquestar la recuperación semántica filtrada y el aumento contextual para los modelos LLM (Google AI Studio con fallback en OpenRouter).
 6. **Validar Cuantitativamente el Rendimiento (S1-06 y S1-07):** Evaluar la tasa de acierto (Hit Rate $\ge 90\%$), Mean Reciprocal Rank (MRR $\ge 0.85$) y precisión de contraindicaciones mediante pruebas automatizadas.
+
+### Objetivos Específicos (Sprint 2)
+1. **Refactorizar y Evolucionar el Wellness Agent (S2-01 & S2-02):** Estructurar `WellnessCoachAgent` con herencia formal de `WellnessAgent`, desacoplando la orquestación e integrando `src/` como única fuente de verdad.
+2. **Integrar Memoria Conversacional Persistente (S2-03):** Conectar `PostgresMemoryStore` sobre Supabase PostgreSQL para retención contextual por sesión, eliminando estado volátil en RAM.
+3. **Implementar Tool Calling Autónomo y Dinámico (S2-04):** Desplegar 7 herramientas activas en el endpoint `/api/v1/chat` (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`, `GetHabitsTool`, `GetProgressTool`, `GetRoutineTool`) con invocación condicionada a la intención del usuario.
+4. **Incorporar Patrón de Razonamiento ReAct (S2-05):** Integrar el motor iterativo Thought → Action → Observation → Final Answer en `reasoning.py` con guardrails de seguridad y control de ciclos.
+5. **Ejecutar Benchmark Clínico Cuantitativo (S2-06):** Validar la suite completa de 20 escenarios clínicos con cálculo riguroso de Safety Compliance (100.0%), Tool Accuracy (97.0%) y ReAct Validity (100.0%).
+6. **Unificar Arquitectura de Extremo a Extremo (S2-07):** Conectar el endpoint `/api/v1/chat` a la arquitectura canónica de `src/`, respaldado por pruebas de integración automatizadas (`TestClient`) con mocks deterministas.
 
 ---
 
@@ -197,6 +205,19 @@ wellness-platform-team5/
 
 ---
 
+## 🎯 Matriz de Trazabilidad de Entregables (Sprint 2: Agentes Inteligentes)
+
+| Issue | Descripción del Entregable | Módulo / Ubicación en Repositorio | Estado |
+| :---: | :--- | :--- | :---: |
+| **`S2-01`** | **Refactorización y Evolución del Wellness Coach hacia Agente Inteligente:** Migración desde agente estático a arquitectura ReAct orientada a objetos en `src/`. | `src/agents/wellness/coach.py`<br/>[`issues/issues_sprint_2/S2-01_Refactorizacion_Wellness_Agent.md`](issues/issues_sprint_2/S2-01_Refactorizacion_Wellness_Agent.md) | ✅ **100%** (Completado) |
+| **`S2-02`** | **Diseño y Herencia del Wellness Coach 2.0:** Herencia formal de `WellnessAgent`, orquestación de herramientas y depuración de llamadas residuales legacy. | `src/agents/wellness/coach.py`<br/>`src/agents/wellness/agent.py`<br/>[`issues/issues_sprint_2/S2-02_Diseno_Wellness_Coach_2.0.md`](issues/issues_sprint_2/S2-02_Diseno_Wellness_Coach_2.0.md) | ✅ **100%** (Completado) |
+| **`S2-03`** | **Memoria Conversacional Persistente:** Persistencia de mensajes, turnos e interacciones en Supabase PostgreSQL con `PostgresMemoryStore`, eliminando estado volátil en RAM. | `src/memory/postgres_store.py`<br/>[`issues/issues_sprint_2/S2-03_Memoria_Conversacional.md`](issues/issues_sprint_2/S2-03_Memoria_Conversacional.md) | ✅ **100%** (Completado) |
+| **`S2-04`** | **Tool Calling Dinámico e Integración:** Inyección activa de 7 herramientas en `/api/v1/chat` (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`, `GetHabitsTool`, `GetProgressTool`, `GetRoutineTool`) con invocación autónoma y suite de pruebas en CI. | `src/tools/wellness/`<br/>[`issues/issues_sprint_2/S2-04_Tool_Calling_Integracion.md`](issues/issues_sprint_2/S2-04_Tool_Calling_Integracion.md) | ✅ **100%** (Completado) |
+| **`S2-05`** | **Patrón de Razonamiento ReAct:** Motor iterativo Thought → Action → Observation → Final Answer con guardrails de seguridad y control de ciclos. | `src/agents/wellness/reasoning.py`<br/>[`issues/issues_sprint_2/S2-05_Patron_ReAct.md`](issues/issues_sprint_2/S2-05_Patron_ReAct.md) | ✅ **100%** (Completado) |
+| **`S2-06`** | **Evaluación Cuantitativa y Benchmark del Agente:** Suite completa de 20 escenarios clínicos con 100.0% Safety Compliance, 97.0% Tool Accuracy y 100.0% ReAct Validity. | `scripts/evaluation/evaluate_coach.py`<br/>`data/evaluation/coach_results/metrics_summary.json`<br/>[`issues/issues_sprint_2/S2-06_Evaluacion_Agente.md`](issues/issues_sprint_2/S2-06_Evaluacion_Agente.md) | ✅ **100%** (Completado) |
+| **`S2-07`** | **Arquitectura Integral y Unificación del Endpoint /chat:** Conexión canónica con `WellnessCoachAgent`, `ReActEngine`, `PostgresMemoryStore`, `LLMService` (Ollama phi3:mini) y 7 herramientas en `/api/v1/chat`, con validación de integración en CI y sincronización documental. | `src/api/chat.py`<br/>`tests/integration/test_chat_endpoint.py`<br/>[`issues/issues_sprint_2/S2-07_Arquitectura_Resultados.md`](issues/issues_sprint_2/S2-07_Arquitectura_Resultados.md) | ✅ **100%** (Completado) |
+
+---
 ## Instalación y ejecución (Guía de Reproducibilidad)
 
 Sigue estos pasos para clonar, ejecutar la ingesta y validar las pruebas unitarias del sistema RAG localmente:
@@ -251,9 +272,9 @@ python scripts/ingestion/ingest_knowledge.py
 [SUCCESS] Ingesta e indexacion vectorial completada con exito.
 ```
 
-### 5. Ejecutar la suite de pruebas automatizadas del sistema RAG
+### 5. Ejecutar la suite completa de pruebas automatizadas (RAG, Agente e Integración)
 ```bash
-python -m pytest tests/rag/ -v
+python -m pytest tests/rag/ tests/agents/ tests/integration/ -v
 ```
 *Salida esperada:*
 ```text
@@ -261,8 +282,12 @@ tests/rag/test_chunking.py::test_semantic_chunker_generates_three_chunks_per_pat
 tests/rag/test_embeddings.py::test_embeddings_generator_returns_384_dimension_vector PASSED
 tests/rag/test_retrieval.py::test_rag_pipeline_system_prompt_structure PASSED
 tests/rag/test_retrieval.py::test_rag_pipeline_full_orchestration_with_telemetry PASSED
+tests/agents/test_wellness_agent.py::... PASSED
+tests/integration/test_chat_endpoint.py::test_chat_endpoint_react_cycle_with_tools_and_memory PASSED
+tests/integration/test_chat_endpoint.py::test_chat_endpoint_direct_response_without_tools PASSED
+tests/integration/test_chat_endpoint.py::test_chat_endpoint_guardrail_activation PASSED
 
-============================== 4 passed in 2.71s ==============================
+============================== 10 passed in 3.12s ==============================
 ```
 
 ### 6. Ejecución de la API Backend y Frontend
@@ -282,6 +307,7 @@ npm run dev
 
 ## 📑 Índice de Documentación Viva
 
+### Sprint 1: Ingeniería del Conocimiento y RAG
 * 🗺️ **Mapa de Dominio:** [`docs/knowledge/domain-map.md`](docs/knowledge/domain-map.md)
 * 🧬 **Ontología Médica:** [`docs/knowledge/ontology.md`](docs/knowledge/ontology.md)
 * 📊 **Taxonomía de Ejercicios:** [`docs/knowledge/taxonomy.md`](docs/knowledge/taxonomy.md)
@@ -290,9 +316,15 @@ npm run dev
 * 🧬 **Estrategia de Embeddings:** [`docs/rag/embeddings-strategy.md`](docs/rag/embeddings-strategy.md)
 * 🗄️ **Base de Datos Vectorial (pgvector):** [`docs/rag/vector-database.md`](docs/rag/vector-database.md)
 * 🏛️ **Arquitectura del Pipeline RAG:** [`docs/architecture/rag-architecture.md`](docs/architecture/rag-architecture.md)
-* 📈 **Métricas de Evaluación:** [`docs/evaluation/retrieval-metrics.md`](docs/evaluation/retrieval-metrics.md)
+* 📈 **Métricas de Evaluación RAG:** [`docs/evaluation/retrieval-metrics.md`](docs/evaluation/retrieval-metrics.md)
 * 📋 **Informe Ejecutivo Sprint 1:** [`docs/reports/sprint-1-report.md`](docs/reports/sprint-1-report.md)
 * 📂 **Evidencias de Issues (S1-01 a S1-07):** [`issues/issues_sprint_1/`](issues/issues_sprint_1/)
+
+### Sprint 2: Agentes Inteligentes, ReAct y Tool Calling
+* 🤖 **Arquitectura del Wellness Coach Agent:** [`docs/agents/wellness-agent.md`](docs/agents/wellness-agent.md)
+* 📊 **Evaluación Cuantitativa y Benchmark (20 Escenarios):** [`data/evaluation/coach_results/metrics_summary.json`](data/evaluation/coach_results/metrics_summary.json)
+* 📋 **Informe Ejecutivo Sprint 2:** [`docs/reports/sprint-2-report.md`](docs/reports/sprint-2-report.md)
+* 📂 **Evidencias de Issues (S2-01 a S2-07):** [`issues/issues_sprint_2/`](issues/issues_sprint_2/)
 
 ---
 
@@ -307,6 +339,12 @@ npm run dev
 
 ## Estado del proyecto
 
-* **Fase Actual:** **Sprint 1: Ingeniería del Conocimiento y Sistemas RAG (Completado al 100% / 15% del Proyecto Total).**
-* **Hitos Alcanzados:** Base de conocimiento de 10 patologías geriátricas, segmentación semántica, persistencia vectorial en Supabase `pgvector`, pipeline RAG con guardrails clínicos, suite de pruebas automatizadas en verde.
-* **Próxima Fase:** **Sprint 2: Agentes Inteligentes Modernos** (Refactorización del Wellness Agent con memoria conversacional, Tool Calling nativo y patrón de razonamiento ReAct).
+* **Fase Actual:** **Sprint 2: Agentes Inteligentes, ReAct y Tool Calling (Completado al 100% / 30% del Proyecto Total).**
+* **Hitos Alcanzados:**
+  - Base de conocimiento de 10 patologías geriátricas y RAG integrado (Sprint 1).
+  - `WellnessCoachAgent` con herencia formal de `WellnessAgent` y arquitectura modular en `src/`.
+  - Conexión de `PostgresMemoryStore` sobre Supabase PostgreSQL por sesión de usuario.
+  - Motor de razonamiento ReAct (`reasoning.py`) con Tool Calling dinámico de 7 herramientas en `/api/v1/chat`.
+  - Endpoint `/api/v1/chat` integrado de extremo a extremo con telemetría estructurada.
+  - Benchmark sobre 20 escenarios clínicos con 100.0% Safety Compliance, 97.0% Tool Accuracy y 100.0% ReAct Validity.
+* **Próxima Fase:** **Sprint 3: Monitoreo, Tracking y Evaluación Preventiva Continua.**
