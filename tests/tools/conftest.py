@@ -24,15 +24,24 @@ async def engine():
         db_url_async = db_url
     else:
         db_url_async = db_url.replace("postgresql://", "postgresql+asyncpg://")
-    eng = create_async_engine(db_url_async, pool_size=2, max_overflow=2)
+    eng = create_async_engine(
+        db_url_async,
+        pool_size=5,
+        max_overflow=5,
+        pool_pre_ping=True,
+    )
     try:
         async with eng.connect() as conn:
             await conn.execute(text("SELECT 1"))
-        from seniorvital_shared.db import init_db
+        from seniorvital_shared.db import init_db, close_pool
         await init_db()
+        await close_pool()
     except Exception as e:
         await eng.dispose()
-        pytest.skip(f"Live PostgreSQL instance not reachable: {e}")
+        err_msg = str(e).lower()
+        if any(keyword in err_msg for keyword in ("connect", "refused", "password", "does not exist", "failed", "could not", "not found", "enotfound", "tenant", "closed")):
+            pytest.skip(f"Live PostgreSQL instance not reachable: {e}")
+        raise
     yield eng
     await eng.dispose()
 
@@ -90,6 +99,8 @@ async def seed_user_with_restrictions(db_session):
 @pytest.fixture
 async def seed_exercises(db_session):
     """Insert 5 test exercises across levels 1-4 with varied contraindications."""
+    await db_session.execute(text("DELETE FROM workout_exercises"))
+    await db_session.execute(text("DELETE FROM exercises"))
     exercises = [
         ("Caminata ligera", 1, "", "Camina a paso suave por 10 minutos"),
         ("Yoga suave", 2, "artritis", "Estiramientos suaves de yoga"),
@@ -109,6 +120,7 @@ async def seed_exercises(db_session):
 @pytest.fixture
 async def seed_habits(db_session, seed_user):
     """Insert 7 days of habit data for the test user."""
+    await db_session.execute(text("DELETE FROM habits WHERE user_id = :uid"), {"uid": seed_user})
     today = date.today()
     for i in range(7):
         d = today - timedelta(days=i)
@@ -126,6 +138,7 @@ async def seed_habits(db_session, seed_user):
 @pytest.fixture
 async def seed_routine(db_session, seed_user):
     """Insert today's active routine for the test user."""
+    await db_session.execute(text("DELETE FROM routines WHERE user_id = :uid"), {"uid": seed_user})
     exercises_json = json.dumps([
         {"name": "Caminata", "sets": 1, "reps": 10, "duration_min": 5}
     ])
@@ -140,6 +153,7 @@ async def seed_routine(db_session, seed_user):
 @pytest.fixture
 async def seed_projections(db_session, seed_user):
     """Insert weekly projections for the test user."""
+    await db_session.execute(text("DELETE FROM projections WHERE user_id = :uid"), {"uid": seed_user})
     today = date.today()
     for i in range(4):
         week_start = today - timedelta(weeks=i)
@@ -154,6 +168,7 @@ async def seed_projections(db_session, seed_user):
 @pytest.fixture
 async def seed_workout_sessions(db_session, seed_user):
     """Insert workout sessions for progress tracking."""
+    await db_session.execute(text("DELETE FROM workout_sessions WHERE user_id = :uid"), {"uid": seed_user})
     from datetime import datetime as dt, timezone
     today = date.today()
     for i in range(6):
