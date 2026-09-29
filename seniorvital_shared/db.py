@@ -307,7 +307,7 @@ def _get_dsn():
 
 
 async def init_pool(min_size=2, max_size=10, owner="default"):
-    """Inicializa el pool de conexiones si aún no existe.
+    """Inicializa el pool de conexiones si aún no existe para el bucle actual.
 
     :param min_size: Número mínimo de conexiones en el pool.
     :param max_size: Número máximo de conexiones en el pool.
@@ -315,6 +315,18 @@ async def init_pool(min_size=2, max_size=10, owner="default"):
     :return: El pool de conexiones de asyncpg.
     """
     global _pool, _pool_owner
+    import asyncio
+    try:
+        current_loop = asyncio.get_running_loop()
+    except RuntimeError:
+        current_loop = None
+
+    if _pool is not None:
+        pool_loop = getattr(_pool, "_loop", None)
+        if getattr(_pool, "_closed", False) or (pool_loop is not None and pool_loop != current_loop):
+            _pool = None
+            _pool_owner = None
+
     if _pool is None:
         _pool = await asyncpg.create_pool(
             dsn=_get_dsn(), min_size=min_size, max_size=max_size
@@ -323,23 +335,42 @@ async def init_pool(min_size=2, max_size=10, owner="default"):
     return _pool
 
 
-async def close_pool(owner="default"):
-    """Cierra el pool de conexiones si el propietario coincide.
+async def close_pool(owner=None):
+    """Cierra el pool de conexiones activo si coincide el propietario o es forzado.
 
-    :param owner: Identificador del propietario. Solo cierra si coincide.
+    :param owner: Identificador del propietario. Si es None o coincide, cierra.
     """
     global _pool, _pool_owner
-    if _pool is not None and _pool_owner == owner:
-        await _pool.close()
-        _pool = None
-        _pool_owner = None
+    if _pool is not None:
+        if owner is None or _pool_owner == owner or _pool_owner == "default":
+            try:
+                if not getattr(_pool, "_closed", False):
+                    await _pool.close()
+            except Exception:
+                pass
+            finally:
+                _pool = None
+                _pool_owner = None
 
 
 async def get_pool() -> asyncpg.Pool:
-    """Retorna el pool de conexiones activo, inicializándolo si es necesario.
+    """Retorna el pool de conexiones activo para el event loop actual, inicializándolo si es necesario.
 
     :return: Pool de conexiones asyncpg.
     """
+    global _pool, _pool_owner
+    import asyncio
+    try:
+        current_loop = asyncio.get_running_loop()
+    except RuntimeError:
+        current_loop = None
+
+    if _pool is not None:
+        pool_loop = getattr(_pool, "_loop", None)
+        if getattr(_pool, "_closed", False) or (pool_loop is not None and pool_loop != current_loop):
+            _pool = None
+            _pool_owner = None
+
     if _pool is None:
         await init_pool()
     return _pool

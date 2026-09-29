@@ -14,8 +14,9 @@ from src.memory.postgres_store import PostgresMemoryStore
 
 @pytest.fixture
 async def pool():
-    """Get the shared asyncpg pool (initialized by conftest auto_init_pool)."""
-    from seniorvital_shared import get_pool, init_db
+    """Get the asyncpg pool for PostgreSQL tests in the current loop with proper teardown."""
+    import asyncpg
+    from seniorvital_shared.db import get_pool, init_db, close_pool
     try:
         p = await get_pool()
         if not p:
@@ -23,9 +24,16 @@ async def pool():
         async with p.acquire() as conn:
             await conn.fetchval("SELECT 1")
         await init_db()
-        return p
-    except Exception as e:
+    except (OSError, asyncpg.PostgresError, asyncpg.CannotConnectNowError) as e:
         pytest.skip(f"Live PostgreSQL instance not reachable: {e}")
+    except Exception as e:
+        err_msg = str(e).lower()
+        if any(keyword in err_msg for keyword in ("connect", "refused", "password", "does not exist", "failed", "could not")):
+            pytest.skip(f"Live PostgreSQL instance not reachable: {e}")
+        raise
+
+    yield p
+    await close_pool()
 
 
 @pytest.fixture

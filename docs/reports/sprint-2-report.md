@@ -37,7 +37,7 @@ Durante el Sprint 2 desarrollamos y consolidamos el Wellness Coach Agent 2.0: un
 | Issue | #12 |
 | Estado | Completado |
 | Componentes | `src/memory/postgres_store.py`, tabla `conversation_history`, wiring en `src/api/chat.py` |
-| Tests | 16 (integración y persistencia multi-turno en `tests/memory/`) |
+| Tests | 11 (integración y persistencia multi-turno en `tests/memory/`) |
 
 **Resultado**: `PostgresMemoryStore` conectado al pool asíncrono de PostgreSQL con retención y recuperación cronológica de contexto histórico. Se incorporó la suite `tests/memory/` en GitHub Actions respaldada por un servicio PostgreSQL contenedorizado en el runner de CI para validar guardar → recuperar → conservar contexto.
 
@@ -48,7 +48,7 @@ Durante el Sprint 2 desarrollamos y consolidamos el Wellness Coach Agent 2.0: un
 | Issue | #13 |
 | Estado | Completado |
 | Componentes | `src/tools/wellness/`, inyección de 7 herramientas en `/api/v1/chat`, documentación en `docs/tools/` |
-| Tests | 38 (integración, selección, consultas sin herramientas, cadenas multi-tool y recuperación ante fallos en `tests/tools/`) |
+| Tests | 39 (integración, selección, consultas sin herramientas, cadenas multi-tool y recuperación ante fallos en `tests/tools/`) |
 
 **Resultado**: Selección dinámica de herramientas bajo el ciclo ReAct. Se incorporó la suite `tests/tools/` en CI para certificar automáticamente la selección de herramientas, consultas directas sin herramientas, encadenamiento multi-tool y resiliencia ante excepciones. En `/api/v1/chat` se inyectan 7 herramientas activas (`SafetyCheckTool`, `ExerciseCatalogTool`, `RAGSearchTool`, `LogHabitTool`, `GetHabitsTool`, `GetProgressTool`, `GetRoutineTool`), preservando `GenerateRoutineTool` a nivel de librería de servicios.
 
